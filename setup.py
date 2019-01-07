@@ -43,9 +43,9 @@ if setuptools is not None:
     kwargs['zip_safe'] = False
 
 setup(
-    name='rest_utils',
+    name='rest_tools',
     scripts=glob.glob('bin/*'),
-    packages=['rest_utils', 'rest_utils.client', 'rest_utils.server'],
+    packages=['rest_tools', 'rest_tools.client', 'rest_tools.server'],
     package_data={
         # data files need to be listed both here (which determines what gets
         # installed) and in MANIFEST.in (which determines what gets included
