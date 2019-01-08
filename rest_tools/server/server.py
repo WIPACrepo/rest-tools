@@ -64,3 +64,6 @@ class RestServer:
                 app, xheaders=True)
         self.http_server.bind(port, address=address, family=socket.AF_INET)
         self.http_server.start()
+
+    def stop(self):
+        self.http_server.stop()
