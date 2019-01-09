@@ -159,12 +159,10 @@ def role_authorization(**_auth):
         :py:class:`tornado.web.HTTPError`
     """
     def make_wrapper(method):
+        @authenticated
         @catch_error
         @wraps(method)
         async def wrapper(self, *args, **kwargs):
-            if not self.current_user:
-                raise tornado.web.HTTPError(403, reason="authentication failed")
-
             roles = _auth.get('roles', [])
 
             authorized = False
@@ -173,7 +171,7 @@ def role_authorization(**_auth):
             if roles and auth_role in roles:
                 authorized = True
             else:
-                logger.info('roles: %r    attrs: %r', roles, attrs)
+                logger.info('roles: %r', roles)
                 logger.info('token_role: %r', auth_role)
                 logger.info('role mismatch')
 
