@@ -17,11 +17,11 @@ from .session import AsyncSession,Session
 from .json_util import json_encode,json_decode
 
 class RestClient(object):
-    def __init__(self, address, token, timeout=60.0, backoff=True, **kwargs):
+    def __init__(self, address, token, timeout=60.0, retries=10, **kwargs):
         self.address = address
         self.token = token
         self.timeout = timeout
-        self.backoff = backoff
+        self.retries = retries
         self.kwargs = kwargs
         self.session = None
 
@@ -31,9 +31,9 @@ class RestClient(object):
         """Open the http session"""
         logging.warning('establish REST http session')
         if sync:
-            self.session = Session()
+            self.session = Session(self.retries)
         else:
-            self.session = AsyncSession()
+            self.session = AsyncSession(self.retries)
         self.session.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer '+self.token,
