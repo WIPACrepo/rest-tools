@@ -32,6 +32,8 @@ def RestHandlerSetup(config={}):
         }
         if 'issuer' in config['auth']:
             kwargs['issuer'] = config['auth']['issuer']
+        if 'algorithm' in config['auth']:
+            kwargs['algorithm'] = config['auth']['algorithm']
         if 'expiration' in config['auth']:
             kwargs['expiration'] = config['auth']['expiration']
         if 'expiration_temp' in config['auth']:
