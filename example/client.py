@@ -11,8 +11,8 @@ from rest_tools.client import RestClient
 from rest_tools.server import Auth
 
 async def main():
-    admin_token = Auth('secret').create_token('foo', payload={'role': 'admin'}).decode('utf-8')
-    user_token = Auth('secret').create_token('foo', payload={'role': 'user'}).decode('utf-8')
+    admin_token = Auth('secret').create_token('foo', payload={'role': 'admin'})
+    user_token = Auth('secret').create_token('foo', payload={'role': 'user'})
 
     api = RestClient('http://localhost:8080/api', token=admin_token)
     await api.request('POST', '/fruits', {'name': 'apple'})

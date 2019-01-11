@@ -16,6 +16,11 @@ import requests
 from .session import AsyncSession,Session
 from .json_util import json_encode,json_decode
 
+def to_str(s):
+    if isinstance(s, bytes):
+        return s.decode('utf-8')
+    return s
+
 class RestClient(object):
     def __init__(self, address, token, timeout=60.0, retries=10, **kwargs):
         self.address = address
@@ -36,7 +41,7 @@ class RestClient(object):
             self.session = AsyncSession(self.retries)
         self.session.headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer '+self.token,
+            'Authorization': 'Bearer '+to_str(self.token),
         }
         if 'username' in self.kwargs and 'password' in self.kwargs:
             self.session.auth = (self.kwargs['username'], self.kwargs['password'])
