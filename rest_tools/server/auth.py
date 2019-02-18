@@ -42,12 +42,13 @@ class Auth:
         })
         return jwt.encode(payload, self.secret, algorithm=self.algorithm)
 
-    def validate(self, token):
+    def validate(self, token, **kwargs):
         """
         Validate a token.
 
         Args:
             token (str): a JWT token
+            **kwargs: additional args passed directly to jwt.decode
 
         Returns:
             dict: data inside token
@@ -55,7 +56,7 @@ class Auth:
         Raises:
             Exception on failure to validate.
         """
-        ret = jwt.decode(token, self.secret, issuer=self.issuer, algorithms=[self.algorithm])
+        ret = jwt.decode(token, self.secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
         if 'type' not in ret:
             raise Exception('no type information')
         return ret
