@@ -40,7 +40,7 @@ class Auth:
             'iat': now,
             'type': type,
         })
-        return jwt.encode(payload, self.secret, algorithm=self.algorithm)
+        return jwt.encode(payload, self.secret, algorithm=self.algorithm).decode('utf-8')
 
     def validate(self, token, **kwargs):
         """
