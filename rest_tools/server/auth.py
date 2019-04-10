@@ -6,8 +6,9 @@ class Auth:
     Handle authentication of JWT tokens.
     """
     
-    def __init__(self, secret, issuer='IceProd', algorithm='HS512', expiration=31622400, expiration_temp=86400):
+    def __init__(self, secret, pub_secret=None, issuer='IceProd', algorithm='HS512', expiration=31622400, expiration_temp=86400):
         self.secret = secret
+        self.pub_secret = pub_secret if pub_secret else secret
         self.issuer = issuer
         self.algorithm = algorithm
         self.max_exp = expiration
@@ -56,7 +57,7 @@ class Auth:
         Raises:
             Exception on failure to validate.
         """
-        ret = jwt.decode(token, self.secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
+        ret = jwt.decode(token, self.pub_secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
         if 'type' not in ret:
             raise Exception('no type information')
         return ret
