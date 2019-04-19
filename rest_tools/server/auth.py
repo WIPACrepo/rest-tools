@@ -57,7 +57,14 @@ class Auth:
         Raises:
             Exception on failure to validate.
         """
-        ret = jwt.decode(token, self.pub_secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
+        try:
+            ret = jwt.decode(token, self.pub_secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
+        except jwt.exceptions.InvalidAudienceError:
+            if 'audience' not in kwargs:
+                kwargs['audience'] = ['ANY']
+                ret = jwt.decode(token, self.pub_secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
+            else:
+                raise
         if 'type' not in ret:
             raise Exception('no type information')
         return ret
