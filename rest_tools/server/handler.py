@@ -8,6 +8,7 @@ import tornado.httpclient
 from tornado.platform.asyncio import to_asyncio_future
 
 from .auth import Auth
+import rest_tools
 
 logger = logging.getLogger('rest')
 
@@ -75,7 +76,7 @@ class RestHandler(tornado.web.RequestHandler):
 
     def get_template_namespace(self):
         namespace = super(RESTHandler,self).get_template_namespace()
-        namespace['version'] = iceprod.__version__
+        namespace['version'] = rest_tools.__version__
         return namespace
 
     def get_current_user(self):
