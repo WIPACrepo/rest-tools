@@ -85,7 +85,10 @@ class RestHandler(tornado.web.RequestHandler):
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
             logger.debug('token: %r', token)
-            data = self.auth.validate(token)
+            try:
+                data = self.auth.validate(token, audience=['ANY'])
+            except Exception:
+                data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
             return data['sub']
@@ -177,6 +180,51 @@ def role_authorization(**_auth):
                 logger.info('roles: %r', roles)
                 logger.info('token_role: %r', auth_role)
                 logger.info('role mismatch')
+
+            if not authorized:
+                raise tornado.web.HTTPError(403, reason="authorization failed")
+
+            return await method(self, *args, **kwargs)
+        return wrapper
+    return make_wrapper
+
+def scope_role_auth(**_auth):
+    """
+    Handle RBAC authorization using oauth2 scopes.
+
+    Like :py:func:`authenticated`, this requires the Authorization header
+    to be filled with a valid token.  Note that calling both decorators
+    is not necessary, as this decorator will perform authentication
+    checking as well.
+
+    Args:
+        roles (list): The roles to match
+        prefix (str): The scope prefix
+
+    Raises:
+        :py:class:`tornado.web.HTTPError`
+    """
+    def make_wrapper(method):
+        @authenticated
+        @catch_error
+        @wraps(method)
+        async def wrapper(self, *args, **kwargs):
+            roles = _auth.get('roles', [])
+            scope_prefix = _auth.get('prefix', None)
+
+            authorized = False
+
+            auth_role = None
+            for scope in self.auth_data.get('scope', '').split():
+                if scope_prefix and scope.startswith(f'{scope_prefix}:'):
+                    auth_role = scope.split(':', 1)[-1]
+                    break
+            if roles and auth_role in roles:
+                authorized = True
+            else:
+                logging.info('roles: %r', roles)
+                logging.info('token_role: %r', auth_role)
+                logging.info('role mismatch')
 
             if not authorized:
                 raise tornado.web.HTTPError(403, reason="authorization failed")
