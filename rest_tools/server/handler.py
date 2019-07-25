@@ -214,16 +214,15 @@ def scope_role_auth(**_auth):
 
             authorized = False
 
-            auth_role = None
+            auth_roles = []
             for scope in self.auth_data.get('scope', '').split():
                 if scope_prefix and scope.startswith(f'{scope_prefix}:'):
-                    auth_role = scope.split(':', 1)[-1]
-                    break
-            if roles and auth_role in roles:
+                    auth_roles.append(scope.split(':', 1)[-1])
+            if roles and any(r in roles for r in auth_roles):
                 authorized = True
             else:
                 logging.info('roles: %r', roles)
-                logging.info('token_role: %r', auth_role)
+                logging.info('token_roles: %r', auth_roles)
                 logging.info('role mismatch')
 
             if not authorized:
