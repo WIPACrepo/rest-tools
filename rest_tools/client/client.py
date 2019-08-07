@@ -22,7 +22,7 @@ def to_str(s):
     return s
 
 class RestClient(object):
-    def __init__(self, address, token, timeout=60.0, retries=10, **kwargs):
+    def __init__(self, address, token=None, timeout=60.0, retries=10, **kwargs):
         self.address = address
         self.token = token
         self.timeout = timeout
@@ -41,8 +41,9 @@ class RestClient(object):
             self.session = AsyncSession(self.retries)
         self.session.headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer '+to_str(self.token),
         }
+        if self.token:
+            self.session.headers['Authorization'] = 'Bearer '+to_str(self.token)
         if 'username' in self.kwargs and 'password' in self.kwargs:
             self.session.auth = (self.kwargs['username'], self.kwargs['password'])
         if 'sslcert' in self.kwargs:
