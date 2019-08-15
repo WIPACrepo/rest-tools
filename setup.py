@@ -37,7 +37,7 @@ if setuptools is not None:
     install_requires = ['tornado>=5.1', 'requests',
                         'requests_toolbelt', 'requests-futures',
                         'sphinx>=1.4', 'coverage>=4.4.2', 'requests-mock',
-                        'PyJWT',
+                        'PyJWT', 'cryptography',
                        ]
     kwargs['install_requires'] = install_requires
     kwargs['zip_safe'] = False
