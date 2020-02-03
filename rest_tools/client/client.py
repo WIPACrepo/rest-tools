@@ -107,7 +107,9 @@ class RestClient(object):
             r = await asyncio.wrap_future(self.session.request(method, url, **kwargs))
             r.raise_for_status()
             return self._decode(r.content)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as e:
+            if method == 'DELETE' and e.response.status_code == 404:
+                raise # skip the logging for an expected error
             logging.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
