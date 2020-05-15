@@ -61,7 +61,7 @@ def from_environment(keys: KeySpec) -> Dict[str, str]:
             val = os.environ[key]
             if config[key] is not None:
                 if isinstance(config[key], bool):
-                    val = True if val.lower() in ('true', 't', '1', 'yes', 'y') else False
+                    val = val.lower() in ('true', 't', '1', 'yes', 'y')
                 elif isinstance(config[key], int):
                     val = int(val)
                 elif isinstance(config[key], float):
