@@ -58,7 +58,15 @@ def from_environment(keys: KeySpec) -> Dict[str, str]:
     config = keys.copy()
     for key in config:
         if key in os.environ:
-            config[key] = os.environ[key]
+            val = os.environ[key]
+            if config[key] is not None:
+                if isinstance(config[key], bool):
+                    val = val.lower() in ('true', 't', '1', 'yes', 'y')
+                elif isinstance(config[key], int):
+                    val = int(val)
+                elif isinstance(config[key], float):
+                    val = float(val)
+            config[key] = val
         elif config[key] is None:
             raise OSError(f"Missing environment variable '{key}'")
     return cast(Dict[str, str], config)
