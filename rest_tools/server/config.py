@@ -6,9 +6,10 @@ from typing import cast, Dict, Mapping, Optional, Sequence, Union
 
 OptionalDict = Mapping[str, Optional[str]]
 KeySpec = Union[str, Sequence[str], OptionalDict]
+RetVal = Union[str, int, float, bool]
 
 
-def from_environment(keys: KeySpec) -> Dict[str, str]:
+def from_environment(keys: KeySpec) -> Dict[str, RetVal]:
     """
     Obtain configuration values from the OS environment.
 
@@ -54,7 +55,7 @@ def from_environment(keys: KeySpec) -> Dict[str, str]:
     elif isinstance(keys, list):
         keys = dict.fromkeys(keys, None)
     elif not isinstance(keys, dict):
-        raise TypeError(f"keys: Expected string, list or dict")
+        raise TypeError("keys: Expected string, list or dict")
     config = keys.copy()
     for key in config:
         if key in os.environ:
