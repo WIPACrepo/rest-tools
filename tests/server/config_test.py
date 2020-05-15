@@ -31,7 +31,7 @@ class config_test(unittest.TestCase):
         self.addCleanup(clean_env)
 
     def test_01_from_environment(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(OSError):
             from_environment({'FOO': None})
 
         os.environ['FOO'] = 'bar'
@@ -40,7 +40,7 @@ class config_test(unittest.TestCase):
 
     def test_10_from_environment(self):
         os.environ['FOO'] = 'bar'
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             from_environment({'FOO': 123})
             
         os.environ['FOO'] = '543'
