@@ -65,5 +65,6 @@ class RestServer:
         self.http_server.bind(port, address=address, family=socket.AF_INET)
         self.http_server.start()
 
-    def stop(self):
+    async def stop(self):
         self.http_server.stop()
+        await self.http_server.close_all_connections()
