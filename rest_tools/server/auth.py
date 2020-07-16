@@ -99,6 +99,7 @@ class OpenIDAuth:
             r.raise_for_status()
             for jwk in r.json()['keys']:
                 kid = jwk['kid']
+                logging.info(f'loaded JWT key {kid}')
                 self.public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
         except Exception:
             logging.warning('failed to refresh OpenID keys', exc_info=True)
@@ -120,7 +121,7 @@ class OpenIDAuth:
         header = jwt.get_unverified_header(token)
         if header['kid'] not in self.public_keys:
             self._refresh_keys()
-        if header['kid'] in public_keys:
+        if header['kid'] in self.public_keys:
             key = self.public_keys[header['kid']]
             options = {}
             kwargs = {}
@@ -132,4 +133,4 @@ class OpenIDAuth:
                 kwargs['audience'] = [audience]
             return jwt.decode(token, key, algorithms=['RS256','RS512'], options=options, **kwargs)
         else:
-            raise Exception('key not found')
+            raise Exception(f'JWT key {header["kid"]} not found')
