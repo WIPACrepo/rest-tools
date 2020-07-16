@@ -7,7 +7,7 @@ import tornado.gen
 import tornado.httpclient
 from tornado.platform.asyncio import to_asyncio_future
 
-from .auth import Auth
+from .auth import Auth, OpenIDAuth
 import rest_tools
 
 logger = logging.getLogger('rest')
@@ -28,18 +28,23 @@ def RestHandlerSetup(config={}):
     auth_url = ''
     module_auth_key = ''
     if 'auth' in config:
-        kwargs = {
-            'secret': config['auth']['secret']
-        }
-        if 'issuer' in config['auth']:
-            kwargs['issuer'] = config['auth']['issuer']
-        if 'algorithm' in config['auth']:
-            kwargs['algorithm'] = config['auth']['algorithm']
-        if 'expiration' in config['auth']:
-            kwargs['expiration'] = config['auth']['expiration']
-        if 'expiration_temp' in config['auth']:
-            kwargs['expiration_temp'] = config['auth']['expiration_temp']
-        auth = Auth(**kwargs)
+        if 'secret' in config['auth']:
+            kwargs = {
+                'secret': config['auth']['secret']
+            }
+            if 'issuer' in config['auth']:
+                kwargs['issuer'] = config['auth']['issuer']
+            if 'algorithm' in config['auth']:
+                kwargs['algorithm'] = config['auth']['algorithm']
+            if 'expiration' in config['auth']:
+                kwargs['expiration'] = config['auth']['expiration']
+            if 'expiration_temp' in config['auth']:
+                kwargs['expiration_temp'] = config['auth']['expiration_temp']
+            auth = Auth(**kwargs)
+        elif 'openid_url' in config['auth']:
+            auth = OpenIDAuth(config['auth']['openid_url'])
+            if auth.token_url:
+                auth_url = auth.token_url
         if 'url' in config['auth']:
             auth_url = config['auth']['url']
     if 'rest_api' in config and 'auth_key' in config['rest_api']:
@@ -85,10 +90,7 @@ class RestHandler(tornado.web.RequestHandler):
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
             logger.debug('token: %r', token)
-            try:
-                data = self.auth.validate(token, audience=['ANY'])
-            except Exception:
-                data = self.auth.validate(token)
+            data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
             return data['sub']
@@ -98,7 +100,7 @@ class RestHandler(tornado.web.RequestHandler):
             logger.info('failed auth', exc_info=True)
         return None
 
-    def write_error(self,status_code=500,**kwargs):
+    def write_error(self, status_code=500, **kwargs):
         """Write out custom error json."""
         data = {
             'code': status_code,

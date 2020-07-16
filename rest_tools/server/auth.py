@@ -1,5 +1,10 @@
+import json
+import logging
 import time
+
 import jwt
+import requests
+
 
 class Auth:
     """
@@ -68,3 +73,63 @@ class Auth:
         if 'type' not in ret:
             raise Exception('no type information')
         return ret
+
+
+class OpenIDAuth:
+    """Handle validation of JWT tokens using OpenID .well-known auto-discovery."""
+    def __init__(self, url):
+        self.url = url if url.endswith('/') else url+'/'
+        self.public_keys = {}
+        self.token_url = None
+
+        self._refresh_keys()
+
+    def _refresh_keys(self):
+        try:
+            # discovery
+            r = requests.get(self.url+'.well-known/openid-configuration')
+            r.raise_for_status()
+            provider_info = r.json()
+
+            # get token url
+            self.token_url = provider_info['token_endpoint']
+
+            # get keys
+            r = requests.get(provider_info['jwks_uri'])
+            r.raise_for_status()
+            for jwk in r.json()['keys']:
+                kid = jwk['kid']
+                self.public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+        except Exception:
+            logging.warning('failed to refresh OpenID keys', exc_info=True)
+
+    def validate(self, token, audience=None):
+        """
+        Validate a token.
+
+        Args:
+            token (str): a JWT token
+            audience (str): audience, or None to disable audience verification
+
+        Returns:
+            dict: data inside token
+
+        Raises:
+            Exception on failure to validate.
+        """
+        header = jwt.get_unverified_header(token)
+        if header['kid'] not in self.public_keys:
+            self._refresh_keys()
+        if header['kid'] in public_keys:
+            key = self.public_keys[header['kid']]
+            options = {}
+            kwargs = {}
+            if not audience:
+                options['verify_aud'] = False
+            elif audience.lower() == 'any':
+                kwargs['audience'] = ['ANY']
+            else:
+                kwargs['audience'] = [audience]
+            return jwt.decode(token, key, algorithms=['RS256','RS512'], options=options, **kwargs)
+        else:
+            raise Exception('key not found')
