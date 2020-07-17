@@ -16,12 +16,14 @@ import requests
 from .session import AsyncSession,Session
 from .json_util import json_encode,json_decode
 
+from ..server import OpenIDAuth
+
 def to_str(s):
     if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
 
-class RestClient(object):
+class RestClient:
     def __init__(self, address, token=None, timeout=60.0, retries=10, **kwargs):
         self.address = address
         self.token = token
@@ -136,3 +138,66 @@ class RestClient(object):
             return self._decode(r.content)
         finally:
             self.session = s
+
+class OpenIDRestClient(RestClient):
+    """
+    A REST client that can handle token refresh using OpenID .well-known auto-discovery.
+
+    Args:
+        address (str): base address of REST API
+        token_url (str): base address of token service
+        refresh_token (str): initial refresh token
+        client_id (str): client id
+        client_secret (str): client secret
+        timeout (int): request timeout
+        retries (int): number of retries to attempt
+    """
+    def __init__(self, address, token_url, refresh_token, client_id, client_secret, **kwargs):
+        super().__init__(address, **kwargs)
+        self.auth = OpenIDAuth(token_url)
+        self.auth.token_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+        self.access_token = None
+        self.refresh_token = refresh_token
+        self._get_token()
+
+    def _get_token(self):
+        if self.access_token:
+            # check if expired
+            try:
+                self.auth.validate(self.access_token)
+                return
+            except Exception:
+                self.access_token = None
+                logging.debug('OpenID token expired')
+
+        if self.refresh_token:
+            # try the refresh token
+            args = {
+                'grant_type': 'refresh_token',
+                'refresh_token': self.refresh_token,
+                'client_id': self.client_id,
+                'client_secret': self.client_secret,
+            }
+
+            try:
+                r = requests.post(self.auth.token_url, data=args)
+                r.raise_for_status()
+                req = r.json()
+            except Exception:
+                self.refresh_token = None
+            else:
+                logging.debug('OpenID token refreshed')
+                self.access_token = req['access_token']
+                self.refresh_token = req['refresh_token'] if 'refresh_token' in req else None
+                return
+
+        raise Exception('No token available')
+
+    def _prepare(self, *args, **kwargs):
+        self._get_token()
+        if self.access_token:
+            self.session.headers['Authorization'] = 'Bearer '+to_str(self.access_token)
+        return super()._prepare(*args, **kwargs)
