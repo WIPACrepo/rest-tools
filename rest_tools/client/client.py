@@ -34,7 +34,7 @@ class RestClient(object):
 
     def open(self, sync=False):
         """Open the http session"""
-        logging.warning('establish REST http session')
+        logging.info('establish REST http session')
         if sync:
             self.session = Session(self.retries)
         else:
@@ -56,7 +56,7 @@ class RestClient(object):
 
     def close(self):
         """Close the http session"""
-        logging.warning('close REST http session')
+        logging.info('close REST http session')
         if self.session:
             self.session.close()
 
@@ -80,7 +80,7 @@ class RestClient(object):
     def _decode(self, content):
         """Internal method for translating response from json"""
         if not content:
-            logging.warning('request returned empty string')
+            logging.info('request returned empty string')
             return None
         try:
            return json_decode(content)
