@@ -155,7 +155,6 @@ class OpenIDRestClient(RestClient):
     def __init__(self, address, token_url, refresh_token, client_id, client_secret, **kwargs):
         super().__init__(address, **kwargs)
         self.auth = OpenIDAuth(token_url)
-        self.auth.token_url
         self.client_id = client_id
         self.client_secret = client_secret
 
