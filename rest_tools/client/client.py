@@ -10,8 +10,10 @@ a json-encoded dictionary as necessary.
 import os
 import logging
 import asyncio
+import time
 
 import requests
+import jwt
 
 from .session import AsyncSession,Session
 from .json_util import json_encode,json_decode
@@ -24,13 +26,32 @@ def to_str(s):
     return s
 
 class RestClient:
+    """
+    A REST client with token handling.
+
+    Args:
+        address (str): base address of REST API
+        token (str): (optional) access token, or a function generating an access token
+        timeout (int): (optional) request timeout (default: 60s)
+        retries (int): (optional) number of retries to attempt (default: 10)
+        username (str): (optional) auth-basic username
+        password (str): (optional) auth-basic password
+    """
     def __init__(self, address, token=None, timeout=60.0, retries=10, **kwargs):
         self.address = address
-        self.token = token
         self.timeout = timeout
         self.retries = retries
         self.kwargs = kwargs
         self.session = None
+
+        # token handling
+        self.access_token = None
+        self.token_func = None
+        if token:
+            if isinstance(token, (str,bytes)):
+                self.access_token = token
+            elif callable(token):
+                self.token_func = token
 
         self.open() # start session
 
@@ -44,8 +65,6 @@ class RestClient:
         self.session.headers = {
             'Content-Type': 'application/json',
         }
-        if self.token:
-            self.session.headers['Authorization'] = 'Bearer '+to_str(self.token)
         if 'username' in self.kwargs and 'password' in self.kwargs:
             self.session.auth = (self.kwargs['username'], self.kwargs['password'])
         if 'sslcert' in self.kwargs:
@@ -62,6 +81,24 @@ class RestClient:
         if self.session:
             self.session.close()
 
+    def _get_token(self):
+        if self.access_token:
+            # check if expired
+            try:
+                data = jwt.decode(self.access_token, verify=False)
+                if data['exp'] < time.time()-5:
+                    raise Exception()
+                return
+            except Exception:
+                self.access_token = None
+                logging.debug('token expired')
+
+        try:
+            self.access_token = self.token_func()
+        except Exception:
+            logging.warning('acquiring access token failed')
+            raise
+
     def _prepare(self, method, path, args=None):
         """Internal method for preparing requests"""
         if not args:
@@ -77,6 +114,10 @@ class RestClient:
             kwargs['params'] = args
         else:
             kwargs['json'] = args
+        if self.token_func:
+            self._get_token()
+        if self.access_token:
+            self.session.headers['Authorization'] = 'Bearer '+to_str(self.access_token)
         return (url, kwargs)
 
     def _decode(self, content):
@@ -166,7 +207,9 @@ class OpenIDRestClient(RestClient):
         if self.access_token:
             # check if expired
             try:
-                self.auth.validate(self.access_token)
+                data = self.auth.validate(self.access_token)
+                if data['exp'] < time.time()-5:
+                    raise Exception()
                 return
             except Exception:
                 self.access_token = None
