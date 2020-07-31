@@ -86,7 +86,7 @@ class RestClient:
             # check if expired
             try:
                 data = jwt.decode(self.access_token, verify=False)
-                if data['exp'] < time.time()-5:
+                if data['exp'] < time.time()+5:
                     raise Exception()
                 return
             except Exception:
