@@ -1,6 +1,8 @@
 import logging
 import json
-from functools import wraps, update_wrapper, partialmethod
+import time
+from functools import wraps, update_wrapper, partialmethod, partial
+from collections import defaultdict
 
 import tornado.web
 import tornado.gen
@@ -8,6 +10,7 @@ import tornado.httpclient
 from tornado.platform.asyncio import to_asyncio_future
 
 from .auth import Auth, OpenIDAuth
+from .stats import RouteStats
 import rest_tools
 
 logger = logging.getLogger('rest')
@@ -49,12 +52,19 @@ def RestHandlerSetup(config={}):
             auth_url = config['auth']['url']
     if 'rest_api' in config and 'auth_key' in config['rest_api']:
         module_auth_key = config['rest_api']['auth_key']
+
+    if 'route_stats' in config:
+        route_stats = defaultdict(partial(RouteStats, **config['route_stats']))
+    else:
+        route_stats = defaultdict(RouteStats)
+
     return {
         'debug': debug,
         'auth': auth,
         'auth_url': auth_url,
         'module_auth_key': module_auth_key,
         'server_header': config.get('server_header', 'REST'),
+        'route_stats': route_stats
     }
 
 class RestHandler(tornado.web.RequestHandler):
@@ -66,7 +76,7 @@ class RestHandler(tornado.web.RequestHandler):
         except Exception:
             logging.error('error', exc_info=True)
 
-    def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', **kwargs):
+    def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
         super(RestHandler, self).initialize(**kwargs)
         self.debug = debug
         self.auth = auth
@@ -75,6 +85,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.auth_key = None
         self.module_auth_key = module_auth_key
         self.server_header = server_header
+        self.route_stats = route_stats
 
     def set_default_headers(self):
         self._headers['Server'] = self.server_header
@@ -99,6 +110,20 @@ class RestHandler(tornado.web.RequestHandler):
                 logger.info('Authorization: %r', self.request.headers['Authorization'])
             logger.info('failed auth', exc_info=True)
         return None
+
+    def prepare(self):
+        stat = self.route_stats[self.request.path]
+        if stat.is_overloaded():
+            backoff = stat.get_backoff_time()
+            logger.warn('Server is overloaded, backoff %r', backoff)
+            self.set_header('Retry-After', backoff)
+            raise tornado.web.HTTPError(503, reason="server overloaded")
+        self.start_time = time.time()
+
+    def on_finish(self):
+        if self.get_status() < 500:
+            stat = self.route_stats[self.request.path]
+            stat.append(time.time()-self.start_time)
 
     def write_error(self, status_code=500, **kwargs):
         """Write out custom error json."""
