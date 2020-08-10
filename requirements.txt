@@ -1,0 +1,14 @@
+pytest
+pytest-asyncio
+pytest-mock
+coverage
+tornado >= 5.0
+requests
+requests_toolbelt
+requests-futures
+requests-mock
+cryptography
+pyjwt
+motor
+unidecode
+sphinx

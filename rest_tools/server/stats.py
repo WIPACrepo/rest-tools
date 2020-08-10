@@ -1,6 +1,7 @@
 from collections import deque
 import statistics
 import random
+import time
 import logging
 
 class RouteStats:
@@ -11,11 +12,15 @@ class RouteStats:
     and presents stats on their performance.
 
     Args:
-        num (int): number of past calls to track
+        window_size (int): number of past calls to track
+        window_time (int): number of seconds to keep track of past calls
         timeout (int): seconds before a request is considered "over time"
     """
-    def __init__(self, num=1000, timeout=30):
-        self.data = deque(maxlen=num)
+    def __init__(self, window_size=1000, window_time=3600, timeout=30):
+        self.data = deque(maxlen=window_size)
+        self.times = deque(maxlen=window_size)
+        self.window_size = window_size
+        self.window_time = window_time
         self.timeout = timeout
 
     def __len__(self):
@@ -23,13 +28,28 @@ class RouteStats:
 
     def append(self, call_time):
         self.data.append(call_time)
+        self.times.append(time.time())
 
     def clear(self):
         self.data.clear()
+        self.times.clear()
 
     def is_overloaded(self):
+        # check window time
+        window_cutoff = time.time()-self.window_time
+        for i,t in enumerate(self.times):
+            if t >= window_cutoff:
+                break
+        if i > 0:
+            logging.debug('routestats: removing %d entries due to age', i)
+            self.data = deque((self.data[j] for j in range(i,len(self.data))), maxlen=self.window_size)
+            self.times = deque((self.times[j] for j in range(i,len(self.times))), maxlen=self.window_size)
+
+        # check if we have enough data to form stats
         if len(self.data) < 4:
             return False
+
+        # now check stats
         median = 0
         try:
             stats = statistics.quantiles(self.data)

@@ -1,0 +1,18 @@
+version: 2
+jobs:
+    test:
+        docker:
+            - image: circleci/python:3.8.5
+              environment:
+                PYTEST_ADDOPTS: tests/
+        steps:
+            - checkout
+            - run: ./setupenv.sh
+            - run: |
+                . env/bin/activate &&
+                pytest --tb=short
+workflows:
+    version: 2
+    build_and_test:
+        jobs:
+            - test
