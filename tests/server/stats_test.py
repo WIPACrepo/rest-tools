@@ -11,6 +11,10 @@ def random_half(mocker):
         return 0.5
     mocker.patch('random.random', new_random)
 
+def test_stats_empty():
+    s = stats.RouteStats()
+    assert not s.is_overloaded()
+
 def test_stats_basic(random_half):
     s = stats.RouteStats(window_size=10, timeout=10)
     for i in range(10):

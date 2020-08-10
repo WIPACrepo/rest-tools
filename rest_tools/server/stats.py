@@ -37,6 +37,7 @@ class RouteStats:
     def is_overloaded(self):
         # check window time
         window_cutoff = time.time()-self.window_time
+        i = 0
         for i,t in enumerate(self.times):
             if t >= window_cutoff:
                 break
