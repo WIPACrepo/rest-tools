@@ -7,8 +7,6 @@ Make a fruit API.
 import asyncio
 import logging
 
-from tornado.ioloop import IOLoop
-
 from rest_tools.client import json_decode
 from rest_tools.server import RestServer, RestHandler, RestHandlerSetup, role_authorization
 
@@ -46,4 +44,4 @@ server = RestServer(debug=True)
 server.add_route('/api/fruits', Fruits, args)
 server.startup(address='localhost', port=8080)
 
-IOLoop.current().start()
+asyncio.get_event_loop().run_forever()

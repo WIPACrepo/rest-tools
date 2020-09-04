@@ -26,15 +26,18 @@ A REST API client exists under `rest_tools.client`.  Use as:
 A REST API server exists under `rest_tools.server`. Use as:
 
 ```python
+    import asyncio
     from rest_tools.server import RestServer, RestHandler
 
     class Fruits(RestHandler):
-        def post():
+        def post(self):
             # handle a new fruit
+            self.write({})
 
     server = RestServer()
     server.add_route('/fruits', Fruits)
     server.startup(address='my.site.here', port=8080)
+    asyncio.get_event_loop().run_forever()
 ```
 
 The server uses [Tornado](https://tornado.readthedocs.io) to handle HTTP
