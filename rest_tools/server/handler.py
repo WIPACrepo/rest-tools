@@ -3,12 +3,14 @@ import json
 import time
 from functools import wraps, update_wrapper, partialmethod, partial
 from collections import defaultdict
+from typing import Any
 
 import tornado.web
 import tornado.gen
 import tornado.httpclient
 from tornado.platform.asyncio import to_asyncio_future
 
+from rest_tools.client import json_decode  # type: ignore
 from .auth import Auth, OpenIDAuth
 from .stats import RouteStats
 import rest_tools
@@ -133,6 +135,36 @@ class RestHandler(tornado.web.RequestHandler):
         }
         self.write(data)
         self.finish()
+
+    def get_optional_argument(self, name: str, default: Any = None) -> Any:
+        """Return argument, or default value if not present.
+
+        Try from `self.request.body` first, then from
+        `self.get_query_argument()`.
+        """
+        try:
+            return self.get_required_argument(name)
+        except tornado.web.HTTPError:
+            return default
+
+    def get_required_argument(self, name: str) -> Any:
+        """Return argument, raise 400 if not present.
+
+        Try from `self.request.body` first, then from
+        `self.get_query_argument()`.
+        """
+        if self.request.body:
+            try:
+                return json_decode(self.request.body)[name]
+            except KeyError:
+                pass
+        try:
+            return self.get_query_argument(name)
+        except tornado.web.MissingArgumentError:
+            pass
+        # fall-through
+        raise tornado.web.HTTPError(400, reason=f"missing argument ({name})")
+
 
 def authenticated(method):
     """
