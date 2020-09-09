@@ -10,7 +10,7 @@ import tornado.gen
 import tornado.httpclient
 from tornado.platform.asyncio import to_asyncio_future
 
-from rest_tools.client import json_decode  # type: ignore
+from rest_tools.json_util import json_decode  # type: ignore
 from .auth import Auth, OpenIDAuth
 from .stats import RouteStats
 import rest_tools
