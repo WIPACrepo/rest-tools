@@ -140,7 +140,7 @@ class RestHandler(tornado.web.RequestHandler):
         """Return argument, or default value if not present.
 
         Try from `self.request.body` first, then from
-        `self.get_query_argument()`.
+        `self.get_argument()`.
         """
         try:
             return self.get_required_argument(name)
@@ -151,7 +151,7 @@ class RestHandler(tornado.web.RequestHandler):
         """Return argument, raise 400 if not present.
 
         Try from `self.request.body` first, then from
-        `self.get_query_argument()`.
+        `self.get_argument()`.
         """
         if self.request.body:
             try:
