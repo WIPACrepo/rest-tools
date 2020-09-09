@@ -159,7 +159,7 @@ class RestHandler(tornado.web.RequestHandler):
             except KeyError:
                 pass
         try:
-            return self.get_query_argument(name)
+            return self.get_argument(name)
         except tornado.web.MissingArgumentError:
             pass
         # fall-through
