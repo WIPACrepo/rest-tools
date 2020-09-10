@@ -3,7 +3,7 @@ import json
 import time
 from functools import wraps, update_wrapper, partialmethod, partial
 from collections import defaultdict
-from typing import Any
+from typing import Any, Optional
 
 import tornado.web
 import tornado.gen
@@ -70,11 +70,24 @@ def RestHandlerSetup(config={}):
     }
 
 
-class NoDefualtValue:
+class NoDefualtValue:  # pylint: disable=R0903
     """Signal no default value, AKA argument is required."""
 
 
 _NO_DEFAULT = NoDefualtValue()
+
+
+def _cast(type_: Optional[type], val: Any) -> Any:
+    """Cast `val` to `type_` type.
+
+    Raise 400 if there's a ValueError.
+    """
+    if not type_:
+        return val
+    try:
+        return type_(val)
+    except ValueError as e:
+        raise tornado.web.HTTPError(400, reason=f"(ValueError) {e}")
 
 
 class RestHandler(tornado.web.RequestHandler):
@@ -145,43 +158,55 @@ class RestHandler(tornado.web.RequestHandler):
         self.finish()
 
     def get_json_body_argument(
-        self, name: str, default: Any = _NO_DEFAULT, strip: bool = True
+        self,
+        name: str,
+        default: Any = _NO_DEFAULT,
+        strip: bool = True,
+        type_: Optional[type] = None,
     ) -> Any:
         """Return the argument by JSON-decoding the request body."""
         if self.request.body:
             try:
                 val = json_decode(self.request.body)[name]  # type: ignore[no-untyped-call]
                 if strip and isinstance(val, tornado.util.unicode_type):
-                    return val.strip()
-                return val
+                    val = val.strip()
+                return _cast(type_, val)
             except KeyError:
-                pass
+                # Required -> raise 400
+                if isinstance(default, NoDefualtValue):
+                    raise tornado.web.MissingArgumentError(name)
 
-        # fall-through
-        if isinstance(default, NoDefualtValue):
-            raise tornado.web.MissingArgumentError(name)
-        return default
+        # Optional / Default
+        if type_:
+            assert isinstance(default, type_) or (default is None)
+        return _cast(type_, default)
 
-    def get_argument(
-        self, name: str, default: Any = _NO_DEFAULT, strip: bool = True
+    def get_argument(  # pylint: disable=W0221
+        self,
+        name: str,
+        default: Any = _NO_DEFAULT,
+        strip: bool = True,
+        type_: Optional[type] = None,
     ) -> Any:
         """Return argument. If no default provided raise 400 if not present.
 
         Try from `self.get_json_body_argument()` first, then from
         `super().get_argument()`.
         """
-        # Required
+        # Required -> raise 400
         if isinstance(default, NoDefualtValue):
             try:
-                return self.get_json_body_argument(name, strip=strip)
+                return _cast(type_, self.get_json_body_argument(name, strip=strip))
             except tornado.web.MissingArgumentError:
                 pass
-            return super().get_argument(name, strip=strip)
+            return _cast(type_, super().get_argument(name, strip=strip))
 
         # Optional / Default
-        if val := self.get_json_body_argument(name, default=default, strip=strip) != default:
-            return val
-        return super().get_argument(name, default=default, strip=strip)
+        if type_:
+            assert isinstance(default, type_) or (default is None)
+        if j_val := self.get_json_body_argument(name, default=default, strip=strip, type_=type_) != default:
+            return j_val
+        return _cast(type_, super().get_argument(name, default=default, strip=strip))
 
 
 def authenticated(method):
