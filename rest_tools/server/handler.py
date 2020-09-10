@@ -176,6 +176,7 @@ class RestHandler(tornado.web.RequestHandler):
                 if isinstance(default, NoDefualtValue):
                     raise tornado.web.MissingArgumentError(name)
 
+        # Else:
         # Optional / Default
         if type_:
             assert isinstance(default, type_) or (default is None)
@@ -193,19 +194,26 @@ class RestHandler(tornado.web.RequestHandler):
         Try from `self.get_json_body_argument()` first, then from
         `super().get_argument()`.
         """
+        # If:
         # Required -> raise 400
         if isinstance(default, NoDefualtValue):
+            # check JSON'd body arguments
             try:
                 return _cast(type_, self.get_json_body_argument(name, strip=strip))
             except tornado.web.MissingArgumentError:
                 pass
+            # check query and body arguments
             return _cast(type_, super().get_argument(name, strip=strip))
 
+        # Else:
         # Optional / Default
         if type_:
             assert isinstance(default, type_) or (default is None)
-        if j_val := self.get_json_body_argument(name, default=default, strip=strip, type_=type_) != default:
-            return j_val
+        # check JSON'd body arguments  # pylint: disable=C0103
+        j = self.get_json_body_argument(name, default=default, strip=strip, type_=type_)
+        if j != default:
+            return j
+        # check query and body arguments
         return _cast(type_, super().get_argument(name, default=default, strip=strip))
 
 
