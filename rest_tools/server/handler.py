@@ -69,6 +69,14 @@ def RestHandlerSetup(config={}):
         'route_stats': route_stats
     }
 
+
+class NoDefualtValue:
+    """Signal no default value, AKA argument is required."""
+
+
+_NO_DEFAULT = NoDefualtValue()
+
+
 class RestHandler(tornado.web.RequestHandler):
     """Default REST handler"""
     def __init__(self, *args, **kwargs):
@@ -136,34 +144,44 @@ class RestHandler(tornado.web.RequestHandler):
         self.write(data)
         self.finish()
 
-    def get_optional_argument(self, name: str, default: Any = None) -> Any:
-        """Return argument, or default value if not present.
-
-        Try from `self.request.body` first, then from
-        `self.get_argument()`.
-        """
-        try:
-            return self.get_required_argument(name)
-        except tornado.web.HTTPError:
-            return default
-
-    def get_required_argument(self, name: str) -> Any:
-        """Return argument, raise 400 if not present.
-
-        Try from `self.request.body` first, then from
-        `self.get_argument()`.
-        """
+    def get_json_body_argument(
+        self, name: str, default: Any = _NO_DEFAULT, strip: bool = True
+    ) -> Any:
+        """Return the argument by JSON-decoding the request body."""
         if self.request.body:
             try:
-                return json_decode(self.request.body)[name]
+                val = json_decode(self.request.body)[name]  # type: ignore[no-untyped-call]
+                if strip and isinstance(val, tornado.util.unicode_type):
+                    return val.strip()
+                return val
             except KeyError:
                 pass
-        try:
-            return self.get_argument(name)
-        except tornado.web.MissingArgumentError:
-            pass
+
         # fall-through
-        raise tornado.web.HTTPError(400, reason=f"missing argument ({name})")
+        if isinstance(default, NoDefualtValue):
+            raise tornado.web.MissingArgumentError(name)
+        return default
+
+    def get_argument(
+        self, name: str, default: Any = _NO_DEFAULT, strip: bool = True
+    ) -> Any:
+        """Return argument. If no default provided raise 400 if not present.
+
+        Try from `self.get_json_body_argument()` first, then from
+        `super().get_argument()`.
+        """
+        # Required
+        if isinstance(default, NoDefualtValue):
+            try:
+                return self.get_json_body_argument(name, strip=strip)
+            except tornado.web.MissingArgumentError:
+                pass
+            return super().get_argument(name, strip=strip)
+
+        # Optional / Default
+        if val := self.get_json_body_argument(name, default=default, strip=strip) != default:
+            return val
+        return super().get_argument(name, default=default, strip=strip)
 
 
 def authenticated(method):
