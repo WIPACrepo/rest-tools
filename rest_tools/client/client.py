@@ -170,10 +170,10 @@ class RestClient:
         Returns:
             dict: json dict or raw string
         """
-        url, kwargs = self._prepare(method, path, args)
         s = self.session
         try:
             self.open(sync=True)
+            url, kwargs = self._prepare(method, path, args)
             r = self.session.request(method, url, **kwargs)
             r.raise_for_status()
             return self._decode(r.content)
