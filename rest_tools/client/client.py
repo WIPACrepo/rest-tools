@@ -11,6 +11,7 @@ import os
 import logging
 import asyncio
 import time
+import json
 
 import requests
 import jwt
@@ -177,6 +178,49 @@ class RestClient:
             r = self.session.request(method, url, **kwargs)
             r.raise_for_status()
             return self._decode(r.content)
+        except requests.exceptions.HTTPError as e:
+            if method == 'DELETE' and e.response.status_code == 404:
+                raise # skip the logging for an expected error
+            logging.info('bad request: %s %s %r', method, path, args, exc_info=True)
+            raise
+        finally:
+            self.session = s
+
+    def request_streaming(self, method, path, args=None):
+        """
+        Send request to REST Server, and stream results back.
+
+        Args:
+            method (str): the http method
+            path (str): the url path on the server
+            args (dict): any arguments to pass
+
+        Returns:
+            dict: json dict or raw string
+        """
+        s = self.session
+        try:
+            self.open(sync=True)
+            url, kwargs = self._prepare(method, path, args)
+            kwargs['timeout'] = 100000 # disable timeout for streaming
+            r = self.session.request(method, url, stream=True, **kwargs)
+            buf = ''
+            for line in r.iter_lines(chunk_size=4096, decode_unicode=True, delimiter='\n'):
+                buf += line+'\n'
+                if buf.strip():
+                    try:
+                        ret = self._decode(buf)
+                    except json.decoder.JSONDecodeError:
+                        # maybe the line break was in the data?
+                        continue
+                    yield ret
+                    buf = ''
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if method == 'DELETE' and e.response.status_code == 404:
+                raise # skip the logging for an expected error
+            logging.info('bad request: %s %s %r', method, path, args, exc_info=True)
+            raise
         finally:
             self.session = s
 
