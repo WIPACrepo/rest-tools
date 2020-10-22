@@ -140,7 +140,7 @@ class rest_client_test(unittest.TestCase):
         obj = {'a': 1, 'b': 'floopdehoop'}
         rep = encode(obj)
         with self.assertRaises(json.JSONDecodeError):
-            decode(rep[:2])
+            decode(rep[:4]+'+'+rep[4:])
         ret, remainder = decode(rep+rep)
         self.assertEqual(ret, obj, "First object is recovered")
         self.assertEqual(remainder, rep, "Remainder is the string repr of second object")
