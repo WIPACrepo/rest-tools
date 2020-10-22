@@ -17,7 +17,7 @@ import requests
 import jwt
 
 from .session import AsyncSession,Session
-from .json_util import json_encode,json_decode
+from .json_util import json_encode,json_decode,json_decode_partial
 
 from ..server import OpenIDAuth
 
@@ -127,7 +127,14 @@ class RestClient:
             logging.info('request returned empty string')
             return None
         try:
-           return json_decode(content)
+            return json_decode(content)
+        except Exception:
+            logging.info('json data: %r', content)
+            raise
+
+    def _decode_partial(self, content):
+        try:
+            return json_decode_partial(content)
         except Exception:
             logging.info('json data: %r', content)
             raise
@@ -204,18 +211,17 @@ class RestClient:
             url, kwargs = self._prepare(method, path, args)
             kwargs['timeout'] = 100000 # disable timeout for streaming
             r = self.session.request(method, url, stream=True, **kwargs)
+            r.raise_for_status()
             buf = ''
             for line in r.iter_lines(chunk_size=4096, decode_unicode=True, delimiter='\n'):
-                buf += line+'\n'
-                if buf.strip():
-                    try:
-                        ret = self._decode(buf)
-                    except json.decoder.JSONDecodeError:
-                        # maybe the line break was in the data?
-                        continue
+                buf += line
+                # yield any JSON documents that can be decoded from buf
+                while buf:
+                    ret, remainder = self._decode_partial(buf)
+                    buf = remainder
+                    if ret is None:
+                        break
                     yield ret
-                    buf = ''
-            r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if method == 'DELETE' and e.response.status_code == 404:
                 raise # skip the logging for an expected error

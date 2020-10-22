@@ -5,6 +5,7 @@ Test script for RestClient
 import logging
 logger = logging.getLogger('rest_client')
 
+import json
 import os, sys, time
 import tempfile
 import shutil
@@ -20,6 +21,7 @@ import requests_mock
 from requests.exceptions import Timeout, SSLError
 
 import rest_tools.client
+import rest_tools.client.json_util
 
 
 class rest_client_test(unittest.TestCase):
@@ -130,6 +132,22 @@ class rest_client_test(unittest.TestCase):
 
         with self.assertRaises(Exception):
             ret = await rpc.request('GET','test',{})
+
+    def test_30_json_decode(self):
+        """Test partial json decoding"""
+        decode = rest_tools.client.json_util.json_decode_partial
+        encode = rest_tools.client.json_util.json_encode
+        obj = {'a': 1, 'b': 'floopdehoop'}
+        rep = encode(obj)
+        with self.assertRaises(json.JSONDecodeError):
+            decode(rep[:2])
+        ret, remainder = decode(rep+rep)
+        self.assertEqual(ret, obj, "First object is recovered")
+        self.assertEqual(remainder, rep, "Remainder is the string repr of second object")
+        # add arbitrary whitespace
+        ret, remainder = decode(rep+'\n\t '+rep)
+        self.assertEqual(ret, obj, "First object is recovered")
+        self.assertEqual(remainder, rep, "Remainder is the string repr of second object")
 
     @requests_mock.mock()
     def test_90_request(self, mock):

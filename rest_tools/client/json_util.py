@@ -164,3 +164,16 @@ def json_encode(value, indent=None):
 def json_decode(value):
     """Returns Python objects for the given JSON string."""
     return json.loads(value,object_hook=JSONToObj)
+
+def json_decode_partial(value):
+    """Get the first valid object from a (partial) JSON string"""
+    try:
+        return (json_decode(value), "")
+    except json.JSONDecodeError as exc:
+        if exc.msg == "Extra data":
+            return (json_decode(value[:exc.pos]), value[exc.pos:])
+        elif exc.pos+1 == len(value):
+            # allow miscellaneous errors at the end
+            return (None, value)
+        else:
+            raise
