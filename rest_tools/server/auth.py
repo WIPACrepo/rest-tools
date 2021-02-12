@@ -1,3 +1,7 @@
+# fmt:off
+# mypy: ignore-errors
+# pylint: skip-file
+
 import json
 import logging
 import time
@@ -46,7 +50,12 @@ class Auth:
             'iat': now,
             'type': type,
         })
-        return jwt.encode(payload, self.secret, algorithm=self.algorithm).decode('utf-8')
+
+        token = jwt.encode(payload, self.secret, algorithm=self.algorithm)
+        try:
+            return token.decode("utf-8")
+        except (UnicodeDecodeError, AttributeError):
+            return token
 
     def validate(self, token, **kwargs):
         """
