@@ -158,8 +158,6 @@ class RestHandler(tornado.web.RequestHandler):
             super(), name, default, strip, type_, choices
         )
 
-
-    @staticmethod
     def get_argument(  # pylint: disable=W0221,R0913
         self,
         name: str,
