@@ -1,21 +1,26 @@
-import logging
-import json
-import time
-from functools import wraps, update_wrapper, partialmethod, partial
-from collections import defaultdict
-from typing import Any, Optional
+"""RestHandler and related classes."""
 
-import tornado.web
+# fmt:off
+# mypy: ignore-errors
+# pylint: skip-file
+
+import logging
+import time
+from collections import defaultdict
+from functools import partial, wraps
+
 import tornado.gen
 import tornado.httpclient
-from tornado.platform.asyncio import to_asyncio_future
+import tornado.web
 
-from rest_tools.client.json_util import json_decode  # type: ignore
-from .auth import Auth, OpenIDAuth
-from .stats import RouteStats
+# local imports
 import rest_tools
 
+from .auth import Auth, OpenIDAuth
+from .stats import RouteStats
+
 logger = logging.getLogger('rest')
+
 
 def RestHandlerSetup(config={}):
     """
@@ -75,12 +80,12 @@ class RestHandler(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
         self.server_header = ''
         try:
-            super(RestHandler, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
         except Exception:
             logging.error('error', exc_info=True)
 
     def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
-        super(RestHandler, self).initialize(**kwargs)
+        super().initialize(**kwargs)
         self.debug = debug
         self.auth = auth
         self.auth_url = auth_url
@@ -94,7 +99,7 @@ class RestHandler(tornado.web.RequestHandler):
         self._headers['Server'] = self.server_header
 
     def get_template_namespace(self):
-        namespace = super(RESTHandler,self).get_template_namespace()
+        namespace = super().get_template_namespace()
         namespace['version'] = rest_tools.__version__
         return namespace
 
@@ -157,6 +162,7 @@ def authenticated(method):
         return await method(self, *args, **kwargs)
     return wrapper
 
+
 def catch_error(method):
     """
     Decorator to catch and handle errors on handlers.
@@ -180,6 +186,7 @@ def catch_error(method):
             message = 'Error in '+self.__class__.__name__
             self.send_error(500, reason=message)
     return wrapper
+
 
 def role_authorization(**_auth):
     """
@@ -219,6 +226,7 @@ def role_authorization(**_auth):
             return await method(self, *args, **kwargs)
         return wrapper
     return make_wrapper
+
 
 def scope_role_auth(**_auth):
     """
