@@ -9,6 +9,8 @@ so is fully asyncronous.
 Note that both the client and server assume starting the asyncio loop
 happens elsewhere - they do not start the loop themselves.
 
+[![CircleCI](https://circleci.com/gh/WIPACrepo/rest-tools/tree/master.svg?style=shield)](https://circleci.com/gh/WIPACrepo/rest-tools/tree/master) <sup>(master branch)</sup>
+
 ## Client
 
 A REST API client exists under `rest_tools.client`.  Use as:

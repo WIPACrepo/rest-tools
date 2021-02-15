@@ -135,16 +135,17 @@ class RestHandler(tornado.web.RequestHandler):
         return None
 
     def prepare(self):
-        stat = self.route_stats[self.request.path]
-        if stat.is_overloaded():
-            backoff = stat.get_backoff_time()
-            logger.warn('Server is overloaded, backoff %r', backoff)
-            self.set_header('Retry-After', backoff)
-            raise tornado.web.HTTPError(503, reason="server overloaded")
-        self.start_time = time.time()
+        if self.route_stats is not None:
+            stat = self.route_stats[self.request.path]
+            if stat.is_overloaded():
+                backoff = stat.get_backoff_time()
+                logger.warn('Server is overloaded, backoff %r', backoff)
+                self.set_header('Retry-After', backoff)
+                raise tornado.web.HTTPError(503, reason="server overloaded")
+            self.start_time = time.time()
 
     def on_finish(self):
-        if self.get_status() < 500:
+        if self.route_stats is not None and self.get_status() < 500:
             stat = self.route_stats[self.request.path]
             stat.append(time.time()-self.start_time)
 

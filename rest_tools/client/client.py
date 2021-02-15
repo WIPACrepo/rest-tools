@@ -1,5 +1,4 @@
-"""
-A simple REST json client using `requests`_ for the http connection.
+"""A simple REST json client using `requests`_ for the http connection.
 
 .. _requests: http://docs.python-requests.org
 
@@ -7,27 +6,31 @@ The REST protocol is built on http(s), with the body containing
 a json-encoded dictionary as necessary.
 """
 
-import os
-import logging
+# fmt:off
+# mypy: ignore-errors
+# pylint: skip-file
+
 import asyncio
+import logging
+import os
 import time
 
-import requests
 import jwt
-
-from .session import AsyncSession,Session
-from .json_util import json_encode,json_decode
+import requests
 
 from ..server import OpenIDAuth
+from .json_util import json_decode
+from .session import AsyncSession, Session
+
 
 def to_str(s):
     if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
 
+
 class RestClient:
-    """
-    A REST client with token handling.
+    """A REST client with token handling.
 
     Args:
         address (str): base address of REST API
@@ -37,12 +40,16 @@ class RestClient:
         username (str): (optional) auth-basic username
         password (str): (optional) auth-basic password
     """
+
     def __init__(self, address, token=None, timeout=60.0, retries=10, **kwargs):
         self.address = address
         self.timeout = timeout
         self.retries = retries
         self.kwargs = kwargs
         self.session = None
+
+        self.logger = logging.getLogger('RestClient')
+        self.logger.setLevel('DEBUG')
 
         # token handling
         self.access_token = None
@@ -56,8 +63,8 @@ class RestClient:
         self.open() # start session
 
     def open(self, sync=False):
-        """Open the http session"""
-        logging.info('establish REST http session')
+        """Open the http session."""
+        self.logger.info('establish REST http session')
         if sync:
             self.session = Session(self.retries)
         else:
@@ -76,8 +83,8 @@ class RestClient:
             self.session.verify = self.kwargs['cacert']
 
     def close(self):
-        """Close the http session"""
-        logging.info('close REST http session')
+        """Close the http session."""
+        self.logger.info('close REST http session')
         if self.session:
             self.session.close()
 
@@ -91,16 +98,16 @@ class RestClient:
                 return
             except Exception:
                 self.access_token = None
-                logging.debug('token expired')
+                self.logger.debug('token expired')
 
         try:
             self.access_token = self.token_func()
         except Exception:
-            logging.warning('acquiring access token failed')
+            self.logger.warning('acquiring access token failed')
             raise
 
     def _prepare(self, method, path, args=None):
-        """Internal method for preparing requests"""
+        """Internal method for preparing requests."""
         if not args:
             args = {}
         if path.startswith('/'):
@@ -121,19 +128,18 @@ class RestClient:
         return (url, kwargs)
 
     def _decode(self, content):
-        """Internal method for translating response from json"""
+        """Internal method for translating response from json."""
         if not content:
-            logging.info('request returned empty string')
+            self.logger.info('request returned empty string')
             return None
         try:
-           return json_decode(content)
+            return json_decode(content)
         except Exception:
-            logging.info('json data: %r', content)
+            self.logger.info('json data: %r', content)
             raise
 
     async def request(self, method, path, args=None):
-        """
-        Send request to REST Server.
+        """Send request to REST Server.
 
         Async request - use with coroutines.
 
@@ -153,12 +159,11 @@ class RestClient:
         except requests.exceptions.HTTPError as e:
             if method == 'DELETE' and e.response.status_code == 404:
                 raise # skip the logging for an expected error
-            logging.info('bad request: %s %s %r', method, path, args, exc_info=True)
+            self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
     def request_seq(self, method, path, args=None):
-        """
-        Send request to REST Server.
+        """Send request to REST Server.
 
         Sequential version of `request`.
 
@@ -170,10 +175,10 @@ class RestClient:
         Returns:
             dict: json dict or raw string
         """
-        url, kwargs = self._prepare(method, path, args)
         s = self.session
         try:
             self.open(sync=True)
+            url, kwargs = self._prepare(method, path, args)
             r = self.session.request(method, url, **kwargs)
             r.raise_for_status()
             return self._decode(r.content)
@@ -181,8 +186,8 @@ class RestClient:
             self.session = s
 
 class OpenIDRestClient(RestClient):
-    """
-    A REST client that can handle token refresh using OpenID .well-known auto-discovery.
+    """A REST client that can handle token refresh using OpenID .well-known
+    auto-discovery.
 
     Args:
         address (str): base address of REST API
@@ -213,7 +218,7 @@ class OpenIDRestClient(RestClient):
                 return
             except Exception:
                 self.access_token = None
-                logging.debug('OpenID token expired')
+                self.logger.debug('OpenID token expired')
 
         if self.refresh_token:
             # try the refresh token
@@ -231,7 +236,7 @@ class OpenIDRestClient(RestClient):
             except Exception:
                 self.refresh_token = None
             else:
-                logging.debug('OpenID token refreshed')
+                self.logger.debug('OpenID token refreshed')
                 self.access_token = req['access_token']
                 self.refresh_token = req['refresh_token'] if 'refresh_token' in req else None
                 return
