@@ -14,14 +14,13 @@ class _NoDefaultValue:  # pylint: disable=R0903
     """Signal no default value, AKA argument is required."""
 
 
-NO_DEFAULT = _NoDefaultValue()
-
-
 class ArgumentHandler:
     """Helper class for argument parsing, defaulting, and casting.
 
     Like argparse.ArgumentParser, but for REST & JSON-body arguments.
     """
+
+    NO_DEFAULT = _NoDefaultValue()
 
     @staticmethod
     def _qualify_argument(
@@ -74,7 +73,7 @@ class ArgumentHandler:
             return ArgumentHandler._qualify_argument(type_, choices, val)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
-            if isinstance(default, type(NO_DEFAULT)):
+            if isinstance(default, type(ArgumentHandler.NO_DEFAULT)):
                 raise tornado.web.MissingArgumentError(name)
 
         # Else:
@@ -98,7 +97,7 @@ class ArgumentHandler:
         """
         # If:
         # Required -> raise 400
-        if isinstance(default, type(NO_DEFAULT)):
+        if isinstance(default, type(ArgumentHandler.NO_DEFAULT)):
             # check JSON'd body arguments
             try:
                 return ArgumentHandler.get_json_body_argument(
