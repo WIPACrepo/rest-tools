@@ -8,6 +8,7 @@ import logging
 import time
 from collections import defaultdict
 from functools import partial, wraps
+from typing import Any, List, Optional
 
 import tornado.gen
 import tornado.httpclient
@@ -16,6 +17,7 @@ import tornado.web
 # local imports
 import rest_tools
 
+from .argument_handler import ArgumentHandler
 from .auth import Auth, OpenIDAuth
 from .stats import RouteStats
 
@@ -142,6 +144,37 @@ class RestHandler(tornado.web.RequestHandler):
         }
         self.write(data)
         self.finish()
+
+    def get_json_body_argument(  # pylint: disable=R0913
+        self,
+        name: str,
+        default: Any = ArgumentHandler.NO_DEFAULT,
+        strip: bool = True,
+        type_: Optional[type] = None,
+        choices: Optional[List[Any]] = None,
+    ) -> Any:
+        """Return the argument by JSON-decoding the request body."""
+        return ArgumentHandler.get_json_body_argument(
+            super(), name, default, strip, type_, choices
+        )
+
+
+    @staticmethod
+    def get_argument(  # pylint: disable=W0221,R0913
+        self,
+        name: str,
+        default: Any = ArgumentHandler.NO_DEFAULT,
+        strip: bool = True,
+        type_: Optional[type] = None,
+        choices: Optional[List[Any]] = None,
+    ) -> Any:
+        """Return argument.
+
+        If no default provided raise 400 if not present.
+        """
+        return ArgumentHandler.get_argument(
+            super(), name, default, strip, type_, choices
+        )
 
 
 def authenticated(method):
