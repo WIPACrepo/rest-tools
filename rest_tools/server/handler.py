@@ -149,13 +149,11 @@ class RestHandler(tornado.web.RequestHandler):
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
-        strip: bool = True,
-        type_: Optional[type] = None,
         choices: Optional[List[Any]] = None,
     ) -> Any:
         """Return the argument by JSON-decoding the request body."""
         return arghandler.ArgumentHandler.get_json_body_argument(
-            super(), name, default, strip, type_, choices
+            super(), name, default, choices
         )
 
     def get_argument(  # pylint: disable=W0221,R0913

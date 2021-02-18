@@ -68,16 +68,12 @@ class ArgumentHandler:
         request_handler: tornado.web.RequestHandler,
         name: str,
         default: Any,
-        strip: bool,
-        type_: Optional[type],
         choices: Optional[List[Any]],
     ) -> Any:
         """Return the argument by JSON-decoding the request body."""
         try:
             value = _get_json_body(request_handler)[name]
-            if strip and isinstance(value, tornado.util.unicode_type):
-                value = value.strip()
-            return ArgumentHandler._qualify_argument(type_, choices, value)
+            return ArgumentHandler._qualify_argument(None, choices, value)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
@@ -85,8 +81,7 @@ class ArgumentHandler:
 
         # Else:
         # Optional / Default
-        ArgumentHandler._type_check(type_, default)
-        return ArgumentHandler._qualify_argument(type_, choices, default)
+        return ArgumentHandler._qualify_argument(None, choices, default)
 
     @staticmethod
     def get_argument(  # pylint: disable=W0221,R0913
@@ -107,9 +102,10 @@ class ArgumentHandler:
         if isinstance(default, type(NO_DEFAULT)):
             # check JSON'd body arguments
             try:
-                return ArgumentHandler.get_json_body_argument(
-                    request_handler, name, default, strip, type_, choices
+                json_arg = ArgumentHandler.get_json_body_argument(
+                    request_handler, name, default, choices
                 )
+                return ArgumentHandler._qualify_argument(type_, choices, json_arg)
             except tornado.web.MissingArgumentError:
                 pass
             # check query and body arguments
@@ -124,10 +120,10 @@ class ArgumentHandler:
         ArgumentHandler._type_check(type_, default)
         # check JSON'd body arguments  # pylint: disable=C0103
         json_arg = ArgumentHandler.get_json_body_argument(
-            request_handler, name, default, strip, type_, choices,
+            request_handler, name, default, choices,
         )
         if json_arg != default:
-            return json_arg
+            return ArgumentHandler._qualify_argument(type_, choices, json_arg)
         # check query and body arguments
         arg = request_handler.get_argument(name, default, strip=strip)
         return ArgumentHandler._qualify_argument(type_, choices, arg)
