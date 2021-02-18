@@ -15,6 +15,7 @@ class _NoDefaultValue:  # pylint: disable=R0903
 
 
 NO_DEFAULT = _NoDefaultValue()
+_FALSES = ["FALSE", "False", "false", "0", 0, "NO", "No", "no"]
 
 
 class ArgumentHandler:
@@ -27,13 +28,13 @@ class ArgumentHandler:
     def _qualify_argument(
         type_: Optional[type], choices: Optional[List[Any]], value: Any
     ) -> Any:
-        """Cast `val` to `type_` type, and/or check that `val` in in `choices`.
+        """Cast `value` to `type_` type, and/or check `value` in in `choices`.
 
         Raise 400 if either qualification fails.
         """
         if type_:
             try:
-                if (type_ == bool) and (value == "False"):
+                if (type_ == bool) and (value in _FALSES):
                     value = False
                 else:
                     value = type_(value)
@@ -68,10 +69,10 @@ class ArgumentHandler:
     ) -> Any:
         """Return the argument by JSON-decoding the request body."""
         try:
-            val = json_decode(request_handler.request.body)[name]  # type: ignore[no-untyped-call]
-            if strip and isinstance(val, tornado.util.unicode_type):
-                val = val.strip()
-            return ArgumentHandler._qualify_argument(type_, choices, val)
+            value = json_decode(request_handler.request.body)[name]  # type: ignore[no-untyped-call]
+            if strip and isinstance(value, tornado.util.unicode_type):
+                value = value.strip()
+            return ArgumentHandler._qualify_argument(type_, choices, value)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
