@@ -76,7 +76,29 @@ def test_01_qualify_argument_errors() -> None:
 
 def test_10_type_check() -> None:
     """Test `_type_check()`."""
-    pass
+    vals = [
+        "abcdef",
+        1,
+        None,
+        ["this is", "a list"],
+        "",
+        2.5,
+        {"but this": "is a dict"},
+    ]
+
+    for val in vals:
+        print(val)
+        # Passing Cases
+        ArgumentHandler._type_check(type(val), val)
+        ArgumentHandler._type_check(None, val)  # type_ == None is always allowed
+
+        # Error Cases # pylint: disable=C0123
+        if val is None:  # val == None is always allowed
+            continue
+        for o_type in [type(o) for o in vals if type(o) != type(val)]:
+            print(o_type)
+            with pytest.raises(ValueError):
+                ArgumentHandler._type_check(o_type, val)
 
 
 def test_20_get_argument_no_body() -> None:
