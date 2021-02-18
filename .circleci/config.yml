@@ -10,7 +10,7 @@ jobs:
             - run: ./setupenv.sh
             - run: |
                 . env/bin/activate &&
-                pytest --tb=short
+                pytest -vvvvv --tb=short
 workflows:
     version: 2
     build_and_test:
