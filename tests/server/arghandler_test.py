@@ -2,11 +2,14 @@
 
 # pylint: disable=W0212
 
+from typing import Any
+from unittest.mock import ANY, Mock, patch
+
 import pytest
 import tornado.web
 
 # local imports
-from rest_tools.server.arghandler import ArgumentHandler
+from rest_tools.server.arghandler import ArgumentHandler, NO_DEFAULT
 
 
 def test_00_qualify_argument() -> None:
@@ -117,21 +120,68 @@ def test_21_get_argument_no_body() -> None:
     pass
 
 
-def test_30_get_json_body_argument() -> None:
+@patch("rest_tools.server.arghandler._get_json_body")
+def test_30_get_json_body_argument(gjb: Mock) -> None:
     """Test `request.body` JSON arguments."""
-    pass
+    body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
+
+    # Simple Use Cases
+    for arg, val in body.items():
+        gjb.return_value = body
+        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, False, None, [])
+        assert ret == val
+
+    # Default Use Cases
+    for arg, val in body.items():
+        gjb.return_value = {a: v for a, v in body.items() if a != arg}
+        ret = ArgumentHandler.get_json_body_argument(ANY, arg, "Terry", False, None, [])
+        assert ret == "Terry"
+
+    def pad(val: Any) -> Any:
+        if isinstance(val, str):
+            return f" \t {val} \n  "
+        return val
+
+    # Strip Use Cases
+    for arg, val in body.items():
+        # w/ stripping
+        gjb.return_value = {a: pad(v) for a, v in body.items()}
+        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, True, None, [])
+        assert ret == val
+        # w/o stripping
+        gjb.return_value = {a: pad(v) for a, v in body.items()}
+        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, False, None, [])
+        assert ret == pad(val)
+        if isinstance(val, str):
+            assert ret != val
+
+    # NOTE - `type_` and `choices` are tested `_qualify_argument` tests
 
 
-def test_31_get_json_body_argument() -> None:
+@patch("rest_tools.server.arghandler._get_json_body")
+def test_31_get_json_body_argument_errors(gjb: Mock) -> None:
     """Test `request.body` JSON arguments."""
-    pass
+    body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
+
+    # Bad Default Type
+    with pytest.raises(ValueError):
+        gjb.return_value = body
+        ArgumentHandler.get_json_body_argument(ANY, "Name", 55, False, str, [])
+
+    # Missing Required Argument
+    with pytest.raises(tornado.web.MissingArgumentError) as e:
+        gjb.return_value = body
+        ArgumentHandler.get_json_body_argument(ANY, "Reqd", NO_DEFAULT, False, None, [])
+    assert "Reqd" in str(e.value)
 
 
 def test_40_get_argument_args_and_body() -> None:
     """Test `get_argument()`."""
     pass
 
+    # NOTE - `type_` and `choices` are tested `_qualify_argument` tests
 
-def test_41_get_argument_args_and_body() -> None:
+
+def test_41_get_argument_args_and_body_errors() -> None:
     """Test `get_argument()`."""
     pass

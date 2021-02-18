@@ -2,7 +2,7 @@
 
 
 import json
-from typing import Any, List, Optional
+from typing import Any, cast, Dict, List, Optional
 
 import tornado.web
 
@@ -16,6 +16,11 @@ class _NoDefaultValue:  # pylint: disable=R0903
 
 NO_DEFAULT = _NoDefaultValue()
 _FALSES = ["FALSE", "False", "false", "0", 0, "NO", "No", "no"]
+
+
+def _get_json_body(request_handler: tornado.web.RequestHandler) -> Dict[str, Any]:
+    json_body = json_decode(request_handler.request.body)  # type: ignore[no-untyped-call]
+    return cast(Dict[str, Any], json_body)
 
 
 class ArgumentHandler:
@@ -69,7 +74,7 @@ class ArgumentHandler:
     ) -> Any:
         """Return the argument by JSON-decoding the request body."""
         try:
-            value = json_decode(request_handler.request.body)[name]  # type: ignore[no-untyped-call]
+            value = _get_json_body(request_handler)[name]
             if strip and isinstance(value, tornado.util.unicode_type):
                 value = value.strip()
             return ArgumentHandler._qualify_argument(type_, choices, value)
