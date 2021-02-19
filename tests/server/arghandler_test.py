@@ -128,34 +128,16 @@ def test_30_get_json_body_argument(gjb: Mock) -> None:
     # Simple Use Cases
     for arg, val in body.items():
         gjb.return_value = body
-        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, False, None, [])
+        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, [])
         assert ret == val
 
     # Default Use Cases
     for arg, val in body.items():
         gjb.return_value = {a: v for a, v in body.items() if a != arg}
-        ret = ArgumentHandler.get_json_body_argument(ANY, arg, "Terry", False, None, [])
+        ret = ArgumentHandler.get_json_body_argument(ANY, arg, "Terry", [])
         assert ret == "Terry"
 
-    def pad(val: Any) -> Any:
-        if isinstance(val, str):
-            return f" \t {val} \n  "
-        return val
-
-    # Strip Use Cases
-    for arg, val in body.items():
-        # w/ stripping
-        gjb.return_value = {a: pad(v) for a, v in body.items()}
-        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, True, None, [])
-        assert ret == val
-        # w/o stripping
-        gjb.return_value = {a: pad(v) for a, v in body.items()}
-        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, False, None, [])
-        assert ret == pad(val)
-        if isinstance(val, str):
-            assert ret != val
-
-    # NOTE - `type_` and `choices` are tested `_qualify_argument` tests
+    # NOTE - `choices` use-cases are tested `_qualify_argument` tests
 
 
 @patch("rest_tools.server.arghandler._get_json_body")
@@ -163,15 +145,10 @@ def test_31_get_json_body_argument_errors(gjb: Mock) -> None:
     """Test `request.body` JSON arguments."""
     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
-    # Bad Default Type
-    with pytest.raises(ValueError):
-        gjb.return_value = body
-        ArgumentHandler.get_json_body_argument(ANY, "Name", 55, False, str, [])
-
     # Missing Required Argument
     with pytest.raises(tornado.web.MissingArgumentError) as e:
         gjb.return_value = body
-        ArgumentHandler.get_json_body_argument(ANY, "Reqd", NO_DEFAULT, False, None, [])
+        ArgumentHandler.get_json_body_argument(ANY, "Reqd", NO_DEFAULT, [])
     assert "Reqd" in str(e.value)
 
 
