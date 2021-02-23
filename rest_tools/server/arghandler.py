@@ -100,10 +100,10 @@ class ArgumentHandler:
         # If:
         # Required -> raise 400
         if isinstance(default, type(NO_DEFAULT)):
-            # check JSON'd body arguments
+            # check JSON-body arguments
             try:
                 json_arg = ArgumentHandler.get_json_body_argument(
-                    request_handler, name, default, choices
+                    request_handler, name, NO_DEFAULT, choices
                 )
                 return ArgumentHandler._qualify_argument(type_, choices, json_arg)
             except tornado.web.MissingArgumentError:
@@ -118,12 +118,14 @@ class ArgumentHandler:
         # Else:
         # Optional / Default
         ArgumentHandler._type_check(type_, default)
-        # check JSON'd body arguments  # pylint: disable=C0103
-        json_arg = ArgumentHandler.get_json_body_argument(
-            request_handler, name, default, choices,
-        )
-        if json_arg != default:
+        # check JSON-body arguments
+        try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
+            json_arg = ArgumentHandler.get_json_body_argument(
+                request_handler, name, NO_DEFAULT, choices
+            )
             return ArgumentHandler._qualify_argument(type_, choices, json_arg)
+        except tornado.web.MissingArgumentError:
+            pass
         # check query and body arguments
         arg = request_handler.get_argument(name, default, strip=strip)
         return ArgumentHandler._qualify_argument(type_, choices, arg)
