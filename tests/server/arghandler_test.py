@@ -2,14 +2,17 @@
 
 # pylint: disable=W0212
 
-from typing import Any
 from unittest.mock import ANY, Mock, patch
 
 import pytest
 import tornado.web
 
 # local imports
-from rest_tools.server.arghandler import ArgumentHandler, NO_DEFAULT
+from rest_tools.server.arghandler import (
+    _UnqualifiedArgumentError,
+    ArgumentHandler,
+    NO_DEFAULT,
+)
 
 
 def test_00_qualify_argument() -> None:
@@ -52,36 +55,29 @@ def test_00_qualify_argument() -> None:
 def test_01_qualify_argument_errors() -> None:
     """Test `_qualify_argument()`."""
     # Test Types:
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(int, [], "")
     assert "(ValueError)" in str(e.value)
-    assert "400" in str(e.value)
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(float, [], "")
     assert "(ValueError)" in str(e.value)
-    assert "400" in str(e.value)
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(float, [], "123abc")
     assert "(ValueError)" in str(e.value)
-    assert "400" in str(e.value)
 
     # Test Choices:
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(None, [23], "23")
     assert "(ValueError)" in str(e.value) and "not in options" in str(e.value)
-    assert "400" in str(e.value)
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(str, ["STRING"], "string")
     assert "(ValueError)" in str(e.value) and "not in options" in str(e.value)
-    assert "400" in str(e.value)
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(int, [0, 1, 2], "3")
     assert "(ValueError)" in str(e.value) and "not in options" in str(e.value)
-    assert "400" in str(e.value)
-    with pytest.raises(tornado.web.HTTPError) as e:
+    with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(list, [["a", "b", "c", "d"]], "abc")
     assert "(ValueError)" in str(e.value) and "not in options" in str(e.value)
-    assert "400" in str(e.value)
 
 
 def test_10_type_check() -> None:
