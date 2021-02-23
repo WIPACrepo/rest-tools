@@ -32,21 +32,33 @@ def test_00_qualify_argument() -> None:
     # float
     assert ArgumentHandler._qualify_argument(float, [], "2.5") == 2.5
     # True
-    assert ArgumentHandler._qualify_argument(bool, [], "True") is True
     assert ArgumentHandler._qualify_argument(bool, [], "1") is True
     assert ArgumentHandler._qualify_argument(bool, [], 1) is True
-    assert ArgumentHandler._qualify_argument(bool, [], "anything") is True
+    assert ArgumentHandler._qualify_argument(bool, [], -99) is True
+    for trues in ["True", "T", "On", "Yes", "Y"]:
+        for val in [
+            trues.upper(),
+            trues.lower(),
+            trues[:-1] + trues[-1].upper(),  # upper only last char
+        ]:
+            assert ArgumentHandler._qualify_argument(bool, [], val) is True
     # False
     assert ArgumentHandler._qualify_argument(bool, [], "") is False
-    assert ArgumentHandler._qualify_argument(bool, [], None) is False
-    for val in ["FALSE", "False", "false", "0", 0, "NO", "No", "no"]:
-        assert ArgumentHandler._qualify_argument(bool, [], val) is False
+    assert ArgumentHandler._qualify_argument(bool, [], "0") is False
+    assert ArgumentHandler._qualify_argument(bool, [], 0) is False
+    for falses in ["False", "F", "Off", "No", "N"]:
+        for val in [
+            falses.upper(),
+            falses.lower(),
+            falses[:-1] + falses[-1].upper(),  # upper only last char
+        ]:
+            assert ArgumentHandler._qualify_argument(bool, [], val) is False
     # list
     assert ArgumentHandler._qualify_argument(list, [], "abcd") == ["a", "b", "c", "d"]
     assert ArgumentHandler._qualify_argument(list, [], "") == []
 
     # Test Choices:
-    assert ArgumentHandler._qualify_argument(bool, [True], "anything") is True
+    assert ArgumentHandler._qualify_argument(bool, [True, False], "t") is True
     assert ArgumentHandler._qualify_argument(int, [0, 1, 2], "1") == 1
     assert ArgumentHandler._qualify_argument(None, [""], "") == ""
     ArgumentHandler._qualify_argument(None, [23, "23"], "23")
@@ -63,6 +75,9 @@ def test_01_qualify_argument_errors() -> None:
     assert "(ValueError)" in str(e.value)
     with pytest.raises(_UnqualifiedArgumentError) as e:
         ArgumentHandler._qualify_argument(float, [], "123abc")
+    assert "(ValueError)" in str(e.value)
+    with pytest.raises(_UnqualifiedArgumentError) as e:
+        ArgumentHandler._qualify_argument(bool, [], "anything")
     assert "(ValueError)" in str(e.value)
 
     # Test Choices:

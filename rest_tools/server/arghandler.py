@@ -1,6 +1,7 @@
 """Handle argument parsing, defaulting, and casting."""
 
 
+import distutils.util
 import json
 from typing import Any, cast, Dict, List, Optional
 
@@ -15,7 +16,6 @@ class _NoDefaultValue:  # pylint: disable=R0903
 
 
 NO_DEFAULT = _NoDefaultValue()
-_FALSES = ["FALSE", "False", "false", "0", 0, "NO", "No", "no"]
 
 
 def _get_json_body(request_handler: tornado.web.RequestHandler) -> Dict[str, Any]:
@@ -49,8 +49,8 @@ class ArgumentHandler:
         """
         if type_:
             try:
-                if (type_ == bool) and (value in _FALSES):
-                    value = False
+                if isinstance(value, str) and (type_ == bool) and (value != ""):
+                    value = bool(distutils.util.strtobool(value))
                 else:
                     value = type_(value)
             except ValueError as e:
