@@ -80,7 +80,7 @@ class ArgumentHandler:
         default: Any,
         choices: Optional[List[Any]],
     ) -> Any:
-        """Return the argument by JSON-decoding the request body."""
+        """Return the argument from JSON-decoded request body."""
         try:
             value = _get_json_body(request_handler)[name]
             return ArgumentHandler._qualify_argument(None, choices, value)
@@ -107,7 +107,7 @@ class ArgumentHandler:
         type_: Optional[type],
         choices: Optional[List[Any]],
     ) -> Any:
-        """Return argument. If no default provided raise 400 if not present.
+        """Return argument from query arguments or JSON request body.
 
         Try from `get_json_body_argument()` first, then from
         `request_handler.get_argument()`.

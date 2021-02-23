@@ -145,18 +145,31 @@ class RestHandler(tornado.web.RequestHandler):
         self.write(data)
         self.finish()
 
-    def get_json_body_argument(  # pylint: disable=R0913
+    def get_json_body_argument(
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
         choices: Optional[List[Any]] = None,
     ) -> Any:
-        """Return the argument by JSON-decoding the request body."""
+        """Return the argument from JSON-decoded request body.
+
+        If no `default` is provided, and the argument is not present, raise `400`.
+
+        Arguments:
+            name -- the argument's name
+
+        Keyword Arguments:
+            default -- a default value to use if the argument is not present
+            choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
+
+        Returns:
+            Any -- the argument's value, unaltered
+        """
         return arghandler.ArgumentHandler.get_json_body_argument(
             super(), name, default, choices
         )
 
-    def get_argument(  # pylint: disable=W0221,R0913
+    def get_argument(
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
@@ -164,9 +177,21 @@ class RestHandler(tornado.web.RequestHandler):
         type_: Optional[type] = None,
         choices: Optional[List[Any]] = None,
     ) -> Any:
-        """Return argument.
+        """Return argument from query arguments or JSON-decoded request body.
 
-        If no default provided raise 400 if not present.
+        If no `default` is provided, and the argument is not present, raise `400`.
+
+        Arguments:
+            name -- the argument's name
+
+        Keyword Arguments:
+            default -- a default value to use if the argument is not present
+            strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
+            type_ -- optionally, type-cast the argument's value (raise `400` on `TypeError`)
+            choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
+
+        Returns:
+            Any -- the argument's value, possibly stripped/type-casted
         """
         return arghandler.ArgumentHandler.get_argument(
             super(), name, default, strip, type_, choices
