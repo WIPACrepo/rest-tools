@@ -18,9 +18,15 @@ class _NoDefaultValue:  # pylint: disable=R0903
 NO_DEFAULT = _NoDefaultValue()
 
 
-def _get_json_body(request_handler: tornado.web.RequestHandler) -> Dict[str, Any]:
+def _get_json_body_arguments(
+    request_handler: tornado.web.RequestHandler,
+) -> Dict[str, Any]:
+    """Return the request body JSON-decoded, but only if it's a `dict`."""
     json_body = json_decode(request_handler.request.body)  # type: ignore[no-untyped-call]
-    return cast(Dict[str, Any], json_body)
+
+    if isinstance(json, dict):
+        return cast(Dict[str, Any], json_body)
+    return {}
 
 
 class _UnqualifiedArgumentError(Exception):
@@ -82,7 +88,7 @@ class ArgumentHandler:
     ) -> Any:
         """Return the argument from JSON-decoded request body."""
         try:
-            value = _get_json_body(request_handler)[name]
+            value = _get_json_body_arguments(request_handler)[name]
             return ArgumentHandler._qualify_argument(None, choices, value)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
