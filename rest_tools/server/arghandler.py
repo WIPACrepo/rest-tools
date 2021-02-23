@@ -29,7 +29,7 @@ class _UnqualifiedArgumentError(Exception):
 
 def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
     if isinstance(error, tornado.web.MissingArgumentError):
-        return error
+        return error  # MissingArgumentError is already a 400 error
     return tornado.web.HTTPError(400, reason=f"`{arg_name}`: {error}")
 
 
