@@ -85,7 +85,7 @@ class ArgumentHandler:
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
-                raise tornado.web.MissingArgumentError(name)
+                raise _make_400_error(name, tornado.web.MissingArgumentError(name))
         except _UnqualifiedArgumentError as e:
             raise _make_400_error(name, e)
 
