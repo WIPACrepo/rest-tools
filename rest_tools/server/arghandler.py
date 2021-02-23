@@ -23,6 +23,14 @@ def _get_json_body(request_handler: tornado.web.RequestHandler) -> Dict[str, Any
     return cast(Dict[str, Any], json_body)
 
 
+class _UnqualifiedArgumentError(Exception):
+    """Raise when ArgumentHandler._qualify_argument() fails."""
+
+
+def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
+    return tornado.web.HTTPError(400, reason=f"`{arg_name}`: {error}")
+
+
 class ArgumentHandler:
     """Helper class for argument parsing, defaulting, and casting.
 
@@ -35,7 +43,7 @@ class ArgumentHandler:
     ) -> Any:
         """Cast `value` to `type_` type, and/or check `value` in in `choices`.
 
-        Raise 400 if either qualification fails.
+        Raise _UnqualifiedArgumentError if either qualification fails.
         """
         if type_:
             try:
@@ -44,11 +52,11 @@ class ArgumentHandler:
                 else:
                     value = type_(value)
             except ValueError as e:
-                raise tornado.web.HTTPError(400, reason=f"(ValueError) {e}")
+                raise _UnqualifiedArgumentError(f"(ValueError) {e}")
 
         if choices and (value not in choices):
-            raise tornado.web.HTTPError(
-                400, reason=f"(ValueError) {value} not in options ({choices})"
+            raise _UnqualifiedArgumentError(
+                f"(ValueError) {value} not in options ({choices})"
             )
 
         return value
@@ -78,10 +86,15 @@ class ArgumentHandler:
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
                 raise tornado.web.MissingArgumentError(name)
+        except _UnqualifiedArgumentError as e:
+            raise _make_400_error(name, e)
 
         # Else:
         # Optional / Default
-        return ArgumentHandler._qualify_argument(None, choices, default)
+        try:
+            return ArgumentHandler._qualify_argument(None, choices, default)
+        except _UnqualifiedArgumentError as e:
+            raise _make_400_error(name, e)
 
     @staticmethod
     def get_argument(  # pylint: disable=W0221,R0913
@@ -108,12 +121,14 @@ class ArgumentHandler:
                 return ArgumentHandler._qualify_argument(type_, choices, json_arg)
             except tornado.web.MissingArgumentError:
                 pass
+            except _UnqualifiedArgumentError as e:
+                raise _make_400_error(name, e)
             # check query and body arguments
             try:
                 arg = request_handler.get_argument(name, strip=strip)
                 return ArgumentHandler._qualify_argument(type_, choices, arg)
-            except tornado.web.MissingArgumentError as e:
-                raise tornado.web.HTTPError(400, reason=e.log_message)
+            except (tornado.web.MissingArgumentError, _UnqualifiedArgumentError) as e:
+                raise _make_400_error(name, e)
 
         # Else:
         # Optional / Default
@@ -125,7 +140,12 @@ class ArgumentHandler:
             )
             return ArgumentHandler._qualify_argument(type_, choices, json_arg)
         except tornado.web.MissingArgumentError:
-            pass
+            pass  # OK. Next, we'll try query arguments...
+        except _UnqualifiedArgumentError as e:
+            raise _make_400_error(name, e)
         # check query and body arguments
         arg = request_handler.get_argument(name, default, strip=strip)
-        return ArgumentHandler._qualify_argument(type_, choices, arg)
+        try:
+            return ArgumentHandler._qualify_argument(type_, choices, arg)
+        except _UnqualifiedArgumentError as e:
+            raise _make_400_error(name, e)
