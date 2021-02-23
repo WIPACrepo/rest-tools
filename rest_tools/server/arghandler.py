@@ -24,7 +24,7 @@ def _get_json_body_arguments(
     """Return the request body JSON-decoded, but only if it's a `dict`."""
     json_body = json_decode(request_handler.request.body)  # type: ignore[no-untyped-call]
 
-    if isinstance(json, dict):
+    if isinstance(json_body, dict):
         return cast(Dict[str, Any], json_body)
     return {}
 
