@@ -1,19 +1,28 @@
-import logging
-import json
-import time
-from functools import wraps, update_wrapper, partialmethod, partial
-from collections import defaultdict
+"""RestHandler and related classes."""
 
-import tornado.web
+# fmt:off
+# mypy: ignore-errors
+# pylint: skip-file
+
+import logging
+import time
+from collections import defaultdict
+from functools import partial, wraps
+from typing import Any, List, Optional
+
 import tornado.gen
 import tornado.httpclient
-from tornado.platform.asyncio import to_asyncio_future
+import tornado.web
 
-from .auth import Auth, OpenIDAuth
-from .stats import RouteStats
+# local imports
 import rest_tools
 
+from . import arghandler
+from .auth import Auth, OpenIDAuth
+from .stats import RouteStats
+
 logger = logging.getLogger('rest')
+
 
 def RestHandlerSetup(config={}):
     """
@@ -67,17 +76,18 @@ def RestHandlerSetup(config={}):
         'route_stats': route_stats
     }
 
+
 class RestHandler(tornado.web.RequestHandler):
     """Default REST handler"""
     def __init__(self, *args, **kwargs):
         self.server_header = ''
         try:
-            super(RestHandler, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
         except Exception:
             logging.error('error', exc_info=True)
 
     def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
-        super(RestHandler, self).initialize(**kwargs)
+        super().initialize(**kwargs)
         self.debug = debug
         self.auth = auth
         self.auth_url = auth_url
@@ -91,7 +101,7 @@ class RestHandler(tornado.web.RequestHandler):
         self._headers['Server'] = self.server_header
 
     def get_template_namespace(self):
-        namespace = super(RESTHandler,self).get_template_namespace()
+        namespace = super().get_template_namespace()
         namespace['version'] = rest_tools.__version__
         return namespace
 
@@ -135,6 +145,59 @@ class RestHandler(tornado.web.RequestHandler):
         self.write(data)
         self.finish()
 
+    def get_json_body_argument(
+        self,
+        name: str,
+        default: Any = arghandler.NO_DEFAULT,
+        choices: Optional[List[Any]] = None,
+    ) -> Any:
+        """Return the argument from JSON-decoded request body.
+
+        If no `default` is provided, and the argument is not present, raise `400`.
+
+        Arguments:
+            name -- the argument's name
+
+        Keyword Arguments:
+            default -- a default value to use if the argument is not present
+            choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
+
+        Returns:
+            Any -- the argument's value, unaltered
+        """
+        return arghandler.ArgumentHandler.get_json_body_argument(
+            super(), name, default, choices
+        )
+
+    def get_argument(
+        self,
+        name: str,
+        default: Any = arghandler.NO_DEFAULT,
+        strip: bool = True,
+        type_: Optional[type] = None,
+        choices: Optional[List[Any]] = None,
+    ) -> Any:
+        """Return argument from query arguments or JSON-decoded request body.
+
+        If no `default` is provided, and the argument is not present, raise `400`.
+
+        Arguments:
+            name -- the argument's name
+
+        Keyword Arguments:
+            default -- a default value to use if the argument is not present
+            strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
+            type_ -- optionally, type-cast the argument's value (raise `400` on `TypeError`)
+            choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
+
+        Returns:
+            Any -- the argument's value, possibly stripped/type-casted
+        """
+        return arghandler.ArgumentHandler.get_argument(
+            super(), name, default, strip, type_, choices
+        )
+
+
 def authenticated(method):
     """
     Decorate methods with this to require that the Authorization
@@ -152,6 +215,7 @@ def authenticated(method):
             raise tornado.web.HTTPError(403, reason="authentication failed")
         return await method(self, *args, **kwargs)
     return wrapper
+
 
 def catch_error(method):
     """
@@ -176,6 +240,7 @@ def catch_error(method):
             message = 'Error in '+self.__class__.__name__
             self.send_error(500, reason=message)
     return wrapper
+
 
 def role_authorization(**_auth):
     """
@@ -215,6 +280,7 @@ def role_authorization(**_auth):
             return await method(self, *args, **kwargs)
         return wrapper
     return make_wrapper
+
 
 def scope_role_auth(**_auth):
     """
