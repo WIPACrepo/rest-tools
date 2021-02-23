@@ -195,13 +195,135 @@ def test_31_get_json_body_argument_errors(gjb: Mock) -> None:
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-def test_40_get_argument_args_and_body() -> None:
-    """Test `get_argument()`."""
-    pass
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_40_get_argument_args_and_body(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
 
-    # NOTE - `type_` and `choices` are tested in `_qualify_argument` tests
+    From JSON-body (no Query-Args)
+    """
+    # TODO - patch based on argument: https://stackoverflow.com/a/16162316/13156561
+    gjb.return_value = {"foo": 14}
+
+    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_not_called()
+    assert ret == 14
 
 
-def test_41_get_argument_args_and_body_errors() -> None:
-    """Test `get_argument()`."""
-    pass
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_41_get_argument_args_and_body(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
+
+    From Query-Args (no JSON-body arguments)
+    """
+    gjb.return_value = {}
+    twrh.get_argument.return_value = 55
+
+    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_called_with("foo", None, strip=False)
+    assert ret == 55
+
+
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_42_get_argument_args_and_body(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
+
+    From Query-Args (with JSON & Query-Arg values) -- but only 1 match
+    """
+    gjb.return_value = {"baz": 7}
+    twrh.get_argument.return_value = 90
+
+    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_called_with("foo", None, strip=False)
+    assert ret == 90
+
+
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_43_get_argument_args_and_body(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
+
+    From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
+    """
+    gjb.return_value = {"foo": 1}
+    twrh.get_argument.return_value = -8
+
+    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_not_called()
+    assert ret == 1
+
+
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_44_get_argument_args_and_body(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
+
+    From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
+
+    **Test JSON-body arg typing**
+    """
+    gjb.return_value = {"foo": "99"}
+    twrh.get_argument.return_value = -0.5
+
+    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, int, [])
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_not_called()
+    assert ret == 99
+
+
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_45_get_argument_args_and_body_errors(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
+
+    **Error-Test JSON-body arg typing**
+
+    If there's a matching argument in JSON-body, but it's the wrong type, raise 400;
+    REGARDLESS if there's a value in the Query-Args.
+    """
+    gjb.return_value = {"foo": "NINETY-NINE"}
+    twrh.get_argument.return_value = -0.5
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        ArgumentHandler.get_argument(twrh, "foo", None, False, int, [])
+    assert "(ValueError)" in str(e.value)
+    assert "400" in str(e.value)
+    assert "NINETY-NINE" in str(e.value)
+    assert "foo" in str(e.value)
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_not_called()
+
+
+@patch("rest_tools.server.arghandler._get_json_body")
+@patch("tornado.web.RequestHandler")
+def test_46_get_argument_args_and_body_errors(twrh: Mock, gjb: Mock) -> None:
+    """Test `get_argument()`.
+
+    **Error-Test JSON-body arg choices**
+
+    If there's a matching argument in JSON-body, but it's not in choices, raise 400;
+    REGARDLESS if there's a value in the Query-Args.
+    """
+    gjb.return_value = {"foo": 5}
+    twrh.get_argument.return_value = 0
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        ArgumentHandler.get_argument(twrh, "foo", None, False, None, ["this one!"])
+    assert "(ValueError)" in str(e.value) and "not in options" in str(e.value)
+    assert "400" in str(e.value)
+    assert "foo" in str(e.value)
+
+    gjb.assert_called_with(twrh)
+    twrh.get_argument.assert_not_called()
