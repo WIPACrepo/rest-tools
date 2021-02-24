@@ -1,7 +1,6 @@
 """RestHandler and related classes."""
 
 # fmt:off
-# mypy: ignore-errors
 # pylint: skip-file
 
 import logging

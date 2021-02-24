@@ -7,7 +7,6 @@ a json-encoded dictionary as necessary.
 """
 
 # fmt:off
-# mypy: ignore-errors
 # pylint: skip-file
 
 import asyncio

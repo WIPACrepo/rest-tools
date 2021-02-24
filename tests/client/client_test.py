@@ -1,7 +1,6 @@
 """Test script for RestClient."""
 
 # fmt:off
-# mypy: ignore-errors
 # pylint: skip-file
 
 import logging
@@ -28,9 +27,11 @@ class rest_client_test(unittest.TestCase):
         os.symlink(os.path.join(curdir, 'rest_tools'),
                    os.path.join(self.test_dir, 'rest_tools'))
         os.chdir(self.test_dir)
+
         def cleanup():
             os.chdir(curdir)
             shutil.rmtree(self.test_dir)
+
         self.addCleanup(cleanup)
 
     @requests_mock.mock()
@@ -51,7 +52,7 @@ class rest_client_test(unittest.TestCase):
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
         def response(req, ctx):
-            body = rest_tools.client.json_decode(req.body)
+            _ = rest_tools.client.json_decode(req.body)
             return rest_tools.client.json_encode(result).encode('utf-8')
         mock.post('/test', content=response)
 
@@ -61,9 +62,11 @@ class rest_client_test(unittest.TestCase):
         self.assertEqual(ret, result)
 
         result2 = {'result2':'the result 2'}
+
         def response(req, ctx):
-            body = rest_tools.client.json_decode(req.body)
+            _ = rest_tools.client.json_decode(req.body)
             return rest_tools.client.json_encode(result2).encode('utf-8')
+
         mock.post('/test2', content=response)
         ret = await rpc.request('POST','/test2')
 
@@ -75,7 +78,7 @@ class rest_client_test(unittest.TestCase):
         """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
-        result = ''
+        # result = ''
 
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
@@ -91,42 +94,42 @@ class rest_client_test(unittest.TestCase):
         """Test timeout."""
         address = 'http://test'
         auth_key = 'passkey'
-        result = 'the result'
+        # result = 'the result'
 
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1, backoff=False)
 
         mock.post('/test', exc=Timeout)
 
         with self.assertRaises(Timeout):
-            ret = await rpc.request('POST','test',{})
+            _ = await rpc.request('POST','test',{})
 
     @requests_mock.mock()
     async def test_21_ssl_error(self, mock):
         """Test ssl error."""
         address = 'http://test'
         auth_key = 'passkey'
-        result = 'the result'
+        # result = 'the result'
 
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1, backoff=False)
 
         mock.post('/test', exc=SSLError)
 
         with self.assertRaises(SSLError):
-            ret = await rpc.request('POST','test',{})
+            _ = await rpc.request('POST','test',{})
 
     @requests_mock.mock()
     async def test_22_request(self, mock):
         """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
-        result = ''
+        # result = ''
 
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
         mock.get('/test', content=b'{"foo"}')
 
         with self.assertRaises(Exception):
-            ret = await rpc.request('GET','test',{})
+            _ = await rpc.request('GET','test',{})
 
     @requests_mock.mock()
     def test_90_request(self, mock):
@@ -138,7 +141,7 @@ class rest_client_test(unittest.TestCase):
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
         def response(req, ctx):
-            body = rest_tools.utils.json_util.json_decode(req.body)
+            _ = rest_tools.utils.json_util.json_decode(req.body)
             return rest_tools.utils.json_util.json_encode(result).encode('utf-8')
         mock.post('/test', content=response)
 
@@ -157,7 +160,7 @@ class rest_client_test(unittest.TestCase):
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
         def response(req, ctx):
-            body = rest_tools.client.json_decode(req.body)
+            _ = rest_tools.client.json_decode(req.body)
             return rest_tools.client.json_encode(result).encode('utf-8')
         mock.post('/test', content=response)
 
@@ -171,16 +174,18 @@ class rest_client_test(unittest.TestCase):
         """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
-        result = {'result':'the result'}
+        # result = {'result':'the result'}
 
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
         def response(req, ctx):
             raise Exception()
+
         mock.post('/test', content=response)
 
         with self.assertRaises(Exception):
             rpc.request_seq('POST','test',{})
+
 
 def load_tests(loader, tests, pattern):
     suite = unittest.TestSuite()
