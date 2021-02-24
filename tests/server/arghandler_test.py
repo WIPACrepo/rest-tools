@@ -1,18 +1,21 @@
 """Test server/arghandler.py."""
 
-# pylint: disable=W0212
+# pylint: disable=W0212,W0621
 
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import tornado.web
 
 # local imports
-from rest_tools.server.arghandler import (
-    _UnqualifiedArgumentError,
-    ArgumentHandler,
-    NO_DEFAULT,
-)
+from rest_tools.server.arghandler import _UnqualifiedArgumentError, ArgumentHandler
+from rest_tools.server.handler import RestHandler
+
+
+@pytest.fixture  # type: ignore[misc]
+def rest_handler() -> RestHandler:
+    """Get a RestHandler instance."""
+    return RestHandler(application=Mock(), request=Mock())
 
 
 def test_00_qualify_argument() -> None:
@@ -122,9 +125,11 @@ def test_10_type_check() -> None:
                 ArgumentHandler._type_check(o_type, val)
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_20_get_argument_no_body(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_20_get_argument_no_body(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
 
     No tests for body-parsing.
@@ -143,14 +148,14 @@ def test_20_get_argument_no_body(twrh: Mock, gjba: Mock) -> None:
         print(val)
         print(type_)
         # w/o typing
-        gjba.return_value = {}
-        twrh.get_argument.return_value = val
-        ret = ArgumentHandler.get_argument(twrh, arg, None, False, None, [])
+        pjba.return_value = {}
+        rhga.return_value = val
+        ret = rest_handler.get_argument(arg, default=None)
         assert ret == val
         # w/ typing
-        gjba.return_value = {}
-        twrh.get_argument.return_value = val
-        ret = ArgumentHandler.get_argument(twrh, arg, None, False, type_, [])
+        pjba.return_value = {}
+        rhga.return_value = val
+        ret = rest_handler.get_argument(arg, default=None, type_=type_)
         assert ret == type_(val) or (val == "False" and ret is False and type_ == bool)
 
     # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
@@ -158,148 +163,166 @@ def test_20_get_argument_no_body(twrh: Mock, gjba: Mock) -> None:
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_21_get_argument_no_body_errors(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_21_get_argument_no_body_errors(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
 
     No tests for body-parsing.
     """
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
-        gjba.return_value = {}
-        twrh.get_argument.side_effect = tornado.web.MissingArgumentError("Reqd")
-        ArgumentHandler.get_argument(twrh, "Reqd", NO_DEFAULT, False, None, [])
+        pjba.return_value = {}
+        rhga.side_effect = tornado.web.MissingArgumentError("Reqd")
+        rest_handler.get_argument("Reqd")
     assert "Reqd" in str(e.value)
     assert "400" in str(e.value)
 
     # NOTE - `type_` and `choices` are tested in `_qualify_argument` tests
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-def test_30_get_json_body_arguments_argument(gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+def test_30_parse_json_body_arguments_argument(
+    pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `request.body` JSON arguments."""
     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
     # Simple Use Cases
     for arg, val in body.items():
-        gjba.return_value = body
-        ret = ArgumentHandler.get_json_body_argument(ANY, arg, None, [])
+        pjba.return_value = body
+        ret = rest_handler.get_json_body_argument(arg)
         assert ret == val
 
     # Default Use Cases
     for arg, val in body.items():
-        gjba.return_value = {a: v for a, v in body.items() if a != arg}
-        ret = ArgumentHandler.get_json_body_argument(ANY, arg, "Terry", [])
+        pjba.return_value = {a: v for a, v in body.items() if a != arg}
+        ret = rest_handler.get_json_body_argument(arg, default="Terry")
         assert ret == "Terry"
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-def test_31_get_json_body_arguments_argument_errors(gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+def test_31_parse_json_body_arguments_argument_errors(
+    pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `request.body` JSON arguments."""
     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
     # Missing Required Argument
     with pytest.raises(tornado.web.MissingArgumentError) as e:
-        gjba.return_value = body
-        ArgumentHandler.get_json_body_argument(ANY, "Reqd", NO_DEFAULT, [])
+        pjba.return_value = body
+        rest_handler.get_json_body_argument("Reqd")
     assert "Reqd" in str(e.value)
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_40_get_argument_args_and_body(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_40_get_argument_args_and_body(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     From JSON-body (no Query-Args)
     """
     # TODO - patch based on argument: https://stackoverflow.com/a/16162316/13156561
-    gjba.return_value = {"foo": 14}
+    pjba.return_value = {"foo": 14}
 
-    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+    ret = rest_handler.get_argument("foo", default=None)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_not_called()
+    pjba.assert_called()
+    rhga.assert_not_called()
     assert ret == 14
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_41_get_argument_args_and_body(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_41_get_argument_args_and_body(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     From Query-Args (no JSON-body arguments)
     """
-    gjba.return_value = {}
-    twrh.get_argument.return_value = 55
+    pjba.return_value = {}
+    rhga.return_value = 55
 
-    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+    ret = rest_handler.get_argument("foo", default=None)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_called_with("foo", None, strip=False)
+    pjba.assert_called()
+    rhga.assert_called_with("foo", None, strip=True)
     assert ret == 55
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_42_get_argument_args_and_body(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_42_get_argument_args_and_body(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     From Query-Args (with JSON & Query-Arg values) -- but only 1 match
     """
-    gjba.return_value = {"baz": 7}
-    twrh.get_argument.return_value = 90
+    pjba.return_value = {"baz": 7}
+    rhga.return_value = 90
 
-    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+    ret = rest_handler.get_argument("foo", default=None)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_called_with("foo", None, strip=False)
+    pjba.assert_called()
+    rhga.assert_called_with("foo", None, strip=True)
     assert ret == 90
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_43_get_argument_args_and_body(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_43_get_argument_args_and_body(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
     """
-    gjba.return_value = {"foo": 1}
-    twrh.get_argument.return_value = -8
+    pjba.return_value = {"foo": 1}
+    rhga.return_value = -8
 
-    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, None, [])
+    ret = rest_handler.get_argument("foo", default=None)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_not_called()
+    pjba.assert_called()
+    rhga.assert_not_called()
     assert ret == 1
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_44_get_argument_args_and_body(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_44_get_argument_args_and_body(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
 
     **Test JSON-body arg typing**
     """
-    gjba.return_value = {"foo": "99"}
-    twrh.get_argument.return_value = -0.5
+    pjba.return_value = {"foo": "99"}
+    rhga.return_value = -0.5
 
-    ret = ArgumentHandler.get_argument(twrh, "foo", None, False, int, [])
+    ret = rest_handler.get_argument("foo", default=None, type_=int)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_not_called()
+    pjba.assert_called()
+    rhga.assert_not_called()
     assert ret == 99
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_45_get_argument_args_and_body_errors(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_45_get_argument_args_and_body_errors(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     **Error-Test JSON-body arg typing**
@@ -307,23 +330,25 @@ def test_45_get_argument_args_and_body_errors(twrh: Mock, gjba: Mock) -> None:
     If there's a matching argument in JSON-body, but it's the wrong type, raise 400;
     REGARDLESS if there's a value in the Query-Args.
     """
-    gjba.return_value = {"foo": "NINETY-NINE"}
-    twrh.get_argument.return_value = -0.5
+    pjba.return_value = {"foo": "NINETY-NINE"}
+    rhga.return_value = -0.5
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        ArgumentHandler.get_argument(twrh, "foo", None, False, int, [])
+        rest_handler.get_argument("foo", default=None, type_=int)
     assert "(ValueError)" in str(e.value)
     assert "400" in str(e.value)
     assert "NINETY-NINE" in str(e.value)
     assert "foo" in str(e.value)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_not_called()
+    pjba.assert_called()
+    rhga.assert_not_called()
 
 
-@patch("rest_tools.server.arghandler._get_json_body_arguments")
-@patch("tornado.web.RequestHandler")
-def test_46_get_argument_args_and_body_errors(twrh: Mock, gjba: Mock) -> None:
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_46_get_argument_args_and_body_errors(
+    rhga: Mock, pjba: Mock, rest_handler: RestHandler
+) -> None:
     """Test `get_argument()`.
 
     **Error-Test JSON-body arg choices**
@@ -331,14 +356,14 @@ def test_46_get_argument_args_and_body_errors(twrh: Mock, gjba: Mock) -> None:
     If there's a matching argument in JSON-body, but it's not in choices, raise 400;
     REGARDLESS if there's a value in the Query-Args.
     """
-    gjba.return_value = {"foo": 5}
-    twrh.get_argument.return_value = 0
+    pjba.return_value = {"foo": 5}
+    rhga.return_value = 0
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        ArgumentHandler.get_argument(twrh, "foo", None, False, None, ["this one!"])
+        rest_handler.get_argument("foo", default=None, choices=["this one!"])
     assert "(ValueError)" in str(e.value) and "not in options" in str(e.value)
     assert "400" in str(e.value)
     assert "foo" in str(e.value)
 
-    gjba.assert_called_with(twrh)
-    twrh.get_argument.assert_not_called()
+    pjba.assert_called()
+    rhga.assert_not_called()

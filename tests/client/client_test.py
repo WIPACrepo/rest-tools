@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import unittest
 
-import requests_mock
+import requests_mock  # type: ignore[import]
 from requests.exceptions import SSLError, Timeout
 
 # local imports

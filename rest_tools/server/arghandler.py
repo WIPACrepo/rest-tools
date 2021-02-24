@@ -3,7 +3,7 @@
 
 import distutils.util
 import json
-from typing import Any, cast, Dict, List, Optional
+from typing import Any, Callable, cast, Dict, List, Optional
 
 import tornado.web
 
@@ -17,11 +17,9 @@ class _NoDefaultValue:  # pylint: disable=R0903
 NO_DEFAULT = _NoDefaultValue()
 
 
-def _get_json_body_arguments(
-    request_handler: tornado.web.RequestHandler,
-) -> Dict[str, Any]:
+def _parse_json_body_arguments(request_body: bytes,) -> Dict[str, Any]:
     """Return the request body JSON-decoded, but only if it's a `dict`."""
-    json_body = json_decode(request_handler.request.body)  # type: ignore[no-untyped-call]
+    json_body = json_decode(request_body)  # type: ignore[no-untyped-call]
 
     if isinstance(json_body, dict):
         return cast(Dict[str, Any], json_body)
@@ -80,14 +78,11 @@ class ArgumentHandler:
 
     @staticmethod
     def get_json_body_argument(  # pylint: disable=R0913
-        request_handler: tornado.web.RequestHandler,
-        name: str,
-        default: Any,
-        choices: Optional[List[Any]],
+        request_body: bytes, name: str, default: Any, choices: Optional[List[Any]],
     ) -> Any:
         """Return the argument from JSON-decoded request body."""
         try:
-            value = _get_json_body_arguments(request_handler)[name]
+            value = _parse_json_body_arguments(request_body)[name]
             return ArgumentHandler._qualify_argument(None, choices, value)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
@@ -105,7 +100,8 @@ class ArgumentHandler:
 
     @staticmethod
     def get_argument(  # pylint: disable=W0221,R0913
-        request_handler: tornado.web.RequestHandler,
+        request_body: bytes,
+        rest_handler_get_argument: Callable[..., Optional[str]],
         name: str,
         default: Any,
         strip: bool,
@@ -123,7 +119,7 @@ class ArgumentHandler:
             # check JSON-body arguments
             try:
                 json_arg = ArgumentHandler.get_json_body_argument(
-                    request_handler, name, NO_DEFAULT, choices
+                    request_body, name, NO_DEFAULT, choices
                 )
                 return ArgumentHandler._qualify_argument(type_, choices, json_arg)
             except tornado.web.MissingArgumentError:
@@ -132,7 +128,7 @@ class ArgumentHandler:
                 raise _make_400_error(name, e)
             # check query and body arguments
             try:
-                arg = request_handler.get_argument(name, strip=strip)
+                arg = rest_handler_get_argument(name, strip=strip)
                 return ArgumentHandler._qualify_argument(type_, choices, arg)
             except (tornado.web.MissingArgumentError, _UnqualifiedArgumentError) as e:
                 raise _make_400_error(name, e)
@@ -143,7 +139,7 @@ class ArgumentHandler:
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             json_arg = ArgumentHandler.get_json_body_argument(
-                request_handler, name, NO_DEFAULT, choices
+                request_body, name, NO_DEFAULT, choices
             )
             return ArgumentHandler._qualify_argument(type_, choices, json_arg)
         except tornado.web.MissingArgumentError:
@@ -151,7 +147,7 @@ class ArgumentHandler:
         except _UnqualifiedArgumentError as e:
             raise _make_400_error(name, e)
         # check query and body arguments
-        arg = request_handler.get_argument(name, default, strip=strip)
+        arg = rest_handler_get_argument(name, default, strip=strip)
         try:
             return ArgumentHandler._qualify_argument(type_, choices, arg)
         except _UnqualifiedArgumentError as e:
