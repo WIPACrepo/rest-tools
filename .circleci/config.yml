@@ -10,6 +10,7 @@ jobs:
             - run: ./setupenv.sh
             - run: |
                 . env/bin/activate &&
+                pycycle --here --verbose &&
                 pytest -vvvvv --tb=short
 workflows:
     version: 2
