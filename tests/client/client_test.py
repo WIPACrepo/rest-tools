@@ -1,25 +1,22 @@
-"""
-Test script for RestClient
-"""
+"""Test script for RestClient."""
+
+# fmt:off
+# mypy: ignore-errors
+# pylint: skip-file
 
 import logging
-logger = logging.getLogger('rest_client')
-
-import os, sys, time
-import tempfile
+import os
 import shutil
-import random
-import string
-
+import tempfile
 import unittest
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-import requests_mock
-from requests.exceptions import Timeout, SSLError
 
+import requests_mock
+from requests.exceptions import SSLError, Timeout
+
+# local imports
 import rest_tools.client
+
+logger = logging.getLogger('rest_client')
 
 
 class rest_client_test(unittest.TestCase):
@@ -38,7 +35,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     def test_01_init(self, mock):
-        """Test init"""
+        """Test init."""
         address = 'http://test'
         auth_key = 'passkey'
         rpc = rest_tools.client.RestClient(address, auth_key)
@@ -46,7 +43,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_10_request(self, mock):
-        """Test request"""
+        """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
         result = {'result':'the result'}
@@ -75,7 +72,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_11_request(self, mock):
-        """Test request"""
+        """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
         result = ''
@@ -91,7 +88,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_20_timeout(self, mock):
-        """Test timeout"""
+        """Test timeout."""
         address = 'http://test'
         auth_key = 'passkey'
         result = 'the result'
@@ -105,7 +102,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_21_ssl_error(self, mock):
-        """Test ssl error"""
+        """Test ssl error."""
         address = 'http://test'
         auth_key = 'passkey'
         result = 'the result'
@@ -119,7 +116,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_22_request(self, mock):
-        """Test request"""
+        """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
         result = ''
@@ -133,7 +130,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     def test_90_request(self, mock):
-        """Test request"""
+        """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
         result = {'result':'the result'}
@@ -141,8 +138,8 @@ class rest_client_test(unittest.TestCase):
         rpc = rest_tools.client.RestClient(address, auth_key, timeout=0.1)
 
         def response(req, ctx):
-            body = rest_tools.client.json_decode(req.body)
-            return rest_tools.client.json_encode(result).encode('utf-8')
+            body = rest_tools.utils.json_util.json_decode(req.body)
+            return rest_tools.utils.json_util.json_encode(result).encode('utf-8')
         mock.post('/test', content=response)
 
         ret = rpc.request_seq('POST','test',{})
@@ -152,7 +149,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_91_request(self, mock):
-        """Test request"""
+        """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
         result = {'result':'the result'}
@@ -171,7 +168,7 @@ class rest_client_test(unittest.TestCase):
 
     @requests_mock.mock()
     async def test_92_request(self, mock):
-        """Test request"""
+        """Test request."""
         address = 'http://test'
         auth_key = 'passkey'
         result = {'result':'the result'}

@@ -7,8 +7,7 @@ from typing import Any, cast, Dict, List, Optional
 
 import tornado.web
 
-# local imports
-from rest_tools.client.json_util import json_decode
+from ..utils.json_util import json_decode
 
 
 class _NoDefaultValue:  # pylint: disable=R0903
