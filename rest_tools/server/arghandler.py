@@ -17,7 +17,7 @@ class _NoDefaultValue:  # pylint: disable=R0903
 NO_DEFAULT = _NoDefaultValue()
 
 
-def _parse_json_body_arguments(request_body: bytes,) -> Dict[str, Any]:
+def _parse_json_body_arguments(request_body: bytes) -> Dict[str, Any]:
     """Return the request body JSON-decoded, but only if it's a `dict`."""
     json_body = json_decode(request_body)  # type: ignore[no-untyped-call]
 
