@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 
+# fmt:off
+# pylint: skip-file
+
+import glob
 import os
 import sys
-import glob
+from typing import Any, Dict
 
 if sys.version_info < (3, 6):
     print('ERROR: rest_tools requires at least Python 3.6+ to run.')
@@ -10,13 +14,13 @@ if sys.version_info < (3, 6):
 
 try:
     # Use setuptools if available, for install_requires (among other things).
-    import setuptools
+    import setuptools  # type: ignore[import]
     from setuptools import setup
 except ImportError:
     setuptools = None
     from distutils.core import setup
 
-kwargs = {}
+kwargs: Dict[str, Any] = {}
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -45,7 +49,7 @@ if setuptools is not None:
 setup(
     name='rest_tools',
     scripts=glob.glob('bin/*'),
-    packages=['rest_tools', 'rest_tools.client', 'rest_tools.server'],
+    packages=['rest_tools', 'rest_tools.client', 'rest_tools.server', 'rest_tools.utils'],
     package_data={
         # data files need to be listed both here (which determines what gets
         # installed) and in MANIFEST.in (which determines what gets included

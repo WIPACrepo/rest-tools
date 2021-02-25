@@ -1,7 +1,6 @@
 """Test script for auth."""
 
 # fmt:off
-# mypy: ignore-errors
 # pylint: skip-file
 
 import logging
@@ -23,8 +22,10 @@ class auth_test(unittest.TestCase):
     def setUp(self):
         super(auth_test,self).setUp()
         self.test_dir = tempfile.mkdtemp(dir=os.getcwd())
+
         def cleanup():
             shutil.rmtree(self.test_dir)
+
         self.addCleanup(cleanup)
 
     def test_01_create_token(self):

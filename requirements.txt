@@ -1,14 +1,17 @@
+coverage
+cryptography
+motor
+pycycle
+pyjwt >= 2.0.1
 pytest
 pytest-asyncio
+pytest-flake8
 pytest-mock
-coverage
-tornado >= 5.0
+pytest-mypy
 requests
-requests_toolbelt
 requests-futures
 requests-mock
-cryptography
-pyjwt >= 2.0.1
-motor
-unidecode
+requests_toolbelt
 sphinx
+tornado >= 5.0
+unidecode

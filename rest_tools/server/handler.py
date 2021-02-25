@@ -1,7 +1,6 @@
 """RestHandler and related classes."""
 
 # fmt:off
-# mypy: ignore-errors
 # pylint: skip-file
 
 import logging
@@ -25,9 +24,8 @@ logger = logging.getLogger('rest')
 
 
 def RestHandlerSetup(config={}):
-    """
-    Default RestHandler setup. Returns the default arguments
-    for passing to the route setup.
+    """Default RestHandler setup. Returns the default arguments for passing to
+    the route setup.
 
     Args:
         config (dict): config dict
@@ -78,8 +76,8 @@ def RestHandlerSetup(config={}):
 
 
 class RestHandler(tornado.web.RequestHandler):
-    """Default REST handler"""
-    def __init__(self, *args, **kwargs):
+    """Default REST handler."""
+    def __init__(self, *args, **kwargs) -> None:
         self.server_header = ''
         try:
             super().__init__(*args, **kwargs)
@@ -166,7 +164,7 @@ class RestHandler(tornado.web.RequestHandler):
             Any -- the argument's value, unaltered
         """
         return arghandler.ArgumentHandler.get_json_body_argument(
-            super(), name, default, choices
+            self.request.body, name, default, choices
         )
 
     def get_argument(
@@ -194,15 +192,14 @@ class RestHandler(tornado.web.RequestHandler):
             Any -- the argument's value, possibly stripped/type-casted
         """
         return arghandler.ArgumentHandler.get_argument(
-            super(), name, default, strip, type_, choices
+            self.request.body, super().get_argument, name, default, strip, type_, choices
         )
 
 
 def authenticated(method):
-    """
-    Decorate methods with this to require that the Authorization
-    header is filled with a valid token. Does *not* check the
-    authorization of the token, just that it exists.
+    """Decorate methods with this to require that the Authorization header is
+    filled with a valid token. Does *not* check the authorization of the token,
+    just that it exists.
 
     On failure, raises a 403 error.
 
@@ -218,10 +215,9 @@ def authenticated(method):
 
 
 def catch_error(method):
-    """
-    Decorator to catch and handle errors on handlers.
+    """Decorator to catch and handle errors on handlers.
 
-    All failures caught here 
+    All failures caught here
     """
     @wraps(method)
     async def wrapper(self, *args, **kwargs):
@@ -243,8 +239,7 @@ def catch_error(method):
 
 
 def role_authorization(**_auth):
-    """
-    Handle RBAC authorization.
+    """Handle RBAC authorization.
 
     Like :py:func:`authenticated`, this requires the Authorization header
     to be filled with a valid token.  Note that calling both decorators
@@ -283,8 +278,7 @@ def role_authorization(**_auth):
 
 
 def scope_role_auth(**_auth):
-    """
-    Handle RBAC authorization using oauth2 scopes.
+    """Handle RBAC authorization using oauth2 scopes.
 
     Like :py:func:`authenticated`, this requires the Authorization header
     to be filled with a valid token.  Note that calling both decorators

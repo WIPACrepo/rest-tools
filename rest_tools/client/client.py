@@ -7,7 +7,6 @@ a json-encoded dictionary as necessary.
 """
 
 # fmt:off
-# mypy: ignore-errors
 # pylint: skip-file
 
 import asyncio
@@ -19,7 +18,7 @@ import jwt
 import requests
 
 from ..server import OpenIDAuth
-from .json_util import json_decode
+from ..utils.json_util import json_decode
 from .session import AsyncSession, Session
 
 

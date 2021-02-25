@@ -4,10 +4,14 @@ Get a `requests`_ Session that fully retries errors.
 .. _requests: http://docs.python-requests.org
 """
 
+# fmt:off
+# pylint: skip-file
+
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from requests_futures.sessions import FuturesSession
+from requests_futures.sessions import FuturesSession  # type: ignore[import]
+
 
 def AsyncSession(retries=10, backoff_factor=0.3,
             method_whitelist=('HEAD','TRACE','GET','POST','PUT','OPTIONS','DELETE'),
