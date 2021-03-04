@@ -43,7 +43,7 @@ class ArgumentHandler:
     """
 
     @staticmethod
-    def _cast_type(type_: Optional[type], value: Any) -> Any:
+    def _cast_type(value: Any, type_: Optional[type]) -> Any:
         """Cast `value` to `cast_type` type.
 
         Raise _InvalidArgumentError if qualification fails.
@@ -62,7 +62,7 @@ class ArgumentHandler:
         return value
 
     @staticmethod
-    def _validate_choice(choices: Optional[List[Any]], value: Any) -> Any:
+    def _validate_choice(value: Any, choices: Optional[List[Any]]) -> Any:
         """Check that `value` is in `choices`.
 
         Raise _InvalidArgumentError if qualification fails.
@@ -79,8 +79,8 @@ class ArgumentHandler:
 
     @staticmethod
     def _check_type(
-        type_: Optional[type],
         value: Any,
+        type_: Optional[type],
         none_is_ok: bool = False,
         server_side_error: bool = False,
     ) -> Any:
@@ -121,8 +121,8 @@ class ArgumentHandler:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
-            value = ArgumentHandler._validate_choice(choices, value)
-            value = ArgumentHandler._check_type(type_, value)
+            value = ArgumentHandler._validate_choice(value, choices)
+            value = ArgumentHandler._check_type(value, type_)
             return value
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
@@ -133,8 +133,8 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         try:
-            value = ArgumentHandler._validate_choice(choices, default)
-            value = ArgumentHandler._check_type(type_, value)
+            value = ArgumentHandler._validate_choice(default, choices)
+            value = ArgumentHandler._check_type(value, type_)
             return value
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
@@ -168,8 +168,8 @@ class ArgumentHandler:
             # check query/base and body arguments
             try:
                 value = rest_handler_get_argument(name, strip=strip)
-                value = ArgumentHandler._cast_type(type_, value)
-                value = ArgumentHandler._validate_choice(choices, value)
+                value = ArgumentHandler._cast_type(value, type_)
+                value = ArgumentHandler._validate_choice(value, choices)
                 return value
             except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
                 raise _make_400_error(name, e)
@@ -190,8 +190,8 @@ class ArgumentHandler:
         # check query base-arguments
         value = rest_handler_get_argument(name, default, strip=strip)
         try:
-            value = ArgumentHandler._cast_type(type_, value)
-            value = ArgumentHandler._validate_choice(choices, value)
+            value = ArgumentHandler._cast_type(value, type_,)
+            value = ArgumentHandler._validate_choice(value, choices)
             return value
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)

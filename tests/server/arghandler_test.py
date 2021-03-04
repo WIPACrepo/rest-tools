@@ -19,82 +19,82 @@ def rest_handler() -> RestHandler:
 def test_00_cast_type() -> None:
     """Test `_cast_type()`."""
     # None - no casting
-    assert ArgumentHandler._cast_type(None, "string") == "string"
-    assert ArgumentHandler._cast_type(None, "0") == "0"
-    assert ArgumentHandler._cast_type(None, "2.5") == "2.5"
+    assert ArgumentHandler._cast_type("string", None) == "string"
+    assert ArgumentHandler._cast_type("0", None) == "0"
+    assert ArgumentHandler._cast_type("2.5", None) == "2.5"
     # str
-    assert ArgumentHandler._cast_type(str, "string") == "string"
-    assert ArgumentHandler._cast_type(str, "") == ""
-    assert ArgumentHandler._cast_type(str, 0) == "0"
+    assert ArgumentHandler._cast_type("string", str) == "string"
+    assert ArgumentHandler._cast_type("", str) == ""
+    assert ArgumentHandler._cast_type(0, str) == "0"
     # int
-    assert ArgumentHandler._cast_type(int, "1") == 1
-    assert ArgumentHandler._cast_type(int, "1") != "1"
+    assert ArgumentHandler._cast_type("1", int) == 1
+    assert ArgumentHandler._cast_type("1", int) != "1"
     # float
-    assert ArgumentHandler._cast_type(float, "2.5") == 2.5
+    assert ArgumentHandler._cast_type("2.5", float) == 2.5
     # True
-    assert ArgumentHandler._cast_type(bool, "1") is True
-    assert ArgumentHandler._cast_type(bool, 1) is True
-    assert ArgumentHandler._cast_type(bool, -99) is True
+    assert ArgumentHandler._cast_type("1", bool) is True
+    assert ArgumentHandler._cast_type(1, bool) is True
+    assert ArgumentHandler._cast_type(-99, bool) is True
     for trues in ["True", "T", "On", "Yes", "Y"]:
         for val in [
             trues.upper(),
             trues.lower(),
             trues[:-1] + trues[-1].upper(),  # upper only last char
         ]:
-            assert ArgumentHandler._cast_type(bool, val) is True
+            assert ArgumentHandler._cast_type(val, bool) is True
     # False
-    assert ArgumentHandler._cast_type(bool, "") is False
-    assert ArgumentHandler._cast_type(bool, "0") is False
-    assert ArgumentHandler._cast_type(bool, 0) is False
+    assert ArgumentHandler._cast_type("", bool) is False
+    assert ArgumentHandler._cast_type("0", bool) is False
+    assert ArgumentHandler._cast_type(0, bool) is False
     for falses in ["False", "F", "Off", "No", "N"]:
         for val in [
             falses.upper(),
             falses.lower(),
             falses[:-1] + falses[-1].upper(),  # upper only last char
         ]:
-            assert ArgumentHandler._cast_type(bool, val) is False
+            assert ArgumentHandler._cast_type(val, bool) is False
     # list
-    assert ArgumentHandler._cast_type(list, "abcd") == ["a", "b", "c", "d"]
-    assert ArgumentHandler._cast_type(list, "") == []
+    assert ArgumentHandler._cast_type("abcd", list) == ["a", "b", "c", "d"]
+    assert ArgumentHandler._cast_type("", list) == []
 
 
 def test_01_cast_type__errors() -> None:
     """Test `_cast_type()`."""
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type(int, "")
+        ArgumentHandler._cast_type("", int)
     assert "(ValueError)" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type(float, "")
+        ArgumentHandler._cast_type("", float)
     assert "(ValueError)" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type(float, "123abc")
+        ArgumentHandler._cast_type("123abc", float)
     assert "(ValueError)" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type(bool, "anything")
+        ArgumentHandler._cast_type("anything", bool)
     assert "(ValueError)" in str(e.value)
 
 
 def test_02_validate_choice() -> None:
     """Test `_validate_choice()`."""
-    assert ArgumentHandler._validate_choice([True, False], True) is True
-    assert ArgumentHandler._validate_choice([0, 1, 2], 1) == 1
-    assert ArgumentHandler._validate_choice([""], "") == ""
-    ArgumentHandler._validate_choice([23, "23"], "23")
+    assert ArgumentHandler._validate_choice(True, [True, False]) is True
+    assert ArgumentHandler._validate_choice(1, [0, 1, 2]) == 1
+    assert ArgumentHandler._validate_choice("", [""]) == ""
+    ArgumentHandler._validate_choice("23", [23, "23"])
 
 
 def test_03_validate_choice__errors() -> None:
     """Test `_validate_choice()`."""
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice([23], "23")
+        ArgumentHandler._validate_choice("23", [23])
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice(["STRING"], "string")
+        ArgumentHandler._validate_choice("string", ["STRING"])
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice([0, 1, 2], "3")
+        ArgumentHandler._validate_choice("3", [0, 1, 2])
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice([["a", "b", "c", "d"]], "abc")
+        ArgumentHandler._validate_choice("abc", [["a", "b", "c", "d"]])
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
 
 
@@ -113,26 +113,26 @@ def test_04_check_type() -> None:
     for val in vals:
         print(val)
         # Passing Cases:
-        ArgumentHandler._check_type(type(val), val)
-        ArgumentHandler._check_type(None, val)  # type_=None is always allowed
-        ArgumentHandler._check_type(type(val), None, none_is_ok=True)
+        ArgumentHandler._check_type(val, type(val))
+        ArgumentHandler._check_type(val, None)  # type_=None is always allowed
+        ArgumentHandler._check_type(None, type(val), none_is_ok=True)
 
         # Error Cases:
 
         # None is not allowed
         if val is not None:
             with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._check_type(type(val), None)
+                ArgumentHandler._check_type(None, type(val))
             with pytest.raises(ValueError):
-                ArgumentHandler._check_type(type(val), None, server_side_error=True)
+                ArgumentHandler._check_type(None, type(val), server_side_error=True)
 
         # type-mismatch  # pylint: disable=C0123
         for o_type in [type(o) for o in vals if type(o) != type(val)]:
             print(o_type)
             with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._check_type(o_type, val)
+                ArgumentHandler._check_type(val, o_type)
             with pytest.raises(ValueError):
-                ArgumentHandler._check_type(o_type, val, server_side_error=True)
+                ArgumentHandler._check_type(val, o_type, server_side_error=True)
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
