@@ -6,8 +6,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 import tornado.web
-
-# local imports
 from rest_tools.server.arghandler import _UnqualifiedArgumentError, ArgumentHandler
 from rest_tools.server.handler import RestHandler
 
@@ -112,17 +110,27 @@ def test_10_type_check() -> None:
 
     for val in vals:
         print(val)
-        # Passing Cases
+        # Passing Cases:
         ArgumentHandler._type_check(type(val), val)
-        ArgumentHandler._type_check(None, val)  # type_ == None is always allowed
+        ArgumentHandler._type_check(None, val)  # type_=None is always allowed
+        ArgumentHandler._type_check(type(val), None, none_is_ok=True)
 
-        # Error Cases # pylint: disable=C0123
-        if val is None:  # val == None is always allowed
-            continue
+        # Error Cases:
+
+        # None is not allowed
+        if val is not None:
+            with pytest.raises(_UnqualifiedArgumentError):
+                ArgumentHandler._type_check(type(val), None)
+            with pytest.raises(ValueError):
+                ArgumentHandler._type_check(type(val), None, server_side_error=True)
+
+        # type-mismatch  # pylint: disable=C0123
         for o_type in [type(o) for o in vals if type(o) != type(val)]:
             print(o_type)
-            with pytest.raises(ValueError):
+            with pytest.raises(_UnqualifiedArgumentError):
                 ArgumentHandler._type_check(o_type, val)
+            with pytest.raises(ValueError):
+                ArgumentHandler._type_check(o_type, val, server_side_error=True)
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")

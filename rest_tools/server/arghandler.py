@@ -68,18 +68,34 @@ class ArgumentHandler:
 
     @staticmethod
     def _type_check(
-        type_: Optional[type], value: Any, none_is_ok: bool = False
+        type_: Optional[type],
+        value: Any,
+        none_is_ok: bool = False,
+        server_side_error: bool = False,
     ) -> None:
-        # check the value's type (None is okay too)
+        """Check the type of `value`.
+
+        Keyword Arguments:
+            none_is_ok {bool} -- indicate if `value` can also be `None` (default: {False})
+            server_side_error {bool} -- *see "Raises" below* (default: {False})
+
+        Raises:
+            ValueError -- if type check fails and `server_side_error=True`
+            _UnqualifiedArgumentError -- if type check fails and `server_side_error=False`
+        """
         if not type_:
             return
+
         if not isinstance(value, type_):
+            # wait, is None okay?
             if value is None and none_is_ok:
                 return
-            raise _UnqualifiedArgumentError(
-                f"(TypeError) {value} ({type(value)}) is not {type_}"
-                f"{' or None' if none_is_ok else ''}"
-            )
+            # raise!
+            msg = f"{value} ({type(value)}) is not {type_}{' or None' if none_is_ok else ''}"
+            if server_side_error:
+                raise ValueError(msg)
+            else:
+                raise _UnqualifiedArgumentError("(TypeError) " + msg)
 
     @staticmethod
     def get_json_body_argument(  # pylint: disable=R0913
@@ -90,7 +106,7 @@ class ArgumentHandler:
         choices: Optional[List[Any]],
     ) -> Any:
         """Get argument from the JSON-decoded request-body."""
-        try:
+        try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
             value = ArgumentHandler._qualify_argument(None, choices, value)
             value = ArgumentHandler._type_check(type_, value)
@@ -102,8 +118,7 @@ class ArgumentHandler:
         except _UnqualifiedArgumentError as e:
             raise _make_400_error(name, e)
 
-        # Else:
-        # Optional / Default
+        # Else: Optional (aka use default value)
         try:
             value = ArgumentHandler._qualify_argument(None, choices, default)
             value = ArgumentHandler._type_check(type_, value)
@@ -126,8 +141,7 @@ class ArgumentHandler:
         Try from `get_json_body_argument()` first, then from
         `request_handler.get_argument()`.
         """
-        # If:
-        # Required -> raise 400
+        # If: Required -> raise 400
         if isinstance(default, type(NO_DEFAULT)):
             # check JSON-body arguments
             try:
@@ -146,7 +160,9 @@ class ArgumentHandler:
                 raise _make_400_error(name, e)
 
         # Else: Optional (aka use default value)
-        ArgumentHandler._type_check(type_, default, none_is_ok=True)
+        ArgumentHandler._type_check(
+            type_, default, none_is_ok=True, server_side_error=True
+        )
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             return ArgumentHandler.get_json_body_argument(
