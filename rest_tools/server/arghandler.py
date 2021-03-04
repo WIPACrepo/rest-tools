@@ -26,8 +26,8 @@ def _parse_json_body_arguments(request_body: bytes) -> Dict[str, Any]:
     return {}
 
 
-class _UnqualifiedArgumentError(Exception):
-    """Raise when ArgumentHandler._qualify_argument() fails."""
+class _InvalidArgumentError(Exception):
+    """Raise when an argument-validation fails."""
 
 
 def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
@@ -43,31 +43,42 @@ class ArgumentHandler:
     """
 
     @staticmethod
-    def _qualify_argument(
-        cast_type: Optional[type], choices: Optional[List[Any]], value: Any
-    ) -> Any:
-        """Cast `value` to `cast_type` type, and/or check `value` in `choices`.
+    def _cast_type(type_: Optional[type], value: Any) -> Any:
+        """Cast `value` to `cast_type` type.
 
-        Raise _UnqualifiedArgumentError if either qualification fails.
+        Raise _InvalidArgumentError if qualification fails.
         """
-        if cast_type:
-            try:
-                if isinstance(value, str) and (cast_type == bool) and (value != ""):
-                    value = bool(distutils.util.strtobool(value))
-                else:
-                    value = cast_type(value)
-            except ValueError as e:
-                raise _UnqualifiedArgumentError(f"(ValueError) {e}")
+        if not type_:
+            return value
 
-        if choices and (value not in choices):
-            raise _UnqualifiedArgumentError(
-                f"(ValueError) {value} not in options ({choices})"
+        try:
+            if isinstance(value, str) and (type_ == bool) and (value != ""):
+                value = bool(distutils.util.strtobool(value))
+            else:
+                value = type_(value)
+        except ValueError as e:
+            raise _InvalidArgumentError(f"(ValueError) {e}")
+
+        return value
+
+    @staticmethod
+    def _validate_choice(choices: Optional[List[Any]], value: Any) -> Any:
+        """Check that `value` is in `choices`.
+
+        Raise _InvalidArgumentError if qualification fails.
+        """
+        if choices is None:
+            return value
+
+        if value not in choices:
+            raise _InvalidArgumentError(
+                f"(ValueError) {value} not in choices ({choices})"
             )
 
         return value
 
     @staticmethod
-    def _type_check(
+    def _check_type(
         type_: Optional[type],
         value: Any,
         none_is_ok: bool = False,
@@ -81,7 +92,7 @@ class ArgumentHandler:
 
         Raises:
             ValueError -- if type check fails and `server_side_error=True`
-            _UnqualifiedArgumentError -- if type check fails and `server_side_error=False`
+            _InvalidArgumentError -- if type check fails and `server_side_error=False`
         """
         if not type_:
             return value
@@ -95,7 +106,7 @@ class ArgumentHandler:
             if server_side_error:
                 raise ValueError(msg)
             else:
-                raise _UnqualifiedArgumentError("(TypeError) " + msg)
+                raise _InvalidArgumentError("(TypeError) " + msg)
 
         return value
 
@@ -110,22 +121,22 @@ class ArgumentHandler:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
-            value = ArgumentHandler._qualify_argument(None, choices, value)
-            value = ArgumentHandler._type_check(type_, value)
+            value = ArgumentHandler._validate_choice(choices, value)
+            value = ArgumentHandler._check_type(type_, value)
             return value
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
                 raise _make_400_error(name, tornado.web.MissingArgumentError(name))
-        except _UnqualifiedArgumentError as e:
+        except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
 
         # Else: Optional (aka use default value)
         try:
-            value = ArgumentHandler._qualify_argument(None, choices, default)
-            value = ArgumentHandler._type_check(type_, value)
+            value = ArgumentHandler._validate_choice(choices, default)
+            value = ArgumentHandler._check_type(type_, value)
             return value
-        except _UnqualifiedArgumentError as e:
+        except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
 
     @staticmethod
@@ -152,17 +163,19 @@ class ArgumentHandler:
                 )
             except tornado.web.MissingArgumentError:
                 pass
-            except _UnqualifiedArgumentError as e:
+            except _InvalidArgumentError as e:
                 raise _make_400_error(name, e)
             # check query/base and body arguments
             try:
-                arg = rest_handler_get_argument(name, strip=strip)
-                return ArgumentHandler._qualify_argument(type_, choices, arg)
-            except (tornado.web.MissingArgumentError, _UnqualifiedArgumentError) as e:
+                value = rest_handler_get_argument(name, strip=strip)
+                value = ArgumentHandler._cast_type(type_, value)
+                value = ArgumentHandler._validate_choice(choices, value)
+                return value
+            except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
                 raise _make_400_error(name, e)
 
         # Else: Optional (aka use default value)
-        ArgumentHandler._type_check(
+        ArgumentHandler._check_type(
             type_, default, none_is_ok=True, server_side_error=True
         )
         # check JSON-body arguments
@@ -172,11 +185,13 @@ class ArgumentHandler:
             )
         except tornado.web.MissingArgumentError:
             pass  # OK. Next, we'll try query base-arguments...
-        except _UnqualifiedArgumentError as e:
+        except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
         # check query base-arguments
-        arg = rest_handler_get_argument(name, default, strip=strip)
+        value = rest_handler_get_argument(name, default, strip=strip)
         try:
-            return ArgumentHandler._qualify_argument(type_, choices, arg)
-        except _UnqualifiedArgumentError as e:
+            value = ArgumentHandler._cast_type(type_, value)
+            value = ArgumentHandler._validate_choice(choices, value)
+            return value
+        except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
