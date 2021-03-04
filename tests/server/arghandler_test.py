@@ -76,26 +76,46 @@ def test_01_cast_type__errors() -> None:
 
 def test_02_validate_choice() -> None:
     """Test `_validate_choice()`."""
-    assert ArgumentHandler._validate_choice(True, [True, False]) is True
-    assert ArgumentHandler._validate_choice(1, [0, 1, 2]) == 1
-    assert ArgumentHandler._validate_choice("", [""]) == ""
-    ArgumentHandler._validate_choice("23", [23, "23"])
+    ArgumentHandler._validate_choice("foo", None, [])
+    ArgumentHandler._validate_choice("foo", None, None)
+
+    # choices
+    assert ArgumentHandler._validate_choice(True, [True, False], None) is True
+    assert ArgumentHandler._validate_choice(1, [0, 1, 2], None) == 1
+    assert ArgumentHandler._validate_choice("", [""], None) == ""
+    ArgumentHandler._validate_choice("23", [23, "23"], None)
+
+    # forbiddens
+    ArgumentHandler._validate_choice("23", [23, "23"], [])
+    ArgumentHandler._validate_choice("23", [23, "23"], ["boo!"])
+    ArgumentHandler._validate_choice("23", ["23"], [23])
 
 
 def test_03_validate_choice__errors() -> None:
     """Test `_validate_choice()`."""
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("23", [23])
+        ArgumentHandler._validate_choice("23", [23], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("string", ["STRING"])
+        ArgumentHandler._validate_choice("string", ["STRING"], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("3", [0, 1, 2])
+        ArgumentHandler._validate_choice("3", [0, 1, 2], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("abc", [["a", "b", "c", "d"]])
+        ArgumentHandler._validate_choice("abc", [["a", "b", "c", "d"]], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+    with pytest.raises(_InvalidArgumentError) as e:
+        ArgumentHandler._validate_choice("foo", [], [])  # no allowed choices
+    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+
+    # forbiddens
+    with pytest.raises(_InvalidArgumentError) as e:
+        ArgumentHandler._validate_choice("23", None, ["23"])
+    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    with pytest.raises(_InvalidArgumentError) as e:
+        ArgumentHandler._validate_choice("baz", ["baz"], ["baz"])
+    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
 
 
 def test_04_check_type() -> None:
@@ -450,15 +470,30 @@ def test_46_get_argument_args_and_body__errors(
 
     **Error-Test JSON-body arg choices**
 
-    If there's a matching argument in JSON-body, but it's not in choices, raise 400;
+    If there's a matching argument in JSON-body, but it's not in choices
+    or it's forbidden, raise 400;
     REGARDLESS if there's a value in the Query-Args.
     """
     pjba.return_value = {"foo": 5}
     rhga.return_value = 0
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("foo", default=None, choices=["this one!"])
+        rest_handler.get_argument("foo", default=None, choices=[0])
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+    assert "400" in str(e.value)
+    assert "foo" in str(e.value)
+
+    pjba.assert_called()
+    rhga.assert_not_called()
+
+    # # #
+
+    pjba.return_value = {"foo": 5}
+    rhga.return_value = 0
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        rest_handler.get_argument("foo", default=None, forbiddens=[5, 6, 7])
+    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
     assert "400" in str(e.value)
     assert "foo" in str(e.value)
 

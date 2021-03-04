@@ -62,17 +62,23 @@ class ArgumentHandler:
         return value
 
     @staticmethod
-    def _validate_choice(value: Any, choices: Optional[List[Any]]) -> Any:
-        """Check that `value` is in `choices`.
+    def _validate_choice(
+        value: Any, choices: Optional[List[Any]], forbiddens: Optional[List[Any]]
+    ) -> Any:
+        """Check that `value` is in `choices` and not in `forbiddens`.
 
         Raise _InvalidArgumentError if qualification fails.
         """
-        if choices is None:
-            return value
-
-        if value not in choices:
+        if choices is not None and value not in choices:
+            # choices=[] is weird, but is still valid
             raise _InvalidArgumentError(
                 f"(ValueError) {value} not in choices ({choices})"
+            )
+
+        if forbiddens and value in forbiddens:
+            # [] === None: (an empty forbiddens list is the same as no forbiddens list)
+            raise _InvalidArgumentError(
+                f"(ValueError) {value} is forbidden ({forbiddens})"
             )
 
         return value
@@ -117,11 +123,12 @@ class ArgumentHandler:
         default: Any,
         type_: Optional[type],
         choices: Optional[List[Any]],
+        forbiddens: Optional[List[Any]],
     ) -> Any:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
-            value = ArgumentHandler._validate_choice(value, choices)
+            value = ArgumentHandler._validate_choice(value, choices, forbiddens)
             value = ArgumentHandler._check_type(value, type_)
             return value
         except (KeyError, json.decoder.JSONDecodeError):
@@ -133,7 +140,7 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         try:
-            value = ArgumentHandler._validate_choice(default, choices)
+            value = ArgumentHandler._validate_choice(default, choices, forbiddens)
             value = ArgumentHandler._check_type(value, type_)
             return value
         except _InvalidArgumentError as e:
@@ -148,6 +155,7 @@ class ArgumentHandler:
         strip: bool,
         type_: Optional[type],
         choices: Optional[List[Any]],
+        forbiddens: Optional[List[Any]],
     ) -> Any:
         """Get argument from query base-arguments / JSON-decoded request-body.
 
@@ -159,7 +167,7 @@ class ArgumentHandler:
             # check JSON-body arguments
             try:
                 return ArgumentHandler.get_json_body_argument(
-                    request_body, name, NO_DEFAULT, type_, choices
+                    request_body, name, NO_DEFAULT, type_, choices, forbiddens
                 )
             except tornado.web.MissingArgumentError:
                 pass
@@ -169,7 +177,7 @@ class ArgumentHandler:
             try:
                 value = rest_handler_get_argument(name, strip=strip)
                 value = ArgumentHandler._cast_type(value, type_)
-                value = ArgumentHandler._validate_choice(value, choices)
+                value = ArgumentHandler._validate_choice(value, choices, forbiddens)
                 return value
             except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
                 raise _make_400_error(name, e)
@@ -181,7 +189,7 @@ class ArgumentHandler:
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             return ArgumentHandler.get_json_body_argument(
-                request_body, name, NO_DEFAULT, type_, choices
+                request_body, name, NO_DEFAULT, type_, choices, forbiddens
             )
         except tornado.web.MissingArgumentError:
             pass  # OK. Next, we'll try query base-arguments...
@@ -191,7 +199,7 @@ class ArgumentHandler:
         value = rest_handler_get_argument(name, default, strip=strip)
         try:
             value = ArgumentHandler._cast_type(value, type_,)
-            value = ArgumentHandler._validate_choice(value, choices)
+            value = ArgumentHandler._validate_choice(value, choices, forbiddens)
             return value
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
