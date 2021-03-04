@@ -44,18 +44,18 @@ class ArgumentHandler:
 
     @staticmethod
     def _qualify_argument(
-        type_: Optional[type], choices: Optional[List[Any]], value: Any
+        cast_type: Optional[type], choices: Optional[List[Any]], value: Any
     ) -> Any:
-        """Cast `value` to `type_` type, and/or check `value` in in `choices`.
+        """Cast `value` to `cast_type` type, and/or check `value` in `choices`.
 
         Raise _UnqualifiedArgumentError if either qualification fails.
         """
-        if type_:
+        if cast_type:
             try:
-                if isinstance(value, str) and (type_ == bool) and (value != ""):
+                if isinstance(value, str) and (cast_type == bool) and (value != ""):
                     value = bool(distutils.util.strtobool(value))
                 else:
-                    value = type_(value)
+                    value = cast_type(value)
             except ValueError as e:
                 raise _UnqualifiedArgumentError(f"(ValueError) {e}")
 
@@ -67,13 +67,18 @@ class ArgumentHandler:
         return value
 
     @staticmethod
-    def _type_check(type_: Optional[type], value: Any) -> None:
+    def _type_check(
+        type_: Optional[type], value: Any, none_is_ok: bool = False
+    ) -> None:
         # check the value's type (None is okay too)
         if not type_:
             return
-        if not isinstance(value, type_) and (value is not None):
-            raise ValueError(
-                f"Value, `{value}` ({type(value)}), is not {type_} or None"
+        if not isinstance(value, type_):
+            if value is None and none_is_ok:
+                return
+            raise _UnqualifiedArgumentError(
+                f"(TypeError) {value} ({type(value)}) is not {type_}"
+                f"{' or None' if none_is_ok else ''}"
             )
 
     @staticmethod
@@ -87,7 +92,9 @@ class ArgumentHandler:
         """Get argument from the JSON-decoded request-body."""
         try:
             value = _parse_json_body_arguments(request_body)[name]
-            return ArgumentHandler._qualify_argument(None, choices, value)
+            value = ArgumentHandler._qualify_argument(None, choices, value)
+            value = ArgumentHandler._type_check(type_, value)
+            return value
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
@@ -98,7 +105,9 @@ class ArgumentHandler:
         # Else:
         # Optional / Default
         try:
-            return ArgumentHandler._qualify_argument(None, choices, default)
+            value = ArgumentHandler._qualify_argument(None, choices, default)
+            value = ArgumentHandler._type_check(type_, value)
+            return value
         except _UnqualifiedArgumentError as e:
             raise _make_400_error(name, e)
 
@@ -136,9 +145,8 @@ class ArgumentHandler:
             except (tornado.web.MissingArgumentError, _UnqualifiedArgumentError) as e:
                 raise _make_400_error(name, e)
 
-        # Else:
-        # Optional / Default
-        ArgumentHandler._type_check(type_, default)
+        # Else: Optional (aka use default value)
+        ArgumentHandler._type_check(type_, default, none_is_ok=True)
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             return ArgumentHandler.get_json_body_argument(
