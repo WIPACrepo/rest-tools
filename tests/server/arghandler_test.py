@@ -65,7 +65,7 @@ def test_00_qualify_argument() -> None:
     ArgumentHandler._qualify_argument(None, [23, "23"], "23")
 
 
-def test_01_qualify_argument_errors() -> None:
+def test_01_qualify_argument__errors() -> None:
     """Test `_qualify_argument()`."""
     # Test Types:
     with pytest.raises(_UnqualifiedArgumentError) as e:
@@ -173,7 +173,7 @@ def test_20_get_argument_no_body(
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
 @patch("tornado.web.RequestHandler.get_argument")
-def test_21_get_argument_no_body_errors(
+def test_21_get_argument_no_body__errors(
     rhga: Mock, pjba: Mock, rest_handler: RestHandler
 ) -> None:
     """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
@@ -192,20 +192,20 @@ def test_21_get_argument_no_body_errors(
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
-def test_30_parse_json_body_arguments_argument(
-    pjba: Mock, rest_handler: RestHandler
-) -> None:
+def test_30_get_json_body_argument(pjba: Mock, rest_handler: RestHandler) -> None:
     """Test `request.body` JSON arguments."""
     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
     # Simple Use Cases
     for arg, val in body.items():
+        print(arg)
         pjba.return_value = body
         ret = rest_handler.get_json_body_argument(arg)
         assert ret == val
 
     # Default Use Cases
     for arg, val in body.items():
+        print(arg)
         pjba.return_value = {a: v for a, v in body.items() if a != arg}
         ret = rest_handler.get_json_body_argument(arg, default="Terry")
         assert ret == "Terry"
@@ -214,7 +214,7 @@ def test_30_parse_json_body_arguments_argument(
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
-def test_31_parse_json_body_arguments_argument_errors(
+def test_31_get_json_body_argument__errors(
     pjba: Mock, rest_handler: RestHandler
 ) -> None:
     """Test `request.body` JSON arguments."""
@@ -227,6 +227,66 @@ def test_31_parse_json_body_arguments_argument_errors(
     assert "Reqd" in str(e.value)
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
+
+
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+def test_32_get_json_body_argument_typechecking(
+    pjba: Mock, rest_handler: RestHandler
+) -> None:
+    """Test `get_json_body_argument()`.
+
+    **Test JSON-body arg type-checking**
+    """
+    pjba.return_value = {"foo": "99.9"}
+
+    ret = rest_handler.get_json_body_argument("foo", default=None, type_=str)
+
+    pjba.assert_called()
+    assert ret == "99.9"
+
+    # # #
+
+    pjba.return_value = {"foo": ["a", "bc"]}
+
+    ret = rest_handler.get_json_body_argument("foo", default=None, type_=list)
+
+    pjba.assert_called()
+    assert ret == ["a", "bc"]
+
+
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+def test_33_get_json_body_argument_typechecking__errors(
+    pjba: Mock, rest_handler: RestHandler
+) -> None:
+    """Test `get_json_body_argument()`.
+
+    If there's a matching argument in JSON-body, but it's the wrong
+    type, raise 400.
+    """
+    pjba.return_value = {"foo": "NINETY-NINE"}
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        rest_handler.get_json_body_argument("foo", default=None, type_=float)
+    assert "(TypeError)" in str(e.value)
+    assert "400" in str(e.value)
+    assert "NINETY-NINE" in str(e.value)
+    assert "foo" in str(e.value)
+
+    pjba.assert_called()
+
+    # # #
+
+    # strings shouldn't become lists
+    pjba.return_value = {"baz": "I'm not a list"}
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        rest_handler.get_json_body_argument("baz", default=None, type_=list)
+    assert "(TypeError)" in str(e.value)
+    assert "400" in str(e.value)
+    assert "I'm not a list" in str(e.value)
+    assert "baz" in str(e.value)
+
+    pjba.assert_called()
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
@@ -314,21 +374,32 @@ def test_44_get_argument_args_and_body(
 
     From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
 
-    **Test JSON-body arg typing**
+    **Test JSON-body arg type-checking**
     """
-    pjba.return_value = {"foo": "99"}
+    pjba.return_value = {"foo": "99.9"}
     rhga.return_value = -0.5
 
-    ret = rest_handler.get_argument("foo", default=None, type_=int)
+    ret = rest_handler.get_argument("foo", default=None, type_=str)
 
     pjba.assert_called()
     rhga.assert_not_called()
-    assert ret == 99
+    assert ret == "99.9"
+
+    # # #
+
+    pjba.return_value = {"foo": ["a", "bc"]}
+    rhga.return_value = "1 2 3"
+
+    ret = rest_handler.get_argument("foo", default=None, type_=list)
+
+    pjba.assert_called()
+    rhga.assert_not_called()
+    assert ret == ["a", "bc"]
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
 @patch("tornado.web.RequestHandler.get_argument")
-def test_45_get_argument_args_and_body_errors(
+def test_45_get_argument_args_and_body__errors(
     rhga: Mock, pjba: Mock, rest_handler: RestHandler
 ) -> None:
     """Test `get_argument()`.
@@ -342,8 +413,8 @@ def test_45_get_argument_args_and_body_errors(
     rhga.return_value = -0.5
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("foo", default=None, type_=int)
-    assert "(ValueError)" in str(e.value)
+        rest_handler.get_argument("foo", default=None, type_=float)
+    assert "(TypeError)" in str(e.value)
     assert "400" in str(e.value)
     assert "NINETY-NINE" in str(e.value)
     assert "foo" in str(e.value)
@@ -351,10 +422,26 @@ def test_45_get_argument_args_and_body_errors(
     pjba.assert_called()
     rhga.assert_not_called()
 
+    # # #
+
+    # strings shouldn't become lists
+    pjba.return_value = {"baz": "I'm not a list"}
+    rhga.return_value = "me neither"
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        rest_handler.get_argument("baz", default=None, type_=list)
+    assert "(TypeError)" in str(e.value)
+    assert "400" in str(e.value)
+    assert "I'm not a list" in str(e.value)
+    assert "baz" in str(e.value)
+
+    pjba.assert_called()
+    rhga.assert_not_called()
+
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
 @patch("tornado.web.RequestHandler.get_argument")
-def test_46_get_argument_args_and_body_errors(
+def test_46_get_argument_args_and_body__errors(
     rhga: Mock, pjba: Mock, rest_handler: RestHandler
 ) -> None:
     """Test `get_argument()`.

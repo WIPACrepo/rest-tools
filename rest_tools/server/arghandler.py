@@ -72,7 +72,7 @@ class ArgumentHandler:
         value: Any,
         none_is_ok: bool = False,
         server_side_error: bool = False,
-    ) -> None:
+    ) -> Any:
         """Check the type of `value`.
 
         Keyword Arguments:
@@ -84,18 +84,20 @@ class ArgumentHandler:
             _UnqualifiedArgumentError -- if type check fails and `server_side_error=False`
         """
         if not type_:
-            return
+            return value
 
         if not isinstance(value, type_):
             # wait, is None okay?
             if value is None and none_is_ok:
-                return
+                return value
             # raise!
             msg = f"{value} ({type(value)}) is not {type_}{' or None' if none_is_ok else ''}"
             if server_side_error:
                 raise ValueError(msg)
             else:
                 raise _UnqualifiedArgumentError("(TypeError) " + msg)
+
+        return value
 
     @staticmethod
     def get_json_body_argument(  # pylint: disable=R0913
