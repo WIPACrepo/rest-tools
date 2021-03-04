@@ -89,6 +89,7 @@ def test_02_validate_choice() -> None:
     ArgumentHandler._validate_choice("23", [23, "23"], [])
     ArgumentHandler._validate_choice("23", [23, "23"], ["boo!"])
     ArgumentHandler._validate_choice("23", ["23"], [23])
+    ArgumentHandler._validate_choice(["list"], None, [list(), dict()])
 
 
 def test_03_validate_choice__errors() -> None:
@@ -115,6 +116,12 @@ def test_03_validate_choice__errors() -> None:
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("baz", ["baz"], ["baz"])
+    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    with pytest.raises(_InvalidArgumentError) as e:
+        ArgumentHandler._validate_choice([], None, [list(), dict()])
+    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    with pytest.raises(_InvalidArgumentError) as e:
+        ArgumentHandler._validate_choice({}, None, [list(), dict()])
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
 
 
