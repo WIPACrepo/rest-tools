@@ -78,7 +78,11 @@ class ArgumentHandler:
 
     @staticmethod
     def get_json_body_argument(  # pylint: disable=R0913
-        request_body: bytes, name: str, default: Any, choices: Optional[List[Any]],
+        request_body: bytes,
+        name: str,
+        default: Any,
+        type_: Optional[type],
+        choices: Optional[List[Any]],
     ) -> Any:
         """Return the argument from JSON-decoded request body."""
         try:

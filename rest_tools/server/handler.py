@@ -9,12 +9,10 @@ from collections import defaultdict
 from functools import partial, wraps
 from typing import Any, List, Optional
 
+import rest_tools
 import tornado.gen
 import tornado.httpclient
 import tornado.web
-
-# local imports
-import rest_tools
 
 from . import arghandler
 from .auth import Auth, OpenIDAuth
@@ -147,6 +145,7 @@ class RestHandler(tornado.web.RequestHandler):
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
+        type_: Optional[type] = None,
         choices: Optional[List[Any]] = None,
     ) -> Any:
         """Return the argument from JSON-decoded request body.
@@ -158,13 +157,14 @@ class RestHandler(tornado.web.RequestHandler):
 
         Keyword Arguments:
             default -- a default value to use if the argument is not present
+            type_ -- optionally, type-check the argument's value (raise `400` for invalid value)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
 
         Returns:
             Any -- the argument's value, unaltered
         """
         return arghandler.ArgumentHandler.get_json_body_argument(
-            self.request.body, name, default, choices
+            self.request.body, name, default, type_, choices
         )
 
     def get_argument(
@@ -185,7 +185,7 @@ class RestHandler(tornado.web.RequestHandler):
         Keyword Arguments:
             default -- a default value to use if the argument is not present
             strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
-            type_ -- optionally, type-cast the argument's value (raise `400` on `TypeError`)
+            type_ -- optionally, type-cast/check the argument's value (raise `400` for invalid value)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
 
         Returns:
