@@ -18,7 +18,7 @@ NO_DEFAULT = _NoDefaultValue()
 
 
 def _parse_json_body_arguments(request_body: bytes) -> Dict[str, Any]:
-    """Return the request body JSON-decoded, but only if it's a `dict`."""
+    """Return the request-body JSON-decoded, but only if it's a `dict`."""
     json_body = json_decode(request_body)  # type: ignore[no-untyped-call]
 
     if isinstance(json_body, dict):
@@ -84,7 +84,7 @@ class ArgumentHandler:
         type_: Optional[type],
         choices: Optional[List[Any]],
     ) -> Any:
-        """Return the argument from JSON-decoded request body."""
+        """Get argument from the JSON-decoded request-body."""
         try:
             value = _parse_json_body_arguments(request_body)[name]
             return ArgumentHandler._qualify_argument(None, choices, value)
@@ -112,7 +112,7 @@ class ArgumentHandler:
         type_: Optional[type],
         choices: Optional[List[Any]],
     ) -> Any:
-        """Return argument from query arguments or JSON request body.
+        """Get argument from query base-arguments / JSON-decoded request-body.
 
         Try from `get_json_body_argument()` first, then from
         `request_handler.get_argument()`.
@@ -122,15 +122,14 @@ class ArgumentHandler:
         if isinstance(default, type(NO_DEFAULT)):
             # check JSON-body arguments
             try:
-                json_arg = ArgumentHandler.get_json_body_argument(
-                    request_body, name, NO_DEFAULT, choices
+                return ArgumentHandler.get_json_body_argument(
+                    request_body, name, NO_DEFAULT, type_, choices
                 )
-                return ArgumentHandler._qualify_argument(type_, choices, json_arg)
             except tornado.web.MissingArgumentError:
                 pass
             except _UnqualifiedArgumentError as e:
                 raise _make_400_error(name, e)
-            # check query and body arguments
+            # check query/base and body arguments
             try:
                 arg = rest_handler_get_argument(name, strip=strip)
                 return ArgumentHandler._qualify_argument(type_, choices, arg)
@@ -142,15 +141,14 @@ class ArgumentHandler:
         ArgumentHandler._type_check(type_, default)
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
-            json_arg = ArgumentHandler.get_json_body_argument(
-                request_body, name, NO_DEFAULT, choices
+            return ArgumentHandler.get_json_body_argument(
+                request_body, name, NO_DEFAULT, type_, choices
             )
-            return ArgumentHandler._qualify_argument(type_, choices, json_arg)
         except tornado.web.MissingArgumentError:
-            pass  # OK. Next, we'll try query arguments...
+            pass  # OK. Next, we'll try query base-arguments...
         except _UnqualifiedArgumentError as e:
             raise _make_400_error(name, e)
-        # check query and body arguments
+        # check query base-arguments
         arg = rest_handler_get_argument(name, default, strip=strip)
         try:
             return ArgumentHandler._qualify_argument(type_, choices, arg)

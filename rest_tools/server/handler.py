@@ -148,7 +148,7 @@ class RestHandler(tornado.web.RequestHandler):
         type_: Optional[type] = None,
         choices: Optional[List[Any]] = None,
     ) -> Any:
-        """Return the argument from JSON-decoded request body.
+        """Get argument from the JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
 
@@ -175,7 +175,7 @@ class RestHandler(tornado.web.RequestHandler):
         type_: Optional[type] = None,
         choices: Optional[List[Any]] = None,
     ) -> Any:
-        """Return argument from query arguments or JSON-decoded request body.
+        """Get argument from query base-arguments / JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
 
