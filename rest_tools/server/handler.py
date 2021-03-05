@@ -9,12 +9,10 @@ from collections import defaultdict
 from functools import partial, wraps
 from typing import Any, List, Optional
 
+import rest_tools
 import tornado.gen
 import tornado.httpclient
 import tornado.web
-
-# local imports
-import rest_tools
 
 from . import arghandler
 from .auth import Auth, OpenIDAuth
@@ -147,9 +145,11 @@ class RestHandler(tornado.web.RequestHandler):
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
+        type: Optional[type] = None,
         choices: Optional[List[Any]] = None,
+        forbiddens: Optional[List[Any]] = None,
     ) -> Any:
-        """Return the argument from JSON-decoded request body.
+        """Get argument from the JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
 
@@ -158,13 +158,15 @@ class RestHandler(tornado.web.RequestHandler):
 
         Keyword Arguments:
             default -- a default value to use if the argument is not present
+            type -- optionally, type-check the argument's value (raise `400` for invalid value)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
+            forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
 
         Returns:
             Any -- the argument's value, unaltered
         """
         return arghandler.ArgumentHandler.get_json_body_argument(
-            self.request.body, name, default, choices
+            self.request.body, name, default, type, choices, forbiddens
         )
 
     def get_argument(
@@ -172,10 +174,11 @@ class RestHandler(tornado.web.RequestHandler):
         name: str,
         default: Any = arghandler.NO_DEFAULT,
         strip: bool = True,
-        type_: Optional[type] = None,
+        type: Optional[type] = None,
         choices: Optional[List[Any]] = None,
+        forbiddens: Optional[List[Any]] = None,
     ) -> Any:
-        """Return argument from query arguments or JSON-decoded request body.
+        """Get argument from query base-arguments / JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
 
@@ -185,14 +188,15 @@ class RestHandler(tornado.web.RequestHandler):
         Keyword Arguments:
             default -- a default value to use if the argument is not present
             strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
-            type_ -- optionally, type-cast the argument's value (raise `400` on `TypeError`)
+            type -- optionally, type-cast/check the argument's value (raise `400` for invalid value)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
+            forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
 
         Returns:
             Any -- the argument's value, possibly stripped/type-casted
         """
         return arghandler.ArgumentHandler.get_argument(
-            self.request.body, super().get_argument, name, default, strip, type_, choices
+            self.request.body, super().get_argument, name, default, strip, type, choices, forbiddens
         )
 
 
