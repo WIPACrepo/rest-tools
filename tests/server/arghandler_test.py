@@ -141,7 +141,7 @@ def test_04_check_type() -> None:
         print(val)
         # Passing Cases:
         ArgumentHandler._check_type(val, type(val))
-        ArgumentHandler._check_type(val, None)  # type_=None is always allowed
+        ArgumentHandler._check_type(val, None)  # type=None is always allowed
         ArgumentHandler._check_type(None, type(val), none_is_ok=True)
 
         # Error Cases:
@@ -192,7 +192,7 @@ def test_20_get_argument_no_body(
         # w/ typing
         pjba.return_value = {}
         rhga.return_value = val
-        ret = rest_handler.get_argument(arg, default=None, type_=type_)
+        ret = rest_handler.get_argument(arg, default=None, type=type_)
         assert ret == type_(val) or (val == "False" and ret is False and type_ == bool)
 
     # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
@@ -268,7 +268,7 @@ def test_32_get_json_body_argument_typechecking(
     """
     pjba.return_value = {"foo": "99.9"}
 
-    ret = rest_handler.get_json_body_argument("foo", default=None, type_=str)
+    ret = rest_handler.get_json_body_argument("foo", default=None, type=str)
 
     pjba.assert_called()
     assert ret == "99.9"
@@ -277,7 +277,7 @@ def test_32_get_json_body_argument_typechecking(
 
     pjba.return_value = {"foo": ["a", "bc"]}
 
-    ret = rest_handler.get_json_body_argument("foo", default=None, type_=list)
+    ret = rest_handler.get_json_body_argument("foo", default=None, type=list)
 
     pjba.assert_called()
     assert ret == ["a", "bc"]
@@ -295,7 +295,7 @@ def test_33_get_json_body_argument_typechecking__errors(
     pjba.return_value = {"foo": "NINETY-NINE"}
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_json_body_argument("foo", default=None, type_=float)
+        rest_handler.get_json_body_argument("foo", default=None, type=float)
     assert "(TypeError)" in str(e.value)
     assert "400" in str(e.value)
     assert "NINETY-NINE" in str(e.value)
@@ -309,7 +309,7 @@ def test_33_get_json_body_argument_typechecking__errors(
     pjba.return_value = {"baz": "I'm not a list"}
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_json_body_argument("baz", default=None, type_=list)
+        rest_handler.get_json_body_argument("baz", default=None, type=list)
     assert "(TypeError)" in str(e.value)
     assert "400" in str(e.value)
     assert "I'm not a list" in str(e.value)
@@ -408,7 +408,7 @@ def test_44_get_argument_args_and_body(
     pjba.return_value = {"foo": "99.9"}
     rhga.return_value = -0.5
 
-    ret = rest_handler.get_argument("foo", default=None, type_=str)
+    ret = rest_handler.get_argument("foo", default=None, type=str)
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -419,7 +419,7 @@ def test_44_get_argument_args_and_body(
     pjba.return_value = {"foo": ["a", "bc"]}
     rhga.return_value = "1 2 3"
 
-    ret = rest_handler.get_argument("foo", default=None, type_=list)
+    ret = rest_handler.get_argument("foo", default=None, type=list)
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -442,7 +442,7 @@ def test_45_get_argument_args_and_body__errors(
     rhga.return_value = -0.5
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("foo", default=None, type_=float)
+        rest_handler.get_argument("foo", default=None, type=float)
     assert "(TypeError)" in str(e.value)
     assert "400" in str(e.value)
     assert "NINETY-NINE" in str(e.value)
@@ -458,7 +458,7 @@ def test_45_get_argument_args_and_body__errors(
     rhga.return_value = "me neither"
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("baz", default=None, type_=list)
+        rest_handler.get_argument("baz", default=None, type=list)
     assert "(TypeError)" in str(e.value)
     assert "400" in str(e.value)
     assert "I'm not a list" in str(e.value)

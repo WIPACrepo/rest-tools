@@ -145,7 +145,7 @@ class RestHandler(tornado.web.RequestHandler):
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
-        type_: Optional[type] = None,
+        type: Optional[type] = None,
         choices: Optional[List[Any]] = None,
         forbiddens: Optional[List[Any]] = None,
     ) -> Any:
@@ -158,7 +158,7 @@ class RestHandler(tornado.web.RequestHandler):
 
         Keyword Arguments:
             default -- a default value to use if the argument is not present
-            type_ -- optionally, type-check the argument's value (raise `400` for invalid value)
+            type -- optionally, type-check the argument's value (raise `400` for invalid value)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
             forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
 
@@ -166,7 +166,7 @@ class RestHandler(tornado.web.RequestHandler):
             Any -- the argument's value, unaltered
         """
         return arghandler.ArgumentHandler.get_json_body_argument(
-            self.request.body, name, default, type_, choices, forbiddens
+            self.request.body, name, default, type, choices, forbiddens
         )
 
     def get_argument(
@@ -174,7 +174,7 @@ class RestHandler(tornado.web.RequestHandler):
         name: str,
         default: Any = arghandler.NO_DEFAULT,
         strip: bool = True,
-        type_: Optional[type] = None,
+        type: Optional[type] = None,
         choices: Optional[List[Any]] = None,
         forbiddens: Optional[List[Any]] = None,
     ) -> Any:
@@ -188,7 +188,7 @@ class RestHandler(tornado.web.RequestHandler):
         Keyword Arguments:
             default -- a default value to use if the argument is not present
             strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
-            type_ -- optionally, type-cast/check the argument's value (raise `400` for invalid value)
+            type -- optionally, type-cast/check the argument's value (raise `400` for invalid value)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
             forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
 
@@ -196,7 +196,7 @@ class RestHandler(tornado.web.RequestHandler):
             Any -- the argument's value, possibly stripped/type-casted
         """
         return arghandler.ArgumentHandler.get_argument(
-            self.request.body, super().get_argument, name, default, strip, type_, choices, forbiddens
+            self.request.body, super().get_argument, name, default, strip, type, choices, forbiddens
         )
 
 
