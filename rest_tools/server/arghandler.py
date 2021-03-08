@@ -32,10 +32,12 @@ class _InvalidArgumentError(Exception):
 
 def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
     if isinstance(error, tornado.web.MissingArgumentError):
-        reason = f"`{arg_name}`: (MissingArgumentError) required argument is missing"
+        error.log_message = (
+            f"`{arg_name}`: (MissingArgumentError) required argument is missing"
+        )
+        return error
     else:
-        reason = f"`{arg_name}`: {error}"
-    return tornado.web.HTTPError(400, reason=reason)
+        return tornado.web.HTTPError(400, reason=f"`{arg_name}`: {error}")
 
 
 class ArgumentHandler:
