@@ -214,8 +214,9 @@ def test_21_get_argument_no_body__errors(
         pjba.return_value = {}
         rhga.side_effect = tornado.web.MissingArgumentError("Reqd")
         rest_handler.get_argument("Reqd")
-    assert "Reqd" in str(e.value)
     assert "400" in str(e.value)
+    assert "Reqd" in str(e.value)
+    assert "(MissingArgumentError) required argument is missing" in str(e.value)
 
     # NOTE - `type_` and `choices` are tested in `_qualify_argument` tests
 
@@ -250,10 +251,12 @@ def test_31_get_json_body_argument__errors(
     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
     # Missing Required Argument
-    with pytest.raises(tornado.web.MissingArgumentError) as e:
+    with pytest.raises(tornado.web.HTTPError) as e:
         pjba.return_value = body
         rest_handler.get_json_body_argument("Reqd")
+    assert "400" in str(e.value)
     assert "Reqd" in str(e.value)
+    assert "(MissingArgumentError) required argument is missing" in str(e.value)
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
