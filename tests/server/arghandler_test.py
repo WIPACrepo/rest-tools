@@ -214,8 +214,8 @@ def test_21_get_argument_no_body__errors(
         pjba.return_value = {}
         rhga.side_effect = tornado.web.MissingArgumentError("Reqd")
         rest_handler.get_argument("Reqd")
-    assert "Reqd" in str(e.value)
-    assert "400" in str(e.value)
+    error_msg = "HTTP 400: `Reqd`: (MissingArgumentError) required argument is missing"
+    assert str(e.value) == error_msg
 
     # NOTE - `type_` and `choices` are tested in `_qualify_argument` tests
 
@@ -250,10 +250,11 @@ def test_31_get_json_body_argument__errors(
     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
     # Missing Required Argument
-    with pytest.raises(tornado.web.MissingArgumentError) as e:
+    with pytest.raises(tornado.web.HTTPError) as e:
         pjba.return_value = body
         rest_handler.get_json_body_argument("Reqd")
-    assert "Reqd" in str(e.value)
+    error_msg = "HTTP 400: `Reqd`: (MissingArgumentError) required argument is missing"
+    assert str(e.value) == error_msg
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
@@ -296,10 +297,8 @@ def test_33_get_json_body_argument_typechecking__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_json_body_argument("foo", default=None, type=float)
-    assert "(TypeError)" in str(e.value)
-    assert "400" in str(e.value)
-    assert "NINETY-NINE" in str(e.value)
-    assert "foo" in str(e.value)
+    error_msg = "HTTP 400: `foo`: (TypeError) NINETY-NINE (<class 'str'>) is not <class 'float'>"
+    assert str(e.value) == error_msg
 
     pjba.assert_called()
 
@@ -310,10 +309,8 @@ def test_33_get_json_body_argument_typechecking__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_json_body_argument("baz", default=None, type=list)
-    assert "(TypeError)" in str(e.value)
-    assert "400" in str(e.value)
-    assert "I'm not a list" in str(e.value)
-    assert "baz" in str(e.value)
+    error_msg = "HTTP 400: `baz`: (TypeError) I'm not a list (<class 'str'>) is not <class 'list'>"
+    assert str(e.value) == error_msg
 
     pjba.assert_called()
 
@@ -443,10 +440,8 @@ def test_45_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("foo", default=None, type=float)
-    assert "(TypeError)" in str(e.value)
-    assert "400" in str(e.value)
-    assert "NINETY-NINE" in str(e.value)
-    assert "foo" in str(e.value)
+    error_msg = "HTTP 400: `foo`: (TypeError) NINETY-NINE (<class 'str'>) is not <class 'float'>"
+    assert str(e.value) == error_msg
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -459,10 +454,8 @@ def test_45_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("baz", default=None, type=list)
-    assert "(TypeError)" in str(e.value)
-    assert "400" in str(e.value)
-    assert "I'm not a list" in str(e.value)
-    assert "baz" in str(e.value)
+    error_msg = "HTTP 400: `baz`: (TypeError) I'm not a list (<class 'str'>) is not <class 'list'>"
+    assert str(e.value) == error_msg
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -486,9 +479,8 @@ def test_46_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("foo", default=None, choices=[0])
-    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-    assert "400" in str(e.value)
-    assert "foo" in str(e.value)
+    error_msg = "HTTP 400: `foo`: (ValueError) 5 not in choices ([0])"
+    assert str(e.value) == error_msg
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -500,9 +492,8 @@ def test_46_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("foo", default=None, forbiddens=[5, 6, 7])
-    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-    assert "400" in str(e.value)
-    assert "foo" in str(e.value)
+    error_msg = "HTTP 400: `foo`: (ValueError) 5 is forbidden ([5, 6, 7])"
+    assert str(e.value) == error_msg
 
     pjba.assert_called()
     rhga.assert_not_called()
