@@ -189,7 +189,7 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         ArgumentHandler._check_type(
-            type_, default, none_is_ok=True, server_side_error=True
+            default, type_, none_is_ok=True, server_side_error=True
         )
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
