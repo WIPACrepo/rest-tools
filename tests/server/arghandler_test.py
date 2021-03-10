@@ -2,6 +2,7 @@
 
 # pylint: disable=W0212,W0621
 
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest  # type: ignore[import]
@@ -160,6 +161,30 @@ def test_04_check_type() -> None:
                 ArgumentHandler._check_type(val, o_type)
             with pytest.raises(ValueError):
                 ArgumentHandler._check_type(val, o_type, server_side_error=True)
+
+
+@patch("rest_tools.server.arghandler._parse_json_body_arguments")
+@patch("tornado.web.RequestHandler.get_argument")
+def test_10_default(rhga: Mock, pjba: Mock, rest_handler: RestHandler) -> None:
+    """Test cases where just the default is returned.
+
+    NOTE: RequestHandler.get_argument() always returns the default if the arg is absent.
+    """
+    default: Any
+    for default in [None, "string", 100, 50.5]:
+        print(default)
+        pjba.return_value = {}
+        rhga.return_value = default
+        ret = rest_handler.get_argument("arg", default=default)
+        assert ret == default
+
+    # w/ typing
+    for default in ["string", 100, 50.5]:
+        print(default)
+        pjba.return_value = {}
+        rhga.return_value = default
+        ret = rest_handler.get_argument("arg", type=type(default), default=default)
+        assert ret == default
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
