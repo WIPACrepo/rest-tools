@@ -20,7 +20,7 @@ import requests
 
 from ..server import OpenIDAuth
 from ..utils.json_util import JSONType, json_decode
-from .session import AsyncSession, Session, SessionType
+from .session import AsyncSession, Session
 
 
 def _to_str(s: Union[str, bytes]) -> str:
@@ -67,14 +67,14 @@ class RestClient:
 
         self.session = self.open()  # start session
 
-    def open(self, sync: bool = False) -> SessionType:
+    def open(self, sync: bool = False) -> requests.Session:
         """Open the http session."""
         self.logger.info('establish REST http session')
         if sync:
             self.session = Session(self.retries)
         else:
             self.session = AsyncSession(self.retries)
-        self.session.headers = {
+        self.session.headers = {  # type: ignore[assignment]
             'Content-Type': 'application/json',
         }
         if 'username' in self.kwargs and 'password' in self.kwargs:
@@ -170,7 +170,8 @@ class RestClient:
         """
         url, kwargs = self._prepare(method, path, args)
         try:
-            r = await asyncio.wrap_future(self.session.request(method, url, **kwargs))
+            # session: AsyncSession; So, self.session.request() -> Future
+            r: requests.Response = await asyncio.wrap_future(self.session.request(method, url, **kwargs))  # type: ignore[arg-type]
             r.raise_for_status()
             return self._decode(r.content)
         except requests.exceptions.HTTPError as e:

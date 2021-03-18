@@ -13,8 +13,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from requests_futures.sessions import FuturesSession  # type: ignore[import]
 
-SessionType = Union[FuturesSession, requests.Session]
-
 
 def AsyncSession(
     retries: int = 10,
@@ -39,7 +37,7 @@ def AsyncSession(
         connect=retries,
         read=retries,
         redirect=retries,
-        status=retries,
+        # status=retries,
         method_whitelist=method_whitelist,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
@@ -73,7 +71,7 @@ def Session(
         connect=retries,
         read=retries,
         redirect=retries,
-        status=retries,
+        # status=retries,
         method_whitelist=method_whitelist,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
