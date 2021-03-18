@@ -1,20 +1,27 @@
-"""
-Some JSON encoding and decoding utilities.
-"""
+"""Some JSON encoding and decoding utilities."""
 
-import json
-from datetime import date,datetime,time
+# fmt:off
+# pylint: skip-file
+
 import base64
-import zlib
+import json
 import logging
+import zlib
+from datetime import date, datetime, time
+from typing import Any, Optional, Union
 
 from tornado.escape import recursive_unicode
 
 logger = logging.getLogger('jsonUtil')
 
+
+JSONType = Any
+
+
 class json_compressor:
     """Used for files and other large things sent over json.
-       Great for log files.
+
+    Great for log files.
     """
     @staticmethod
     def compress(obj):
@@ -63,7 +70,8 @@ class time_converter(datetime_converter):
         return time(d.hour,d.minute,d.second,d.microsecond)
 
 class binary_converter:
-    """note that is is really only for decode of json, since python bytes are strings"""
+    """note that is is really only for decode of json, since python bytes are
+    strings."""
     @staticmethod
     def dumps(obj,name=None):
         return base64.b64encode(obj)
@@ -102,6 +110,7 @@ class var_converter:
 # for things like OrderedDict
 import ast
 from collections import OrderedDict
+
 
 class repr_converter:
     @staticmethod
@@ -157,10 +166,17 @@ def JSONToObj(obj):
     return ret
 
 
-def json_encode(value, indent=None):
+def json_encode(value: JSONType, indent: Optional[Union[int, str]] = None) -> str:
     """JSON-encodes the given Python object."""
-    return json.dumps(recursive_unicode(value),default=objToJSON,separators=(',',':'), indent=indent).replace("</", "<\\/")
+    string = json.dumps(
+        recursive_unicode(value),
+        default=objToJSON,
+        separators=(",", ":"),
+        indent=indent,
+    )
+    return string.replace("</", "<\\/")
 
-def json_decode(value):
-    """Returns Python objects for the given JSON string."""
-    return json.loads(value,object_hook=JSONToObj)
+
+def json_decode(value: Union[str, bytes, bytearray]) -> JSONType:
+    """Return Python objects for the given JSON string."""
+    return json.loads(value, object_hook=JSONToObj)

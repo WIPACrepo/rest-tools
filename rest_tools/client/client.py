@@ -13,16 +13,17 @@ import asyncio
 import logging
 import os
 import time
+from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
 
 from ..server import OpenIDAuth
-from ..utils.json_util import json_decode
-from .session import AsyncSession, Session
+from ..utils.json_util import JSONType, json_decode
+from .session import AsyncSession, Session, SessionType
 
 
-def to_str(s):
+def to_str(s) -> str:
     if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
@@ -40,19 +41,26 @@ class RestClient:
         password (str): (optional) auth-basic password
     """
 
-    def __init__(self, address, token=None, timeout=60.0, retries=10, **kwargs):
+    def __init__(
+        self,
+        address: str,
+        token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
+        timeout: float = 60.0,
+        retries: int = 10,
+        **kwargs: Any
+    ) -> None:
         self.address = address
         self.timeout = timeout
         self.retries = retries
         self.kwargs = kwargs
-        self.session = None
+        self.session: Optional[SessionType] = None
 
         self.logger = logging.getLogger('RestClient')
         self.logger.setLevel('DEBUG')
 
         # token handling
-        self.access_token = None
-        self.token_func = None
+        self.access_token: Optional[Union[str, bytes]] = None
+        self.token_func: Optional[Callable[[], Union[str, bytes]]] = None
         if token:
             if isinstance(token, (str,bytes)):
                 self.access_token = token
@@ -61,7 +69,7 @@ class RestClient:
 
         self.open() # start session
 
-    def open(self, sync=False):
+    def open(self, sync: bool = False) -> None:
         """Open the http session."""
         self.logger.info('establish REST http session')
         if sync:
@@ -81,13 +89,13 @@ class RestClient:
         if 'cacert' in self.kwargs:
             self.session.verify = self.kwargs['cacert']
 
-    def close(self):
+    def close(self) -> None:
         """Close the http session."""
         self.logger.info('close REST http session')
         if self.session:
             self.session.close()
 
-    def _get_token(self):
+    def _get_token(self) -> None:
         if self.access_token:
             # check if expired
             try:
@@ -105,14 +113,19 @@ class RestClient:
             self.logger.warning('acquiring access token failed')
             raise
 
-    def _prepare(self, method, path, args=None):
+    def _prepare(
+        self,
+        method: str,
+        path: str,
+        args: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, Dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
             args = {}
         if path.startswith('/'):
             path = path[1:]
         url = os.path.join(self.address, path)
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             'timeout': self.timeout,
         }
         if method in ('GET','HEAD'):
@@ -126,7 +139,7 @@ class RestClient:
             self.session.headers['Authorization'] = 'Bearer '+to_str(self.access_token)
         return (url, kwargs)
 
-    def _decode(self, content):
+    def _decode(self, content: Union[str, bytes, bytearray]) -> JSONType:
         """Internal method for translating response from json."""
         if not content:
             self.logger.info('request returned empty string')
@@ -137,7 +150,12 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    async def request(self, method, path, args=None):
+    async def request(
+        self,
+        method: str,
+        path: str,
+        args: Optional[Dict[str, Any]] = None
+    ) -> JSONType:
         """Send request to REST Server.
 
         Async request - use with coroutines.
@@ -161,7 +179,12 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    def request_seq(self, method, path, args=None):
+    def request_seq(
+        self,
+        method: str,
+        path: str,
+        args: Optional[Dict[str, Any]] = None
+    ) -> JSONType:
         """Send request to REST Server.
 
         Sequential version of `request`.
@@ -197,17 +220,25 @@ class OpenIDRestClient(RestClient):
         timeout (int): request timeout
         retries (int): number of retries to attempt
     """
-    def __init__(self, address, token_url, refresh_token, client_id, client_secret, **kwargs):
+    def __init__(
+        self,
+        address: str,
+        token_url: str,
+        refresh_token: str,
+        client_id: str,
+        client_secret: str,
+        **kwargs: Any
+    ) -> None:
         super().__init__(address, **kwargs)
         self.auth = OpenIDAuth(token_url)
         self.client_id = client_id
         self.client_secret = client_secret
 
         self.access_token = None
-        self.refresh_token = refresh_token
+        self.refresh_token: Optional[Union[str, bytes]] = refresh_token
         self._get_token()
 
-    def _get_token(self):
+    def _get_token(self) -> None:
         if self.access_token:
             # check if expired
             try:
@@ -242,7 +273,7 @@ class OpenIDRestClient(RestClient):
 
         raise Exception('No token available')
 
-    def _prepare(self, *args, **kwargs):
+    def _prepare(self, *args: Any, **kwargs: Any) -> Tuple[str, Dict[str, Any]]:
         self._get_token()
         if self.access_token:
             self.session.headers['Authorization'] = 'Bearer '+to_str(self.access_token)
