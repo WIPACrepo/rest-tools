@@ -214,14 +214,19 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
+        chunk_size: Optional[int] = 8096
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.
+
+        `chunk_size=None` will read data as it arrives
+        in whatever size the chunks are received.
 
         Args:
             method (str): the http method
             path (str): the url path on the server
             args (dict): any arguments to pass
+            chunk_size (int): chunk size (see above)
 
         Returns:
             dict: json dict or raw string
@@ -232,7 +237,7 @@ class RestClient:
             url, kwargs = self._prepare(method, path, args)
             resp = self.session.request(method, url, stream=True, **kwargs)
             resp.raise_for_status()
-            for line in resp.iter_lines():
+            for line in resp.iter_lines(chunk_size=chunk_size):
                 yield self._decode(line)
         finally:
             self.session = s
