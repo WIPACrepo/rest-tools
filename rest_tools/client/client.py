@@ -207,6 +207,25 @@ class RestClient:
         finally:
             self.session = s
 
+    async def request_stream(
+        self,
+        method: str,
+        path: str,
+        args: Optional[Dict[str, Any]] = None
+    ) -> Generator[JSONType, None, None]:
+        """Send request to REST Server, and stream results back.
+
+        Args:
+            method (str): the http method
+            path (str): the url path on the server
+            args (dict): any arguments to pass
+
+        Returns:
+            dict: json dict or raw string
+        """
+        pass
+
+
 class OpenIDRestClient(RestClient):
     """A REST client that can handle token refresh using OpenID .well-known
     auto-discovery.
