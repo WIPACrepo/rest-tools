@@ -53,8 +53,6 @@ class RestClient:
         self.timeout = timeout
         self.retries = retries
         self.kwargs = kwargs
-        self.session: Optional[SessionType] = None
-
         self.logger = logging.getLogger('RestClient')
         self.logger.setLevel('DEBUG')
 
@@ -67,9 +65,9 @@ class RestClient:
             elif callable(token):
                 self.token_func = token
 
-        self.open() # start session
+        self.session = self.open()  # start session
 
-    def open(self, sync: bool = False) -> None:
+    def open(self, sync: bool = False) -> SessionType:
         """Open the http session."""
         self.logger.info('establish REST http session')
         if sync:
@@ -88,6 +86,8 @@ class RestClient:
                 self.session.cert = self.kwargs['sslcert']
         if 'cacert' in self.kwargs:
             self.session.verify = self.kwargs['cacert']
+
+        return self.session
 
     def close(self) -> None:
         """Close the http session."""
@@ -108,7 +108,7 @@ class RestClient:
                 self.logger.debug('token expired')
 
         try:
-            self.access_token = self.token_func()
+            self.access_token = self.token_func()  # type: ignore[misc]
         except Exception:
             self.logger.warning('acquiring access token failed')
             raise
