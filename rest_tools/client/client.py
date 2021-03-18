@@ -23,7 +23,7 @@ from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session, SessionType
 
 
-def to_str(s) -> str:
+def _to_str(s: Union[str, bytes]) -> str:
     if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
@@ -136,7 +136,7 @@ class RestClient:
         if self.token_func:
             self._get_token()
         if self.access_token:
-            self.session.headers['Authorization'] = 'Bearer '+to_str(self.access_token)
+            self.session.headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
         return (url, kwargs)
 
     def _decode(self, content: Union[str, bytes, bytearray]) -> JSONType:
@@ -295,5 +295,5 @@ class OpenIDRestClient(RestClient):
     def _prepare(self, *args: Any, **kwargs: Any) -> Tuple[str, Dict[str, Any]]:
         self._get_token()
         if self.access_token:
-            self.session.headers['Authorization'] = 'Bearer '+to_str(self.access_token)
+            self.session.headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
         return super()._prepare(*args, **kwargs)
