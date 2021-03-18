@@ -226,7 +226,16 @@ class RestClient:
         Returns:
             dict: json dict or raw string
         """
-        pass
+        s = self.session
+        try:
+            self.open(sync=True)
+            url, kwargs = self._prepare(method, path, args)
+            resp = self.session.request(method, url, stream=True, **kwargs)
+            resp.raise_for_status()
+            for line in resp.iter_lines():
+                yield self._decode(line)
+        finally:
+            self.session = s
 
 
 class OpenIDRestClient(RestClient):
