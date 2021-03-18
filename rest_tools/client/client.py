@@ -210,7 +210,7 @@ class RestClient:
         finally:
             self.session = s
 
-    async def request_stream(
+    def request_stream(
         self,
         method: str,
         path: str,
