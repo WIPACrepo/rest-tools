@@ -99,7 +99,8 @@ class RestClient:
         if self.access_token:
             # check if expired
             try:
-                data = jwt.decode(self.access_token, verify=False)
+                # NOTE: PyJWT mis-type-hinted arg #1 as a str, but byte is also fine
+                data = jwt.decode(self.access_token, verify=False)  # type: ignore[arg-type]
                 if data['exp'] < time.time()+5:
                     raise Exception()
                 return
