@@ -144,3 +144,20 @@ async def test_92_request_seq(requests_mock: Mock) -> None:
 
     with pytest.raises(Exception):
         rpc.request_seq("POST", "test", {})
+
+
+def test_100_request_stream(requests_mock: Mock) -> None:
+    """Test `request_stream()`."""
+    result = {"result": "the result"}
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
+
+    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        _ = json_decode(req.body)
+        return json_encode(result).encode("utf-8")
+
+    requests_mock.post("/test", content=response)
+    ret = rpc.request_stream("POST", "test", {})
+
+    assert requests_mock.called
+    assert ret == result
