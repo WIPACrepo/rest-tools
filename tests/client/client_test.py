@@ -20,21 +20,16 @@ logger = logging.getLogger("rest_client")
 
 
 def test_01_init() -> None:
-    """Test init."""
-    address = "http://test"
-    auth_key = "passkey"
-    rpc = RestClient(address, auth_key)
+    """Test `__init__()` & `close()`."""
+    rpc = RestClient("http://test", "passkey")
     rpc.close()
 
 
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_10_request(requests_mock: Mock) -> None:
     """Test `async request()`."""
-    address = "http://test"
-    auth_key = "passkey"
     result = {"result": "the result"}
-
-    rpc = RestClient(address, auth_key, timeout=0.1)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
@@ -64,11 +59,7 @@ async def test_10_request(requests_mock: Mock) -> None:
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_11_request(requests_mock: Mock) -> None:
     """Test request in `async request()`."""
-    address = "http://test"
-    auth_key = "passkey"
-    # result = ''
-
-    rpc = RestClient(address, auth_key, timeout=0.1)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.get("/test", content=b"")
     ret = await rpc.request("GET", "test", {})
 
@@ -79,11 +70,7 @@ async def test_11_request(requests_mock: Mock) -> None:
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_20_timeout(requests_mock: Mock) -> None:
     """Test timeout in `async request()`."""
-    address = "http://test"
-    auth_key = "passkey"
-    # result = 'the result'
-
-    rpc = RestClient(address, auth_key, timeout=0.1, backoff=False)
+    rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
     requests_mock.post("/test", exc=Timeout)
 
     with pytest.raises(Timeout):
@@ -93,11 +80,7 @@ async def test_20_timeout(requests_mock: Mock) -> None:
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_21_ssl_error(requests_mock: Mock) -> None:
     """Test ssl error in `async request()`."""
-    address = "http://test"
-    auth_key = "passkey"
-    # result = 'the result'
-
-    rpc = RestClient(address, auth_key, timeout=0.1, backoff=False)
+    rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
     requests_mock.post("/test", exc=SSLError)
 
     with pytest.raises(SSLError):
@@ -107,11 +90,7 @@ async def test_21_ssl_error(requests_mock: Mock) -> None:
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_22_request(requests_mock: Mock) -> None:
     """Test `async request()`."""
-    address = "http://test"
-    auth_key = "passkey"
-    # result = ''
-
-    rpc = RestClient(address, auth_key, timeout=0.1)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.get("/test", content=b'{"foo"}')
 
     with pytest.raises(Exception):
@@ -120,11 +99,8 @@ async def test_22_request(requests_mock: Mock) -> None:
 
 def test_90_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
-    address = "http://test"
-    auth_key = "passkey"
     result = {"result": "the result"}
-
-    rpc = RestClient(address, auth_key, timeout=0.1)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
@@ -141,11 +117,8 @@ def test_90_request_seq(requests_mock: Mock) -> None:
 @pytest.mark.asyncio  # type: ignore[misc]
 async def test_91_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
-    address = "http://test"
-    auth_key = "passkey"
     result = {"result": "the result"}
-
-    rpc = RestClient(address, auth_key, timeout=0.1)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
@@ -162,11 +135,7 @@ async def test_91_request_seq(requests_mock: Mock) -> None:
 @pytest.mark.asyncio  # type: ignore[misc]  # type: ignore[misc]
 async def test_92_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
-    address = "http://test"
-    auth_key = "passkey"
-    # result = {'result':'the result'}
-
-    rpc = RestClient(address, auth_key, timeout=0.1)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         raise Exception()
