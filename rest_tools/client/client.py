@@ -7,7 +7,6 @@ a json-encoded dictionary as necessary.
 """
 
 # fmt:off
-# pylint: skip-file
 
 import asyncio
 import logging
