@@ -175,7 +175,7 @@ def test_100_request_stream() -> None:
     Based on https://github.com/gabrielfalcao/HTTPretty/blob/master/tests/functional/test_requests.py#L290
     """
     mock_url = "http://stream.test"
-    response_stream = [
+    expected_stream = [
         b'{"foo-bar":"baz"}\r\n',
         b"\r\n",
         b'{"green":["eggs", "and", "ham"]}\r\n',
@@ -187,73 +187,51 @@ def test_100_request_stream() -> None:
     # ----------------------------------------------------------------------------------
 
     HTTPretty.register_uri(
-        HTTPretty.POST, mock_url, body=(ln for ln in response_stream), streaming=True,
+        HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
 
     # taken from the requests docs
 
     # test iterating by line
     # http://docs.python-requests.org/en/latest/user/advanced/#streaming-requests
-    response = requests.post(
-        mock_url,
-        data={"track": "requests"},
-        auth=("username", "password"),
-        stream=True,
-    )
+    response_stream = requests.post(mock_url, stream=True).iter_lines()
 
-    line_iter = response.iter_lines()
     with _in_time(0.01, "Iterating by line is taking forever!"):
-        for i, _ in enumerate(response_stream):
-            expect_to_equal(next(line_iter).strip(), response_stream[i].strip())
+        for i, _ in enumerate(expected_stream):
+            expect_to_equal(next(response_stream).strip(), expected_stream[i].strip())
 
     # ----------------------------------------------------------------------------------
 
     HTTPretty.register_uri(
-        HTTPretty.POST, mock_url, body=(ln for ln in response_stream), streaming=True,
+        HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
     # test iterating by line after a second request
-    response = requests.post(
-        mock_url,
-        data={"track": "requests"},
-        auth=("username", "password"),
-        stream=True,
-    )
+    response_stream = requests.post(mock_url, stream=True).iter_lines()
 
-    line_iter = response.iter_lines()
     with _in_time(0.01, "Iterating by line is taking forever (again)!"):
-        for i, _ in enumerate(response_stream):
-            expect_to_equal(next(line_iter).strip(), response_stream[i].strip())
+        for i, _ in enumerate(expected_stream):
+            expect_to_equal(next(response_stream).strip(), expected_stream[i].strip())
 
     # ----------------------------------------------------------------------------------
 
     HTTPretty.register_uri(
-        HTTPretty.POST, mock_url, body=(ln for ln in response_stream), streaming=True,
+        HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
     # test iterating by char
-    response = requests.post(
-        mock_url,
-        data={"track": "requests"},
-        auth=("username", "password"),
-        stream=True,
-    )
+    response_stream = requests.post(mock_url, stream=True).iter_content(chunk_size=1)
 
     with _in_time(0.02, "Iterating by char is taking forever!"):
-        body = b"".join(c for c in response.iter_content(chunk_size=1))
-    expect_to_equal(body, b"".join(response_stream))
+        body = b"".join(c for c in response_stream)
+    expect_to_equal(body, b"".join(expected_stream))
 
     # ----------------------------------------------------------------------------------
 
     # test iterating by chunks larger than the stream
     HTTPretty.register_uri(
-        HTTPretty.POST, mock_url, body=(ln for ln in response_stream), streaming=True,
+        HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
-    response = requests.post(
-        mock_url,
-        data={"track": "requests"},
-        auth=("username", "password"),
-        stream=True,
-    )
+    response_stream = requests.post(mock_url, stream=True).iter_content(chunk_size=1024)
 
     with _in_time(0.02, "Iterating by large chunks is taking forever!"):
-        body = b"".join(c for c in response.iter_content(chunk_size=1024))
-    expect_to_equal(body, b"".join(response_stream))
+        body = b"".join(c for c in response_stream)
+    expect_to_equal(body, b"".join(expected_stream))
