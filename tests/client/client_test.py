@@ -5,6 +5,7 @@ import logging
 import signal
 import sys
 from contextlib import contextmanager
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -180,6 +181,9 @@ def test_100_request_stream() -> None:
         b'{"green":["eggs", "and", "ham"]}\r\n',
     ]
 
+    def expect_to_equal(one: Any, two: Any) -> None:
+        expect(one).to.equal(two)  # pylint: disable=E1101
+
     # ----------------------------------------------------------------------------------
 
     HTTPretty.register_uri(
@@ -200,8 +204,7 @@ def test_100_request_stream() -> None:
     line_iter = response.iter_lines()
     with _in_time(0.01, "Iterating by line is taking forever!"):
         for i, _ in enumerate(response_stream):
-            # pylint: disable=E1101
-            expect(next(line_iter).strip()).to.equal(response_stream[i].strip())
+            expect_to_equal(next(line_iter).strip(), response_stream[i].strip())
 
     # ----------------------------------------------------------------------------------
 
@@ -217,12 +220,9 @@ def test_100_request_stream() -> None:
     )
 
     line_iter = response.iter_lines()
-    with _in_time(
-        0.01, "Iterating by line is taking forever the second time " "around!"
-    ):
+    with _in_time(0.01, "Iterating by line is taking forever (again)!"):
         for i, _ in enumerate(response_stream):
-            # pylint: disable=E1101
-            expect(next(line_iter).strip()).to.equal(response_stream[i].strip())
+            expect_to_equal(next(line_iter).strip(), response_stream[i].strip())
 
     # ----------------------------------------------------------------------------------
 
@@ -237,12 +237,9 @@ def test_100_request_stream() -> None:
         stream=True,
     )
 
-    twitter_expected_response_body = b"".join(response_stream)
     with _in_time(0.02, "Iterating by char is taking forever!"):
-        twitter_body = b"".join(c for c in response.iter_content(chunk_size=1))
-
-    # pylint: disable=E1101
-    expect(twitter_body).to.equal(twitter_expected_response_body)
+        body = b"".join(c for c in response.iter_content(chunk_size=1))
+    expect_to_equal(body, b"".join(response_stream))
 
     # ----------------------------------------------------------------------------------
 
@@ -258,7 +255,5 @@ def test_100_request_stream() -> None:
     )
 
     with _in_time(0.02, "Iterating by large chunks is taking forever!"):
-        twitter_body = b"".join(c for c in response.iter_content(chunk_size=1024))
-
-    # pylint: disable=E1101
-    expect(twitter_body).to.equal(twitter_expected_response_body)
+        body = b"".join(c for c in response.iter_content(chunk_size=1024))
+    expect_to_equal(body, b"".join(response_stream))
