@@ -2,12 +2,17 @@
 
 
 import logging
+import signal
 import sys
+from contextlib import contextmanager
 from unittest.mock import Mock
 
 import pytest
+import requests  # TODO - remove
+from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
+from sure import expect  # type: ignore[import]
 
 sys.path.append(".")
 from rest_tools.client import RestClient  # isort:skip # noqa # pylint: disable=C0413
@@ -146,18 +151,115 @@ async def test_92_request_seq(requests_mock: Mock) -> None:
         rpc.request_seq("POST", "test", {})
 
 
-def test_100_request_stream(requests_mock: Mock) -> None:
-    """Test `request_stream()`."""
-    result = {"result": "the result"}
-    rpc = RestClient("http://test", "passkey", timeout=0.1)
+@httprettified  # type: ignore[misc]
+def test_100_request_stream() -> None:
+    """Test `request_stream()`.
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
-        assert req.body is not None
-        _ = json_decode(req.body)
-        return json_encode(result).encode("utf-8")
+    Based on https://github.com/gabrielfalcao/HTTPretty/blob/master/tests/functional/test_requests.py#L290
+    """
 
-    requests_mock.post("/test", content=response)
-    ret = rpc.request_stream("POST", "test", {})
+    @contextmanager
+    def in_time(time, message):  # type: ignore[no-untyped-def]
+        # A context manager that uses signals to force a time limit in tests
+        # (unlike the `@within` decorator, which only complains afterward), or
+        # raise an AssertionError.
 
-    assert requests_mock.called
-    assert ret == result
+        def handler(signum, frame):  # type: ignore[no-untyped-def]
+            raise AssertionError(message)
+
+        signal.signal(signal.SIGALRM, handler)
+        signal.setitimer(signal.ITIMER_REAL, time)
+        yield
+        signal.setitimer(signal.ITIMER_REAL, 0)
+
+    # this obviously isn't a fully functional twitter streaming client!
+    twitter_response_lines = [
+        b'{"text":"If \\"for the boobs\\" requests to follow me one more time I\'m calling the police. http://t.co/a0mDEAD8"}\r\n',
+        b"\r\n",
+        b'{"text":"RT @onedirection: Thanks for all your # FollowMe1D requests Directioners! We\u2019ll be following 10 people throughout the day starting NOW. G ..."}\r\n',
+    ]
+
+    TWITTER_STREAMING_URL = "https://stream.twitter.com/1/statuses/filter.json"
+
+    HTTPretty.register_uri(
+        HTTPretty.POST,
+        TWITTER_STREAMING_URL,
+        body=(l for l in twitter_response_lines),
+        streaming=True,
+    )
+
+    # taken from the requests docs
+
+    # test iterating by line
+    # Http://docs.python-requests.org/en/latest/user/advanced/# streaming-requests
+    response = requests.post(
+        TWITTER_STREAMING_URL,
+        data={"track": "requests"},
+        auth=("username", "password"),
+        stream=True,
+    )
+
+    line_iter = response.iter_lines()
+    with in_time(0.01, "Iterating by line is taking forever!"):
+        for i in range(len(twitter_response_lines)):
+            expect(next(line_iter).strip()).to.equal(twitter_response_lines[i].strip())
+
+    HTTPretty.register_uri(
+        HTTPretty.POST,
+        TWITTER_STREAMING_URL,
+        body=(ln for ln in twitter_response_lines),
+        streaming=True,
+    )
+    # test iterating by line after a second request
+    response = requests.post(
+        TWITTER_STREAMING_URL,
+        data={"track": "requests"},
+        auth=("username", "password"),
+        stream=True,
+    )
+
+    line_iter = response.iter_lines()
+    with in_time(
+        0.01, "Iterating by line is taking forever the second time " "around!"
+    ):
+        for i in range(len(twitter_response_lines)):
+            expect(next(line_iter).strip()).to.equal(twitter_response_lines[i].strip())
+
+    HTTPretty.register_uri(
+        HTTPretty.POST,
+        TWITTER_STREAMING_URL,
+        body=(ln for ln in twitter_response_lines),
+        streaming=True,
+    )
+    # test iterating by char
+    response = requests.post(
+        TWITTER_STREAMING_URL,
+        data={"track": "requests"},
+        auth=("username", "password"),
+        stream=True,
+    )
+
+    twitter_expected_response_body = b"".join(twitter_response_lines)
+    with in_time(0.02, "Iterating by char is taking forever!"):
+        twitter_body = b"".join(c for c in response.iter_content(chunk_size=1))
+
+    expect(twitter_body).to.equal(twitter_expected_response_body)
+
+    # test iterating by chunks larger than the stream
+    HTTPretty.register_uri(
+        HTTPretty.POST,
+        TWITTER_STREAMING_URL,
+        body=(ln for ln in twitter_response_lines),
+        streaming=True,
+    )
+    response = requests.post(
+        TWITTER_STREAMING_URL,
+        data={"track": "requests"},
+        auth=("username", "password"),
+        stream=True,
+    )
+
+    with in_time(0.02, "Iterating by large chunks is taking forever!"):
+        twitter_body = b"".join(c for c in response.iter_content(chunk_size=1024))
+
+    expect(twitter_body).to.equal(twitter_expected_response_body)
