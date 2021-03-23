@@ -193,12 +193,11 @@ def test_100_request_stream() -> None:
         print(f"\niteration #{test_num}")
         HTTPretty.register_uri(
             HTTPretty.POST,
-            mock_url,
+            mock_url + "/foo/bar/",
             body=(ln for ln in expected_stream),
             streaming=True,
         )
-        # FIXME: add uri/url support
-        response_stream = rpc.request_stream("POST", "", {})
+        response_stream = rpc.request_stream("POST", "/foo/bar/", {})
 
         with _in_time(0.01, "Iterating by line is taking forever!"):
             for i, resp in enumerate(response_stream):
@@ -206,19 +205,19 @@ def test_100_request_stream() -> None:
                 assert resp == jsonify(expected_stream[i])
 
     # now w/ chunk sizes
-    # FIXME: chunk_size<8 fails for `\r\n`
     for chunk_size in [None, 8, 0, -1, 1024, 32768]:
         print(f"\nchunk_size: {chunk_size}")
         HTTPretty.register_uri(
             HTTPretty.POST,
-            mock_url,
+            mock_url + "/foo/bar/",
             body=(ln for ln in expected_stream),
             streaming=True,
         )
-        # FIXME: add uri/url support
-        response_stream = rpc.request_stream("POST", "", {}, chunk_size=chunk_size)
+        response_stream = rpc.request_stream(
+            "POST", "/foo/bar/", {}, chunk_size=chunk_size
+        )
 
-        with _in_time(0.01, "Iterating by line is taking forever!"):
+        with _in_time(0.01, "Iterating by line is taking forever w/ chunks!"):
             for i, resp in enumerate(response_stream):
                 print(f"{resp=}")
                 assert resp == jsonify(expected_stream[i])
