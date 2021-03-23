@@ -240,8 +240,8 @@ class RestClient:
             url, kwargs = self._prepare(method, path, args)
             resp = self.session.request(method, url, stream=True, **kwargs)
             resp.raise_for_status()
-            for line in resp.iter_lines(chunk_size=chunk_size):
-                yield self._decode(line)
+            for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):
+                yield self._decode(line.strip())
         finally:
             self.session = s
 
