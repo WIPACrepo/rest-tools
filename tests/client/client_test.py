@@ -1,6 +1,7 @@
 """Test script for RestClient."""
 
 
+import json
 import logging
 import signal
 import sys
@@ -13,7 +14,6 @@ import requests  # TODO - remove
 from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
-from sure import expect  # type: ignore[import]
 
 sys.path.append(".")
 from rest_tools.client import RestClient  # isort:skip # noqa # pylint: disable=C0413
@@ -180,9 +180,7 @@ def test_100_request_stream() -> None:
         b"\r\n",
         b'{"green":["eggs", "and", "ham"]}\r\n',
     ]
-
-    def expect_to_equal(one: Any, two: Any) -> None:
-        expect(one).to.equal(two)  # pylint: disable=E1101
+    rpc = RestClient(mock_url, "passkey", timeout=1)
 
     # ----------------------------------------------------------------------------------
 
@@ -190,15 +188,11 @@ def test_100_request_stream() -> None:
         HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
 
-    # taken from the requests docs
-
-    # test iterating by line
-    # http://docs.python-requests.org/en/latest/user/advanced/#streaming-requests
     response_stream = requests.post(mock_url, stream=True).iter_lines()
 
     with _in_time(0.01, "Iterating by line is taking forever!"):
-        for i, _ in enumerate(expected_stream):
-            expect_to_equal(next(response_stream).strip(), expected_stream[i].strip())
+        for i, resp in enumerate(response_stream):
+            assert resp.strip() == expected_stream[i].strip()
 
     # ----------------------------------------------------------------------------------
 
@@ -206,11 +200,17 @@ def test_100_request_stream() -> None:
         HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
     # test iterating by line after a second request
-    response_stream = requests.post(mock_url, stream=True).iter_lines()
+    response_stream = rpc.request_stream("POST", "", {})  # FIXME: add uri/url support
 
     with _in_time(0.01, "Iterating by line is taking forever (again)!"):
-        for i, _ in enumerate(expected_stream):
-            expect_to_equal(next(response_stream).strip(), expected_stream[i].strip())
+        for i, resp in enumerate(response_stream):
+            print(resp)
+            expected = (
+                json.loads(expected_stream[i].strip())
+                if expected_stream[i].strip()
+                else None
+            )
+            assert resp == expected
 
     # ----------------------------------------------------------------------------------
 
@@ -222,7 +222,7 @@ def test_100_request_stream() -> None:
 
     with _in_time(0.02, "Iterating by char is taking forever!"):
         body = b"".join(c for c in response_stream)
-    expect_to_equal(body, b"".join(expected_stream))
+    assert body == b"".join(expected_stream)
 
     # ----------------------------------------------------------------------------------
 
@@ -231,7 +231,10 @@ def test_100_request_stream() -> None:
         HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
     )
     response_stream = requests.post(mock_url, stream=True).iter_content(chunk_size=1024)
+    print(b"".join(expected_stream))
 
     with _in_time(0.02, "Iterating by large chunks is taking forever!"):
         body = b"".join(c for c in response_stream)
-    expect_to_equal(body, b"".join(expected_stream))
+    print(body)
+    assert body == b"".join(expected_stream)
+    # assert 0
