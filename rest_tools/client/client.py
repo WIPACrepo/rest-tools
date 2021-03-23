@@ -219,7 +219,8 @@ class RestClient:
         """Send request to REST Server, and stream results back.
 
         `chunk_size=None` will read data as it arrives
-        in whatever size the chunks are received.
+        in whatever size the chunks are received. `chunk_size`<`1`
+        will be treated as `chunk_size=None`
 
         Args:
             method (str): the http method
@@ -230,6 +231,9 @@ class RestClient:
         Returns:
             dict: json dict or raw string
         """
+        if chunk_size is not None and chunk_size < 1:
+            chunk_size = None
+
         s = self.session
         try:
             self.open(sync=True)
