@@ -206,7 +206,7 @@ def test_100_request_stream() -> None:
                 assert resp == jsonify(expected_stream[i])
 
     # now w/ chunk sizes
-    for chunk_size in [None, 3, 0, -1, 4, 8, 20, 100, 1024, 32768]:
+    for chunk_size in [None, 3, 0, -1, 4, 8, 9, 20, 100, 1024, 32768]:
         print(f"\nchunk_size: {chunk_size}")
         HTTPretty.register_uri(
             HTTPretty.POST,
