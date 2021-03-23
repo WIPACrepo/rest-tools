@@ -174,7 +174,7 @@ def test_100_request_stream() -> None:
 
     Based on https://github.com/gabrielfalcao/HTTPretty/blob/master/tests/functional/test_requests.py#L290
     """
-    mock_url = "http://stream.test"
+    mock_url = "http://test"
     expected_stream = [
         b'{"foo-bar":"baz"}\r\n',
         b"\r\n",
@@ -193,11 +193,11 @@ def test_100_request_stream() -> None:
         print(f"\niteration #{test_num}")
         HTTPretty.register_uri(
             HTTPretty.POST,
-            mock_url + "/foo/bar/",
+            mock_url + "/stream/it/",
             body=(ln for ln in expected_stream),
             streaming=True,
         )
-        response_stream = rpc.request_stream("POST", "/foo/bar/", {})
+        response_stream = rpc.request_stream("POST", "/stream/it/", {})
 
         with _in_time(0.01, "Iterating by line is taking forever!"):
             for i, resp in enumerate(response_stream):
@@ -205,16 +205,17 @@ def test_100_request_stream() -> None:
                 assert resp == jsonify(expected_stream[i])
 
     # now w/ chunk sizes
+    # FIXME: chunk_size<8 fails for `\r\n` b/c it treats those as two separate lines
     for chunk_size in [None, 8, 0, -1, 1024, 32768]:
         print(f"\nchunk_size: {chunk_size}")
         HTTPretty.register_uri(
             HTTPretty.POST,
-            mock_url + "/foo/bar/",
+            mock_url + "/stream/it/w/chunks",
             body=(ln for ln in expected_stream),
             streaming=True,
         )
         response_stream = rpc.request_stream(
-            "POST", "/foo/bar/", {}, chunk_size=chunk_size
+            "POST", "/stream/it/w/chunks", {}, chunk_size=chunk_size
         )
 
         with _in_time(0.01, "Iterating by line is taking forever w/ chunks!"):
