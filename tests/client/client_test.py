@@ -10,7 +10,6 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-import requests  # TODO - remove
 from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
