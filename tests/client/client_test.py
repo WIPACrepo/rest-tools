@@ -237,6 +237,8 @@ def test_101_request_stream() -> None:
         [],
         [b"\n", b"\r\n", b"\n"],
         [b" \n"],
+        [b" "],
+        [b"\t"],
     ]
     for expected_stream in empty_streams:
         # test multiple times
