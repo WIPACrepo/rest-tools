@@ -190,7 +190,7 @@ def test_100_request_stream() -> None:
 
     # test multiple times
     for test_num in range(2):
-        print(f"iteration #{test_num}")
+        print(f"\niteration #{test_num}")
         HTTPretty.register_uri(
             HTTPretty.POST,
             mock_url,
@@ -205,29 +205,20 @@ def test_100_request_stream() -> None:
                 print(f"{resp=}")
                 assert resp == jsonify(expected_stream[i])
 
-    # ----------------------------------------------------------------------------------
+    # now w/ chunk sizes
+    # FIXME: chunk_size<8 fails for `\r\n`
+    for chunk_size in [None, 8, 0, -1, 1024, 32768]:
+        print(f"\nchunk_size: {chunk_size}")
+        HTTPretty.register_uri(
+            HTTPretty.POST,
+            mock_url,
+            body=(ln for ln in expected_stream),
+            streaming=True,
+        )
+        # FIXME: add uri/url support
+        response_stream = rpc.request_stream("POST", "", {}, chunk_size=chunk_size)
 
-    HTTPretty.register_uri(
-        HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
-    )
-    # test iterating by char
-    response_stream = requests.post(mock_url, stream=True).iter_content(chunk_size=1)
-
-    with _in_time(0.02, "Iterating by char is taking forever!"):
-        body = b"".join(c for c in response_stream)
-    assert body == b"".join(expected_stream)
-
-    # ----------------------------------------------------------------------------------
-
-    # test iterating by chunks larger than the stream
-    HTTPretty.register_uri(
-        HTTPretty.POST, mock_url, body=(ln for ln in expected_stream), streaming=True,
-    )
-    response_stream = requests.post(mock_url, stream=True).iter_content(chunk_size=1024)
-    print(b"".join(expected_stream))
-
-    with _in_time(0.02, "Iterating by large chunks is taking forever!"):
-        body = b"".join(c for c in response_stream)
-    print(body)
-    assert body == b"".join(expected_stream)
-    # assert 0
+        with _in_time(0.01, "Iterating by line is taking forever!"):
+            for i, resp in enumerate(response_stream):
+                print(f"{resp=}")
+                assert resp == jsonify(expected_stream[i])
