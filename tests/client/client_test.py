@@ -224,3 +224,43 @@ def test_100_request_stream() -> None:
             for i, resp in enumerate(response_stream):
                 print(f"{resp=}")
                 assert resp == json_stream[i]
+
+
+@httprettified  # type: ignore[misc]
+def test_101_request_stream() -> None:
+    """Test `request_stream()` when there's no response."""
+    mock_url = "http://test"
+    rpc = RestClient(mock_url, "passkey", timeout=1)
+
+    # test multiple times
+    for test_num in range(2):
+        print(f"\niteration #{test_num}")
+        HTTPretty.register_uri(
+            HTTPretty.POST, mock_url + "/stream/no-resp/", body=[b"\n"], streaming=True,
+        )
+        response_stream = rpc.request_stream("POST", "/stream/no-resp/", {})
+
+        never_entered = True
+        with _in_time(0.01, "Iterating by line is taking forever!"):
+            for _ in response_stream:
+                never_entered = False
+        assert never_entered
+
+    # now w/ chunk sizes
+    for chunk_size in [None, 3, 0, -1, 4, 8, 9, 20, 100, 1024, 32768]:
+        print(f"\nchunk_size: {chunk_size}")
+        HTTPretty.register_uri(
+            HTTPretty.POST,
+            mock_url + "/stream/no-resp/w/chunks",
+            body=[b"\n"],
+            streaming=True,
+        )
+        response_stream = rpc.request_stream(
+            "POST", "/stream/no-resp/w/chunks", {}, chunk_size=chunk_size
+        )
+
+        never_entered_w_chunks = True
+        with _in_time(0.01, "Iterating by line is taking forever w/ chunks!"):
+            for _ in response_stream:
+                never_entered_w_chunks = False
+        assert never_entered_w_chunks
