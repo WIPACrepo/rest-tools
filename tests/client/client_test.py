@@ -175,9 +175,9 @@ def test_100_request_stream() -> None:
     """
     mock_url = "http://test"
     expected_stream = [
-        b'{"foo-bar":"baz"}\r\n',
-        b"\r\n",
-        b'{"green":["eggs", "and", "ham"]}\r\n',
+        b'{"foo-bar":"baz"}\n',
+        b"\n",
+        b'{"green":["eggs", "and", "ham"]}\n',
         b'{"george": 1, "paul": 2, "ringo": 3, "john": 4}\n',
         b'"this is just a string"\n',
         b"[1,2,3]\n",
@@ -204,8 +204,7 @@ def test_100_request_stream() -> None:
                 assert resp == jsonify(expected_stream[i])
 
     # now w/ chunk sizes
-    # FIXME: chunk_size<8 fails for `\r\n` b/c it treats those as two separate lines
-    for chunk_size in [None, 8, 0, -1, 1024, 32768]:
+    for chunk_size in [None, 1, 0, -1, 8, 20, 100, 1024, 32768]:
         print(f"\nchunk_size: {chunk_size}")
         HTTPretty.register_uri(
             HTTPretty.POST,
