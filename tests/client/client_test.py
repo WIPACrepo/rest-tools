@@ -189,6 +189,8 @@ def test_100_request_stream() -> None:
     def jsonify(val: bytes) -> Any:
         return json.loads(val.strip()) if val.strip() else None
 
+    json_stream = [j for t in expected_stream if (j := jsonify(t))]  # no blanks
+
     # test multiple times
     for test_num in range(2):
         print(f"\niteration #{test_num}")
@@ -203,7 +205,7 @@ def test_100_request_stream() -> None:
         with _in_time(0.01, "Iterating by line is taking forever!"):
             for i, resp in enumerate(response_stream):
                 print(f"{resp=}")
-                assert resp == jsonify(expected_stream[i])
+                assert resp == json_stream[i]
 
     # now w/ chunk sizes
     for chunk_size in [None, 3, 0, -1, 4, 8, 9, 20, 100, 1024, 32768]:
@@ -221,4 +223,4 @@ def test_100_request_stream() -> None:
         with _in_time(0.01, "Iterating by line is taking forever w/ chunks!"):
             for i, resp in enumerate(response_stream):
                 print(f"{resp=}")
-                assert resp == jsonify(expected_stream[i])
+                assert resp == json_stream[i]
