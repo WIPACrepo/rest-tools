@@ -241,7 +241,8 @@ class RestClient:
             resp = self.session.request(method, url, stream=True, **kwargs)
             resp.raise_for_status()
             for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):
-                if decoded := self._decode(line.strip()):
+                decoded = self._decode(line.strip())
+                if decoded:  # skip `None`
                     yield decoded
         finally:
             self.session = s
