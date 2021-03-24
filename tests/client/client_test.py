@@ -209,7 +209,7 @@ def test_100_request_stream() -> None:
                 assert resp == json_stream[i]
 
     # now w/ chunk sizes
-    for chunk_size in [None, 3, 0, -1, 4, 8, 9, 20, 100, 1024, 32768]:
+    for chunk_size in [None, -1, 0, 1, 2, 3, 4, 8, 9, 20, 100, 1024, 32768]:
         print(f"\nchunk_size: {chunk_size}")
         HTTPretty.register_uri(
             HTTPretty.POST,
@@ -260,7 +260,7 @@ def test_101_request_stream() -> None:
             assert never_entered
 
         # now w/ chunk sizes
-        for chunk_size in [None, 3, 0, -1, 4, 8, 9, 20, 100, 1024, 32768]:
+        for chunk_size in [None, -1, 0, 1, 2, 3, 4, 8, 9, 20, 100, 1024, 32768]:
             print(f"\nchunk_size: {chunk_size}")
             HTTPretty.register_uri(
                 HTTPretty.POST,
@@ -309,7 +309,7 @@ def test_102_request_stream() -> None:
                     assert resp == json_stream[i]
 
         # now w/ chunk sizes
-        for chunk_size in [None, 3, 0, -1, 4, 8, 9, 20, 100, 1024, 32768]:
+        for chunk_size in [None, -1, 0, 1, 2, 3, 4, 8, 9, 20, 100, 1024, 32768]:
             print(f"\nchunk_size: {chunk_size}")
             HTTPretty.register_uri(
                 HTTPretty.POST,
