@@ -1,5 +1,4 @@
-"""
-Get a `requests`_ Session that fully retries errors.
+"""Get a `requests`_ Session that fully retries errors.
 
 .. _requests: http://docs.python-requests.org
 """
@@ -7,18 +6,21 @@ Get a `requests`_ Session that fully retries errors.
 # fmt:off
 # pylint: skip-file
 
+from typing import Iterable, Union
+
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from requests_futures.sessions import FuturesSession  # type: ignore[import]
 
 
-def AsyncSession(retries=10, backoff_factor=0.3,
-            method_whitelist=('HEAD','TRACE','GET','POST','PUT','OPTIONS','DELETE'),
-            status_forcelist=(408, 429, 500, 502, 503, 504),
-            ):
-    """
-    Return a Session object with full retry capabilities.
+def AsyncSession(
+    retries: int = 10,
+    backoff_factor: float = 0.3,
+    method_whitelist: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
+) -> FuturesSession:
+    """Return a Session object with full retry capabilities.
 
     Args:
         retries (int): number of retries
@@ -35,7 +37,7 @@ def AsyncSession(retries=10, backoff_factor=0.3,
         connect=retries,
         read=retries,
         redirect=retries,
-        status=retries,
+        # status=retries,
         method_whitelist=method_whitelist,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
@@ -45,12 +47,14 @@ def AsyncSession(retries=10, backoff_factor=0.3,
     session.mount('https://', adapter)
     return session
 
-def Session(retries=10, backoff_factor=0.3,
-            method_whitelist=('HEAD','TRACE','GET','POST','PUT','OPTIONS','DELETE'),
-            status_forcelist=(408, 429, 500, 502, 503, 504),
-            ):
-    """
-    Return a Session object with full retry capabilities.
+
+def Session(
+    retries: int = 10,
+    backoff_factor: float = 0.3,
+    method_whitelist: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
+) -> requests.Session:
+    """Return a Session object with full retry capabilities.
 
     Args:
         retries (int): number of retries
@@ -67,7 +71,7 @@ def Session(retries=10, backoff_factor=0.3,
         connect=retries,
         read=retries,
         redirect=retries,
-        status=retries,
+        # status=retries,
         method_whitelist=method_whitelist,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,

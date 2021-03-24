@@ -1,5 +1,6 @@
 coverage
 cryptography
+httpretty==1.0.5
 motor
 pycycle
 pyjwt >= 2.0.1
