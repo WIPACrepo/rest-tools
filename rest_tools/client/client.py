@@ -68,7 +68,7 @@ class RestClient:
 
     def open(self, sync: bool = False) -> requests.Session:
         """Open the http session."""
-        self.logger.info('establish REST http session')
+        self.logger.debug('establish REST http session')
         if sync:
             self.session = Session(self.retries)
         else:
