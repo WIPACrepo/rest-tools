@@ -1,5 +1,6 @@
 coverage
 cryptography
+git+https://github.com/WIPACrepo/wipac-telemetry-prototype#egg=wipac_tracing
 httpretty==1.0.5
 motor
 pycycle
