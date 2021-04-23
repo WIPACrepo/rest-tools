@@ -67,7 +67,7 @@ class RestClient:
 
         self.session = self.open()  # start session
 
-    @tracing.tools.new_span()
+    @tracing.tools.spanned()
     def open(self, sync: bool = False) -> requests.Session:
         """Open the http session."""
         self.logger.debug('establish REST http session')
@@ -90,7 +90,7 @@ class RestClient:
 
         return self.session
 
-    @tracing.tools.new_span()
+    @tracing.tools.spanned()
     def close(self) -> None:
         """Close the http session."""
         self.logger.info('close REST http session')
@@ -154,7 +154,7 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    @tracing.tools.new_span()
+    @tracing.tools.spanned()
     async def request(
         self,
         method: str,
@@ -185,7 +185,7 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    @tracing.tools.new_span()
+    @tracing.tools.spanned()
     def request_seq(
         self,
         method: str,
@@ -214,7 +214,7 @@ class RestClient:
         finally:
             self.session = s
 
-    @tracing.tools.new_span()
+    @tracing.tools.spanned()
     def request_stream(
         self,
         method: str,
