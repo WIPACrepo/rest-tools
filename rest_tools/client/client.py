@@ -12,7 +12,7 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union, cast
 
 import jwt
 import requests
@@ -119,26 +119,34 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
+        span: tracing.tools.OptSpan = None
     ) -> Tuple[str, Dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
             args = {}
+
+        if span:  # TODO - needs testing -> how does it serialize/de-serialize?
+            args["wipac-telemetry-link"] = tracing.tools.make_link(span, 'RestClient')
+
         if path.startswith('/'):
             path = path[1:]
         url = os.path.join(self.address, path)
-        kwargs: Dict[str, Any] = {
-            'timeout': self.timeout,
-        }
-        if method in ('GET','HEAD'):
+
+        kwargs: Dict[str, Any] = {'timeout': self.timeout}
+
+        if method in ('GET', 'HEAD'):
             # args should be urlencoded
             kwargs['params'] = args
         else:
             kwargs['json'] = args
+
         if self.token_func:
             self._get_token()
+
         if self.access_token:
             self.session.headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
+
         return (url, kwargs)
 
     def _decode(self, content: Union[str, bytes, bytearray]) -> JSONType:
@@ -172,7 +180,7 @@ class RestClient:
         Returns:
             dict: json dict or raw string
         """
-        url, kwargs = self._prepare(method, path, args)
+        url, kwargs = self._prepare(method, path, args, span)
         try:
             # session: AsyncSession; So, self.session.request() -> Future
             r: requests.Response = await asyncio.wrap_future(self.session.request(method, url, **kwargs))  # type: ignore[arg-type]
@@ -207,7 +215,7 @@ class RestClient:
         s = self.session
         try:
             self.open(sync=True)
-            url, kwargs = self._prepare(method, path, args)
+            url, kwargs = self._prepare(method, path, args, span)
             r = self.session.request(method, url, **kwargs)
             r.raise_for_status()
             return self._decode(r.content)
@@ -244,7 +252,7 @@ class RestClient:
         s = self.session
         try:
             self.open(sync=True)
-            url, kwargs = self._prepare(method, path, args)
+            url, kwargs = self._prepare(method, path, args, span)
             resp = self.session.request(method, url, stream=True, **kwargs)
             resp.raise_for_status()
             for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):
