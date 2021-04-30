@@ -67,7 +67,6 @@ class RestClient:
 
         self.session = self.open()  # start session
 
-    @tracing.tools.evented(these=['sync'])
     def open(self, sync: bool = False) -> requests.Session:
         """Open the http session."""
         self.logger.debug('establish REST http session')
@@ -90,7 +89,6 @@ class RestClient:
 
         return self.session
 
-    @tracing.tools.evented()
     def close(self) -> None:
         """Close the http session."""
         self.logger.info('close REST http session')
