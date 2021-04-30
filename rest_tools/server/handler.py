@@ -14,7 +14,7 @@ import tornado.gen
 import tornado.httpclient
 import tornado.web
 
-from ..utils.config import WIPAC_TELEMETRY_LINK_ARG
+from ..utils.config import WIPAC_TELEMETRY_LINK_REST_ARG
 from . import arghandler
 from .auth import Auth, OpenIDAuth
 from .stats import RouteStats
@@ -341,7 +341,7 @@ def use_trace_link_from_client(method: Callable[..., Any]) -> Callable[..., Any]
 
     @wraps(method)
     async def wrapper(self: RestHandler, *args: Any, **kwargs: Any) -> Any:
-        kwargs['client_link'] = self.get_argument(WIPAC_TELEMETRY_LINK_ARG, None)
+        kwargs['client_link'] = self.get_argument(WIPAC_TELEMETRY_LINK_REST_ARG, None)
         return await method(self, *args, **kwargs)
 
     return wrapper

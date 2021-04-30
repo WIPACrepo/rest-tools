@@ -19,7 +19,7 @@ import requests
 from wipac_telemetry import tracing
 
 from ..server import OpenIDAuth
-from ..utils.config import WIPAC_TELEMETRY_LINK_ARG
+from ..utils.config import WIPAC_TELEMETRY_LINK_REST_ARG
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
@@ -128,7 +128,7 @@ class RestClient:
             args = {}
 
         if span:  # TODO - needs testing -> how does it serialize/de-serialize?
-            args[WIPAC_TELEMETRY_LINK_ARG] = tracing.tools.make_link(span, 'RestClient')
+            args[WIPAC_TELEMETRY_LINK_REST_ARG] = tracing.tools.make_link(span, 'RestClient')
 
         if path.startswith('/'):
             path = path[1:]
