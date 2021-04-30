@@ -152,12 +152,13 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    @tracing.tools.spanned(these=['method', 'path', 'self.address'])
+    @tracing.tools.spanned(these=['method', 'path', 'self.address'], inject=True)
     async def request(
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
+        span: tracing.tools.OptSpan = None
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -183,12 +184,13 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    @tracing.tools.spanned(these=['method', 'path', 'self.address'])
+    @tracing.tools.spanned(these=['method', 'path', 'self.address'], inject=True)
     def request_seq(
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
+        span: tracing.tools.OptSpan = None
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -212,13 +214,14 @@ class RestClient:
         finally:
             self.session = s
 
-    @tracing.tools.spanned(these=['method', 'path', 'self.address'])
+    @tracing.tools.spanned(these=['method', 'path', 'self.address'], inject=True)
     def request_stream(
         self,
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
-        chunk_size: Optional[int] = 8096
+        chunk_size: Optional[int] = 8096,
+        span: tracing.tools.OptSpan = None
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.
 
