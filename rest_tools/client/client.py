@@ -16,10 +16,9 @@ from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
-from wipac_telemetry import tracing
+from wipac_telemetry import tracing_tools
 
 from ..server import OpenIDAuth
-from ..utils.config import WIPAC_TELEMETRY_LINK_REST_ARG
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
@@ -121,14 +120,14 @@ class RestClient:
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
-        span: tracing.tools.OptSpan = None
     ) -> Tuple[str, Dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
             args = {}
 
-        if span:  # TODO - needs testing -> how does it serialize/de-serialize?
-            args[WIPAC_TELEMETRY_LINK_REST_ARG] = tracing.tools.make_link(span, 'RestClient')
+        # auto-inject the current span's info into the HTTP headers
+        if tracing_tools.get_current_span().is_recording():
+            tracing_tools.inject(self.session.headers)
 
         if path.startswith('/'):
             path = path[1:]
@@ -161,13 +160,12 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    @tracing.tools.spanned(these=['method', 'path', 'self.address'], inject=True)
+    @tracing_tools.spanned(these=['method', 'path', 'self.address'])
     async def request(
         self,
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
-        span: tracing.tools.OptSpan = None
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -181,7 +179,7 @@ class RestClient:
         Returns:
             dict: json dict or raw string
         """
-        url, kwargs = self._prepare(method, path, args, span)
+        url, kwargs = self._prepare(method, path, args)
         try:
             # session: AsyncSession; So, self.session.request() -> Future
             r: requests.Response = await asyncio.wrap_future(self.session.request(method, url, **kwargs))  # type: ignore[arg-type]
@@ -193,13 +191,12 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    @tracing.tools.spanned(these=['method', 'path', 'self.address'], inject=True)
+    @tracing_tools.spanned(these=['method', 'path', 'self.address'])
     def request_seq(
         self,
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
-        span: tracing.tools.OptSpan = None
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -216,21 +213,20 @@ class RestClient:
         s = self.session
         try:
             self.open(sync=True)
-            url, kwargs = self._prepare(method, path, args, span)
+            url, kwargs = self._prepare(method, path, args)
             r = self.session.request(method, url, **kwargs)
             r.raise_for_status()
             return self._decode(r.content)
         finally:
             self.session = s
 
-    @tracing.tools.spanned(these=['method', 'path', 'self.address'], inject=True)
+    @tracing_tools.spanned(these=['method', 'path', 'self.address'])
     def request_stream(
         self,
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
         chunk_size: Optional[int] = 8096,
-        span: tracing.tools.OptSpan = None
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.
 
@@ -253,7 +249,7 @@ class RestClient:
         s = self.session
         try:
             self.open(sync=True)
-            url, kwargs = self._prepare(method, path, args, span)
+            url, kwargs = self._prepare(method, path, args)
             resp = self.session.request(method, url, stream=True, **kwargs)
             resp.raise_for_status()
             for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):

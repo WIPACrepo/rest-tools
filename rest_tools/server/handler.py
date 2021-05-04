@@ -7,14 +7,13 @@ import logging
 import time
 from collections import defaultdict
 from functools import partial, wraps
-from typing import Any, Callable, List, Optional
+from typing import Any, List, Optional
 
 import rest_tools
 import tornado.gen
 import tornado.httpclient
 import tornado.web
 
-from ..utils.config import WIPAC_TELEMETRY_LINK_REST_ARG
 from . import arghandler
 from .auth import Auth, OpenIDAuth
 from .stats import RouteStats
@@ -324,24 +323,3 @@ def scope_role_auth(**_auth):
             return await method(self, *args, **kwargs)
         return wrapper
     return make_wrapper
-
-
-def use_trace_link_from_client(method: Callable[..., Any]) -> Callable[..., Any]:
-    """Get WIPAC Telemetry `Link` from REST args & inject as method argument.
-
-    Injects as keyword argument, `client_link`. If the client did not
-    send a `Link`, inject `None`. Use in conjunction with
-    `@wipac_telemetry.tracing.tools.spanned()`
-
-    Example:
-        `@use_trace_link_from_client`
-        `@spanned(links=['client_link'], ...)`
-        `def get(arg1: str, client_link: Optional[Link] = None) -> JSONType:`
-    """
-
-    @wraps(method)
-    async def wrapper(self: RestHandler, *args: Any, **kwargs: Any) -> Any:
-        kwargs['client_link'] = self.get_argument(WIPAC_TELEMETRY_LINK_REST_ARG, None)
-        return await method(self, *args, **kwargs)
-
-    return wrapper
