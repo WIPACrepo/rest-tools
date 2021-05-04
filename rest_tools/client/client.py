@@ -127,7 +127,7 @@ class RestClient:
 
         # auto-inject the current span's info into the HTTP headers
         if tracing_tools.get_current_span().is_recording():
-            tracing_tools.inject(self.session.headers)
+            tracing_tools.propagations.inject(self.session.headers)
 
         if path.startswith('/'):
             path = path[1:]
