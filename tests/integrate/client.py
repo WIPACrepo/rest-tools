@@ -15,6 +15,7 @@ from rest_tools.client import RestClient  # noqa: E402 # pylint: disable=C0413,E
 from rest_tools.server import Auth  # noqa: E402 # pylint: disable=C0413,E0401
 
 
+@tracing_tools.spanned()
 async def main() -> None:
     """Establish REST connection, make some requests, handle responses."""
     admin_token = Auth("secret").create_token("foo", payload={"role": "admin"})
@@ -23,22 +24,12 @@ async def main() -> None:
     rc = RestClient("http://localhost:8080/api", token=admin_token)
     rc_user = RestClient("http://localhost:8080/api", token=user_token)
 
-    @tracing_tools.spanned()
-    async def _request_post_1() -> None:
-        await rc.request("POST", "/fruits", {"name": "apple"})
+    # populate
+    await rc.request("POST", "/fruits", {"name": "apple"})
+    await rc.request("POST", "/fruits", {"name": "banana"})
 
-    @tracing_tools.spanned()
-    async def _request_post_2() -> None:
-        await rc.request("POST", "/fruits", {"name": "banana"})
-
-    await _request_post_1()
-    await _request_post_2()
-
-    @tracing_tools.spanned()
-    async def _request_get() -> Dict[str, Any]:
-        return await rc_user.request("GET", "/fruits")  # type: ignore[no-any-return]
-
-    ret = await _request_get()
+    # query
+    ret = await rc_user.request("GET", "/fruits")
     assert ret["fruits"] == {"apple": {"name": "apple"}, "banana": {"name": "banana"}}
 
 

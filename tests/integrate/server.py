@@ -30,7 +30,7 @@ class FruitsHanlder(RestHandler):
         super().initialize(*args, **kwargs)
         self.fruit = fruit  # pylint: disable=W0201
 
-    @tracing_tools.spanned(from_client=True)
+    @tracing_tools.spanned(kind="server")
     @role_authorization(roles=["admin", "user"])
     async def get(self) -> None:
         """Write existing fruits."""
@@ -40,7 +40,7 @@ class FruitsHanlder(RestHandler):
 
         self.write({"fruits": self.fruit})
 
-    @tracing_tools.spanned(from_client=True)
+    @tracing_tools.spanned(kind="server")
     @role_authorization(roles=["admin"])
     async def post(self) -> None:
         """Handle a new fruit."""
