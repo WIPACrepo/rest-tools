@@ -8,22 +8,24 @@ import logging
 import sys
 from typing import Any, Dict
 
-from wipac_telemetry import tracing_tools  # noqa: E402 # pylint: disable=C0413,E0401
+from wipac_telemetry import tracing_tools
 
 sys.path.append("../..")
-from rest_tools.server import (
+from rest_tools.server import (  # noqa: E402 # pylint: disable=C0413,E0401
     RestHandler,
     RestHandlerSetup,
     RestServer,
     role_authorization,
 )
-from rest_tools.utils.json_util import json_decode
+from rest_tools.utils.json_util import (  # noqa: E402 # pylint: disable=C0413,E0401
+    json_decode,
+)
 
 
 class FruitsHanlder(RestHandler):
     """Handle Fruit requests."""
 
-    def initialize(self, fruit: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+    def initialize(self, fruit: Dict[str, Any], *args: Any, **kwargs: Any) -> None:  # type: ignore
         """Initialize."""
         super().initialize(*args, **kwargs)
         self.fruit = fruit  # pylint: disable=W0201
