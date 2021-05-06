@@ -160,7 +160,7 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    @tracing_tools.spanned(these=['method', 'path', 'self.address'])
+    @tracing_tools.spanned(these=['method', 'path', 'self.address'], kind=tracing_tools.SpanKind.CLIENT)
     async def request(
         self,
         method: str,
@@ -191,7 +191,7 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    @tracing_tools.spanned(these=['method', 'path', 'self.address'])
+    @tracing_tools.spanned(these=['method', 'path', 'self.address'], kind=tracing_tools.SpanKind.CLIENT)
     def request_seq(
         self,
         method: str,
@@ -220,7 +220,7 @@ class RestClient:
         finally:
             self.session = s
 
-    @tracing_tools.spanned(these=['method', 'path', 'self.address'])
+    @tracing_tools.spanned(these=['method', 'path', 'self.address'], kind=tracing_tools.SpanKind.CLIENT)
     def request_stream(
         self,
         method: str,
