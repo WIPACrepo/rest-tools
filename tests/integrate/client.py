@@ -6,7 +6,6 @@ Add some fruit to the server, then read them back.
 import asyncio
 import logging
 import sys
-from typing import Any, Dict
 
 from wipac_telemetry import tracing_tools
 
