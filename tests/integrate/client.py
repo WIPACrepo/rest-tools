@@ -27,7 +27,7 @@ async def main() -> None:
     await rc.request("POST", "/fruits", {"name": "apple"})
     await rc.request("POST", "/fruits", {"name": "banana"})
 
-    # query
+    # # query
     ret = await rc_user.request("GET", "/fruits")
     assert ret["fruits"] == {"apple": {"name": "apple"}, "banana": {"name": "banana"}}
 

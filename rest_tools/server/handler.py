@@ -94,6 +94,10 @@ class RestHandler(tornado.web.RequestHandler):
         self.server_header = server_header
         self.route_stats = route_stats
 
+    @tracing_tools.spanned(kind="server", these=["self.request.method", "self.request.uri"])
+    async def _execute(self, *args: Any, **kwargs: Any) -> None:
+        return await super()._execute(*args, **kwargs)
+
     def set_default_headers(self):
         self._headers['Server'] = self.server_header
 
@@ -112,8 +116,7 @@ class RestHandler(tornado.web.RequestHandler):
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
-            if self._span:
-                self._span.set_attribute('auth_data.role', self.auth_data['role'])
+            tracing_tools.get_current_span().set_attribute('self.auth_data.role', self.auth_data['role'])
             return data['sub']
         # Auth Failed
         except Exception:
@@ -123,11 +126,9 @@ class RestHandler(tornado.web.RequestHandler):
 
         return None
 
-    @tracing_tools.spanned(kind="server", inject=True, these=["self.request.method", "self.request.uri"])
-    def prepare(self, span: tracing_tools.OptSpan):
+    @tracing_tools.evented()
+    def prepare(self):
         """Prepare before http-method request handlers."""
-        self._span = span
-
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
@@ -137,15 +138,14 @@ class RestHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
 
+    @tracing_tools.evented()
     def on_finish(self):
         """Cleanup after http-method request handlers."""
         if self.route_stats is not None and self.get_status() < 500:
             stat = self.route_stats[self.request.path]
             stat.append(time.time() - self.start_time)
 
-        if self._span:
-            self._span.end()
-
+    @tracing_tools.evented(all_args=True)
     def write_error(self, status_code=500, **kwargs):
         """Write out custom error json."""
         data = {
