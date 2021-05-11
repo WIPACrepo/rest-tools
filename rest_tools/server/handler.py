@@ -13,6 +13,7 @@ import rest_tools
 import tornado.gen
 import tornado.httpclient
 import tornado.web
+from wipac_telemetry import tracing_tools
 
 from . import arghandler
 from .auth import Auth, OpenIDAuth
@@ -102,22 +103,31 @@ class RestHandler(tornado.web.RequestHandler):
         return namespace
 
     def get_current_user(self):
+        """Get the current user, and set auth-related attributes."""
         try:
-            type,token = self.request.headers['Authorization'].split(' ', 1)
+            type, token = self.request.headers['Authorization'].split(' ', 1)
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
             logger.debug('token: %r', token)
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
+            if self._span:
+                self._span.set_attribute('auth_data.role', self.auth_data['role'])
             return data['sub']
+        # Auth Failed
         except Exception:
             if self.debug and 'Authorization' in self.request.headers:
                 logger.info('Authorization: %r', self.request.headers['Authorization'])
             logger.info('failed auth', exc_info=True)
+
         return None
 
-    def prepare(self):
+    @tracing_tools.spanned(kind="server", inject=True, these=["self.request.method", "self.request.uri"])
+    def prepare(self, span: tracing_tools.OptSpan):
+        """Prepare before http-method request handlers."""
+        self._span = span
+
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
@@ -128,9 +138,13 @@ class RestHandler(tornado.web.RequestHandler):
             self.start_time = time.time()
 
     def on_finish(self):
+        """Cleanup after http-method request handlers."""
         if self.route_stats is not None and self.get_status() < 500:
             stat = self.route_stats[self.request.path]
-            stat.append(time.time()-self.start_time)
+            stat.append(time.time() - self.start_time)
+
+        if self._span:
+            self._span.end()
 
     def write_error(self, status_code=500, **kwargs):
         """Write out custom error json."""

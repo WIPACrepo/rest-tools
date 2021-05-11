@@ -31,7 +31,6 @@ class FruitsHanlder(RestHandler):
         self.fruit = fruit  # pylint: disable=W0201
 
     @role_authorization(roles=["admin", "user"])
-    @tracing_tools.spanned(kind="server", these=["self.auth_data.role"])
     async def get(self) -> None:
         """Write existing fruits."""
         assert tracing_tools.get_current_span().parent.span_id
@@ -41,7 +40,6 @@ class FruitsHanlder(RestHandler):
         self.write({"fruits": self.fruit})
 
     @role_authorization(roles=["admin"])
-    @tracing_tools.spanned(kind="server", these=["self.auth_data.role"])
     async def post(self) -> None:
         """Handle a new fruit."""
         assert tracing_tools.get_current_span().parent.span_id
