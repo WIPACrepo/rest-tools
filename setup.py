@@ -43,7 +43,7 @@ def _get_install_requires() -> List[str]:
     def convert(req: str) -> str:
         # GitHub Packages
         if "github.com" in req:
-            pat = r"^git\+(?P<url>https://github\.com/[^/]+/[^/]+)(?P<tag>@(v)?\d+\.\d+\.\d+)#egg=(?P<package>\w+)$"
+            pat = r"^git\+(?P<url>https://github\.com/[^/]+/[^/]+)@(?P<tag>(v)?\d+\.\d+\.\d+)#egg=(?P<package>\w+)$"
             re_match = re.match(pat, req)
             if not re_match:
                 raise Exception(
@@ -51,7 +51,8 @@ def _get_install_requires() -> List[str]:
                     f"pip-install git-package url is not in standardized format {pat} ({req})"
                 )
             groups = re_match.groupdict()
-            return f'{groups["package"]} @ {groups["url"]}.git{groups["tag"]}'
+            # point right to .zip (https://stackoverflow.com/a/56635563/13156561)
+            return f'{groups["package"]} @ {groups["url"]}/archive/refs/tags/{groups["tag"]}.zip'
         # PyPI Packages
         else:
             return req.replace("==", ">=")
