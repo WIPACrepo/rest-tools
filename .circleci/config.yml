@@ -10,7 +10,7 @@ jobs:
             - run: ./setupenv.sh
             - run: |
                 . env/bin/activate &&
-                pycycle --here --verbose &&
+                pycycle --source . --verbose &&
                 pytest -vvvvv --tb=short --mypy --flake8
 workflows:
     version: 2

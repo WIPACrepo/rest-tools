@@ -1,9 +1,9 @@
-coverage
+coverage>=4.4.2
 cryptography
 httpretty==1.0.5
 motor
 pycycle
-pyjwt >= 2.0.1
+pyjwt>=2.0.1
 pytest
 pytest-asyncio
 pytest-flake8
@@ -13,6 +13,7 @@ requests
 requests-futures
 requests-mock
 requests_toolbelt
-sphinx
-tornado >= 5.0
+sphinx>=1.4
+tornado>=5.1
 unidecode
+git+https://github.com/WIPACrepo/wipac-dev-tools@v1.0.2#egg=wipac_dev_tools
