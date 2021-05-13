@@ -94,7 +94,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.server_header = server_header
         self.route_stats = route_stats
 
-    @tracing_tools.spanned(kind="server", these=["self.request.method", "self.request.uri"])
+    @tracing_tools.spanned(kind="server", these=["self.request.method", "self.request.path"])
     async def _execute(self, *args: Any, **kwargs: Any) -> None:
         return await super()._execute(*args, **kwargs)
 
