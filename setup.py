@@ -39,21 +39,23 @@ def _get_version() -> str:
     raise Exception("cannot find __version__")
 
 
-def _get_pypi_requirements() -> List[str]:
-    return [m.replace("==", ">=") for m in REQUIREMENTS if "git+" not in m]
+def _get_install_requires() -> List[str]:
+    def convert(req: str) -> str:
+        # GitHub Packages
+        if "github.com" in req:
+            pat = r"^git\+(?P<url>https://github\.com/[^/]+/[^/]+@(v)?\d+\.\d+\.\d+)#egg=(?P<package>\w+)$"
+            re_match = re.match(pat, req)
+            if not re_match:
+                raise Exception(
+                    f"from {REQUIREMENTS_PATH}: "
+                    f"pip-install git-package url is not in standardized format {pat} ({req})"
+                )
+            return f'{re_match.groupdict()["package"]} @ {re_match.groupdict()["url"]}'
+        # PyPI Packages
+        else:
+            return req.replace("==", ">=")
 
-
-def _get_git_requirements() -> List[str]:
-    def valid(req: str) -> bool:
-        pat = r"^git\+https://github\.com/[^/]+/[^/]+@(v)?\d+\.\d+\.\d+#egg=\w+$"
-        if not re.match(pat, req):
-            raise Exception(
-                f"from {REQUIREMENTS_PATH}: "
-                f"pip-install git-package url is not in standardized format {pat} ({req})"
-            )
-        return True
-
-    return [m.replace("git+", "") for m in REQUIREMENTS if "git+" in m and valid(m)]
+    return [convert(m) for m in REQUIREMENTS]
 
 
 def _python_lang_classifiers() -> List[str]:
@@ -128,7 +130,6 @@ setup(
             "Programming Language :: Python :: Implementation :: CPython",
         ]
     ),
-    install_requires=_get_pypi_requirements(),
-    dependency_links=_get_git_requirements(),
+    install_requires=_get_install_requires(),
     zip_safe=False,
 )
