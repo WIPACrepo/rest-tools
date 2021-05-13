@@ -43,14 +43,15 @@ def _get_install_requires() -> List[str]:
     def convert(req: str) -> str:
         # GitHub Packages
         if "github.com" in req:
-            pat = r"^git\+(?P<url>https://github\.com/[^/]+/[^/]+@(v)?\d+\.\d+\.\d+)#egg=(?P<package>\w+)$"
+            pat = r"^git\+(?P<url>https://github\.com/[^/]+/[^/]+)(?P<tag>@(v)?\d+\.\d+\.\d+)#egg=(?P<package>\w+)$"
             re_match = re.match(pat, req)
             if not re_match:
                 raise Exception(
                     f"from {REQUIREMENTS_PATH}: "
                     f"pip-install git-package url is not in standardized format {pat} ({req})"
                 )
-            return f'{re_match.groupdict()["package"]} @ {re_match.groupdict()["url"]}'
+            groups = re_match.groupdict()
+            return f'{groups["package"]} @ {groups["url"]}.git{groups["tag"]}'
         # PyPI Packages
         else:
             return req.replace("==", ">=")
