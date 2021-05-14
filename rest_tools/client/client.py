@@ -16,7 +16,12 @@ from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
-from wipac_telemetry import tracing_tools
+from wipac_telemetry.tracing_tools import (
+    SpanKind,
+    get_current_span,
+    propagations,
+    spanned,
+)
 
 from ..server import OpenIDAuth
 from ..utils.json_util import JSONType, json_decode
@@ -126,8 +131,8 @@ class RestClient:
             args = {}
 
         # auto-inject the current span's info into the HTTP headers
-        if tracing_tools.get_current_span().is_recording():
-            tracing_tools.propagations.inject(self.session.headers)
+        if get_current_span().is_recording():
+            propagations.inject(self.session.headers)
 
         if path.startswith('/'):
             path = path[1:]
@@ -160,7 +165,7 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    @tracing_tools.spanned(these=['method', 'path', 'self.address'], kind='CLIENT')
+    @spanned(these=['method', 'path', 'self.address'], kind=SpanKind.CLIENT)
     async def request(
         self,
         method: str,
@@ -191,7 +196,7 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    @tracing_tools.spanned(these=['method', 'path', 'self.address'], kind='CLIENT')
+    @spanned(these=['method', 'path', 'self.address'], kind=SpanKind.CLIENT)
     def request_seq(
         self,
         method: str,
@@ -220,7 +225,7 @@ class RestClient:
         finally:
             self.session = s
 
-    @tracing_tools.spanned(these=['method', 'path', 'self.address'], kind='CLIENT')
+    @spanned(these=['method', 'path', 'self.address'], kind=SpanKind.CLIENT)
     def request_stream(
         self,
         method: str,
