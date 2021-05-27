@@ -9,11 +9,11 @@ pytest-asyncio
 pytest-flake8
 pytest-mock
 pytest-mypy
-requests
+requests==2.25.1
 requests-futures
 requests-mock
 requests_toolbelt
 sphinx>=1.4
 tornado>=5.1
 unidecode
-git+https://github.com/WIPACrepo/wipac-dev-tools@v1.0.2#egg=wipac_dev_tools
+git+https://github.com/WIPACrepo/wipac-dev-tools@v1.0.7#egg=wipac_dev_tools
