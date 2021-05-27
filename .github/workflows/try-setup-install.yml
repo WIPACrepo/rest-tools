@@ -36,4 +36,5 @@ jobs:
       - run: |
           python3 -V
           pip install --upgrade pip
+          pip install wheel
           pip install --editable .
