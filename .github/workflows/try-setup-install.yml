@@ -34,7 +34,6 @@ jobs:
         with:
           python-version: ${{ matrix.py3_versions }}
       - run: |
-          echo ${{ matrix.py3_versions }}
           python3 -V
           pip install --upgrade pip
           python setup.py install
