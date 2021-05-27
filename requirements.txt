@@ -16,4 +16,4 @@ requests_toolbelt
 sphinx>=1.4
 tornado>=5.1
 unidecode
-git+https://github.com/WIPACrepo/wipac-dev-tools@v1.0.7#egg=wipac_dev_tools
+git+https://github.com/WIPACrepo/wipac-dev-tools@v1.0.10#egg=wipac_dev_tools
