@@ -37,4 +37,5 @@ setup(
         ],
     ),
     zip_safe=False,
+    name="bug"
 )
