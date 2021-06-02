@@ -127,7 +127,7 @@ class RestClient:
 
         # auto-inject the current span's info into the HTTP headers
         if wtt.get_current_span().is_recording():
-            wtt.propagations.inject(self.session.headers)
+            wtt.propagations.inject_span_carrier(self.session.headers)  # type: ignore[arg-type]
 
         if path.startswith('/'):
             path = path[1:]

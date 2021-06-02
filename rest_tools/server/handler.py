@@ -94,8 +94,20 @@ class RestHandler(tornado.web.RequestHandler):
         self.server_header = server_header
         self.route_stats = route_stats
 
-    @wtt.spanned(kind=wtt.SpanKind.SERVER, these=["self.request.method", "self.request.path"])
+    @wtt.spanned(
+        kind=wtt.SpanKind.SERVER,
+        these=["self.request.method", "self.request.path"],
+        carrier="self.request.headers",
+    )
     async def _execute(self, *args: Any, **kwargs: Any) -> None:
+        """Call implemented methods.
+
+        NOTE: This is the closest common call-stack ancestor of
+            - `prepare()`,
+            - "method handlers" (`get()`, `post()`, ...),
+            - `on_finish()`,
+            - etc.
+        """
         return await super()._execute(*args, **kwargs)
 
     def set_default_headers(self):
