@@ -1,20 +1,21 @@
-coverage
+coverage>=4.4.2
 cryptography
 git+https://github.com/WIPACrepo/wipac-telemetry-prototype#egg=wipac_telemetry
 httpretty==1.0.5
 motor
 pycycle
-pyjwt >= 2.0.1
+pyjwt>=2.0.1
 pytest
 pytest-asyncio
 pytest-flake8
 pytest-mock
 pytest-mypy
-requests
+requests==2.25.1
 requests-futures
 requests-mock
 requests_toolbelt
-sphinx
+sphinx>=1.4
+tornado>=5.1
 types-requests
-tornado >= 5.0
 unidecode
+git+https://github.com/WIPACrepo/wipac-dev-tools@v1.0.10#egg=wipac_dev_tools
