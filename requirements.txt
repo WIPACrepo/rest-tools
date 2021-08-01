@@ -15,5 +15,6 @@ requests-futures
 requests-mock
 requests_toolbelt
 sphinx
+types-requests
 tornado >= 5.0
 unidecode
