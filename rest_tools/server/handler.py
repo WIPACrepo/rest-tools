@@ -128,7 +128,8 @@ class RestHandler(tornado.web.RequestHandler):
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
-            wtt.get_current_span().set_attribute('self.auth_data.role', self.auth_data['role'])
+            if "role" in self.auth_data:
+                wtt.get_current_span().set_attribute('self.auth_data.role', self.auth_data['role'])
             return data['sub']
         # Auth Failed
         except Exception:
