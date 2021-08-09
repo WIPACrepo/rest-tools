@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
+import wipac_telemetry.tracing_tools as wtt
 
 from ..server import OpenIDAuth
 from ..utils.json_util import JSONType, json_decode
@@ -118,26 +119,34 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
     ) -> Tuple[str, Dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
             args = {}
+
+        # auto-inject the current span's info into the HTTP headers
+        if wtt.get_current_span().is_recording():
+            wtt.propagations.inject_span_carrier(self.session.headers)  # type: ignore[arg-type]
+
         if path.startswith('/'):
             path = path[1:]
         url = os.path.join(self.address, path)
-        kwargs: Dict[str, Any] = {
-            'timeout': self.timeout,
-        }
-        if method in ('GET','HEAD'):
+
+        kwargs: Dict[str, Any] = {'timeout': self.timeout}
+
+        if method in ('GET', 'HEAD'):
             # args should be urlencoded
             kwargs['params'] = args
         else:
             kwargs['json'] = args
+
         if self.token_func:
             self._get_token()
+
         if self.access_token:
             self.session.headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
+
         return (url, kwargs)
 
     def _decode(self, content: Union[str, bytes, bytearray]) -> JSONType:
@@ -151,11 +160,12 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
+    @wtt.spanned(these=['method', 'path', 'self.address'], kind=wtt.SpanKind.CLIENT)
     async def request(
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -181,11 +191,12 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
+    @wtt.spanned(these=['method', 'path', 'self.address'], kind=wtt.SpanKind.CLIENT)
     def request_seq(
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None
+        args: Optional[Dict[str, Any]] = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -209,12 +220,13 @@ class RestClient:
         finally:
             self.session = s
 
+    @wtt.spanned(these=['method', 'path', 'self.address'], kind=wtt.SpanKind.CLIENT)
     def request_stream(
         self,
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
-        chunk_size: Optional[int] = 8096
+        chunk_size: Optional[int] = 8096,
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.
 

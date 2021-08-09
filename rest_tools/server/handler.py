@@ -13,6 +13,7 @@ import rest_tools
 import tornado.gen
 import tornado.httpclient
 import tornado.web
+import wipac_telemetry.tracing_tools as wtt
 
 from . import arghandler
 from .auth import Auth, OpenIDAuth
@@ -93,6 +94,22 @@ class RestHandler(tornado.web.RequestHandler):
         self.server_header = server_header
         self.route_stats = route_stats
 
+    @wtt.spanned(
+        kind=wtt.SpanKind.SERVER,
+        these=["self.request.method", "self.request.path"],
+        carrier="self.request.headers",
+    )
+    async def _execute(self, *args: Any, **kwargs: Any) -> None:
+        """Call implemented methods.
+
+        NOTE: This is the closest common call-stack ancestor of
+            - `prepare()`,
+            - "method handlers" (`get()`, `post()`, ...),
+            - `on_finish()`,
+            - etc.
+        """
+        return await super()._execute(*args, **kwargs)
+
     def set_default_headers(self):
         self._headers['Server'] = self.server_header
 
@@ -102,22 +119,29 @@ class RestHandler(tornado.web.RequestHandler):
         return namespace
 
     def get_current_user(self):
+        """Get the current user, and set auth-related attributes."""
         try:
-            type,token = self.request.headers['Authorization'].split(' ', 1)
+            type, token = self.request.headers['Authorization'].split(' ', 1)
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
             logger.debug('token: %r', token)
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
+            if "role" in self.auth_data:
+                wtt.get_current_span().set_attribute('self.auth_data.role', self.auth_data['role'])
             return data['sub']
+        # Auth Failed
         except Exception:
             if self.debug and 'Authorization' in self.request.headers:
                 logger.info('Authorization: %r', self.request.headers['Authorization'])
             logger.info('failed auth', exc_info=True)
+
         return None
 
+    @wtt.evented()
     def prepare(self):
+        """Prepare before http-method request handlers."""
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
@@ -127,11 +151,14 @@ class RestHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
 
+    @wtt.evented()
     def on_finish(self):
+        """Cleanup after http-method request handlers."""
         if self.route_stats is not None and self.get_status() < 500:
             stat = self.route_stats[self.request.path]
-            stat.append(time.time()-self.start_time)
+            stat.append(time.time() - self.start_time)
 
+    @wtt.evented(all_args=True)
     def write_error(self, status_code=500, **kwargs):
         """Write out custom error json."""
         data = {
