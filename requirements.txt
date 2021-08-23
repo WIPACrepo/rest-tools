@@ -17,4 +17,4 @@ sphinx>=1.4
 tornado>=5.1
 types-requests
 unidecode
-git+https://github.com/WIPACrepo/wipac-telemetry-prototype@v0.1.9#egg=wipac_telemetry
+git+https://github.com/WIPACrepo/wipac-telemetry-prototype@v0.1.12#egg=wipac_telemetry
