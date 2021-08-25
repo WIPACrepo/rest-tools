@@ -1,4 +1,5 @@
 version: 2
+
 jobs:
     test:
         docker:
@@ -13,6 +14,7 @@ jobs:
                 pip install pycycle
                 pycycle --here --verbose
                 pytest -vvvvv --tb=short --mypy --flake8
+
 workflows:
     version: 2
     build_and_test:
