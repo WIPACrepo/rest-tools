@@ -101,9 +101,11 @@ class RestClient:
             try:
                 # NOTE: PyJWT mis-type-hinted arg #1 as a str, but byte is also fine
                 # https://github.com/jpadilla/pyjwt/pull/605#issuecomment-772082918
-                data = jwt.decode(self.access_token, algorithms=['RS256', 'RS512'],
-                                  options={"verify_signature": False})  # type: ignore[arg-type]
-                if data['exp'] < time.time()+5:
+                data = jwt.decode(
+                    self.access_token,  # type: ignore[arg-type]
+                    algorithms=['RS256', 'RS512'],
+                    options={"verify_signature": False}
+                )
                     raise Exception()
                 return
             except Exception:
