@@ -2,15 +2,18 @@
 Helpers for setting up `Tornado <http://tornado.readthedocs.io>`_ servers.
 """
 
-import os
-import socket
-import logging
+# fmt:off
+# pylint: skip-file
+
 import binascii
+import logging
+import socket
 
 import tornado.web
 from tornado.platform.asyncio import AsyncIOMainLoop
-import asyncio
+
 AsyncIOMainLoop().install()
+
 
 def tornado_logger(handler):
     """Log tornado messages to our logger"""

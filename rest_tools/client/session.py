@@ -6,7 +6,7 @@
 # fmt:off
 # pylint: skip-file
 
-from typing import Iterable, Union
+from typing import Iterable
 
 import requests
 from requests.adapters import HTTPAdapter

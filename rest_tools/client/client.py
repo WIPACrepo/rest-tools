@@ -57,10 +57,11 @@ class RestClient:
         self.logger.setLevel('DEBUG')
 
         # token handling
+        self._token_expire_delay_offset = 5
         self.access_token: Optional[Union[str, bytes]] = None
         self.token_func: Optional[Callable[[], Union[str, bytes]]] = None
         if token:
-            if isinstance(token, (str,bytes)):
+            if isinstance(token, (str, bytes)):
                 self.access_token = token
             elif callable(token):
                 self.token_func = token
@@ -101,9 +102,13 @@ class RestClient:
             try:
                 # NOTE: PyJWT mis-type-hinted arg #1 as a str, but byte is also fine
                 # https://github.com/jpadilla/pyjwt/pull/605#issuecomment-772082918
-                data = jwt.decode(self.access_token, algorithms=['RS256', 'RS512'],
-                                  options={"verify_signature": False})  # type: ignore[arg-type]
-                if data['exp'] < time.time()+5:
+                data = jwt.decode(
+                    self.access_token,  # type: ignore[arg-type]
+                    algorithms=['RS256', 'RS512'],
+                    options={"verify_signature": False}
+                )
+                # account for an X second delay over the wire, so expire sooner
+                if data['exp'] < time.time() + self._token_expire_delay_offset:
                     raise Exception()
                 return
             except Exception:
