@@ -57,10 +57,11 @@ class RestClient:
         self.logger.setLevel('DEBUG')
 
         # token handling
+        self._token_expire_delay_offset = 5
         self.access_token: Optional[Union[str, bytes]] = None
         self.token_func: Optional[Callable[[], Union[str, bytes]]] = None
         if token:
-            if isinstance(token, (str,bytes)):
+            if isinstance(token, (str, bytes)):
                 self.access_token = token
             elif callable(token):
                 self.token_func = token
@@ -106,6 +107,8 @@ class RestClient:
                     algorithms=['RS256', 'RS512'],
                     options={"verify_signature": False}
                 )
+                # account for an X second delay over the wire, so expire sooner
+                if data['exp'] < time.time() + self._token_expire_delay_offset:
                     raise Exception()
                 return
             except Exception:
