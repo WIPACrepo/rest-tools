@@ -3,6 +3,7 @@
 # fmt:off
 # pylint: skip-file
 
+import ast
 import base64
 import json
 import logging
@@ -106,10 +107,8 @@ class var_converter:
             setattr(ret,k,obj[k])
         return ret
 
+
 # do some default conversions
-# for things like OrderedDict
-import ast
-from collections import OrderedDict
 
 
 class repr_converter:
