@@ -10,4 +10,4 @@ requests_toolbelt
 sphinx>=1.4
 tornado>=5.1
 unidecode
-git+https://github.com/WIPACrepo/wipac-telemetry-prototype@v0.1.16#egg=wipac_telemetry
+git+https://github.com/WIPACrepo/wipac-telemetry-prototype@v0.1.18#egg=wipac_telemetry
