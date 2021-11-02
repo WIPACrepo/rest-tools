@@ -54,7 +54,6 @@ class RestClient:
         self.retries = retries
         self.kwargs = kwargs
         self.logger = logging.getLogger('RestClient')
-        self.logger.setLevel('DEBUG')
 
         # token handling
         self._token_expire_delay_offset = 5
