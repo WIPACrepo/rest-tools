@@ -24,7 +24,7 @@ shop = SetupShop(
 setup(
     scripts=glob.glob("bin/*"),
     url="https://github.com/WIPACrepo/rest-tools",
-    # package_data={shop.name: ["py.typed"]},
+    package_data={shop.name: ["py.typed"]},
     **shop.get_kwargs(
         subpackages=["client", "server", "utils"],
         other_classifiers=[
