@@ -15,8 +15,19 @@ jobs:
                 pycycle --here --verbose
                 pytest -vvvvv --tb=short --mypy --flake8
 
+    mypy:
+        docker:
+            - image: circleci/python:3.8.5
+        steps:
+            - checkout
+            - run: ./setupenv.sh
+            - run: |
+                . env/bin/activate
+                mypy rest_tools/
+
 workflows:
     version: 2
     build_and_test:
         jobs:
             - test
+            - mypy

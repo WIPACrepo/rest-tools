@@ -3,7 +3,7 @@
 
 import distutils.util
 import json
-from typing import Any, Callable, cast, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import tornado.web
 
@@ -19,7 +19,7 @@ NO_DEFAULT = _NoDefaultValue()
 
 def _parse_json_body_arguments(request_body: bytes) -> Dict[str, Any]:
     """Return the request-body JSON-decoded, but only if it's a `dict`."""
-    json_body = json_decode(request_body)  # type: ignore[no-untyped-call]
+    json_body = json_decode(request_body)
 
     if isinstance(json_body, dict):
         return cast(Dict[str, Any], json_body)
@@ -203,7 +203,7 @@ class ArgumentHandler:
         # check query base-arguments
         value = rest_handler_get_argument(name, default, strip=strip)
         try:
-            value = ArgumentHandler._cast_type(value, type_,)
+            value = ArgumentHandler._cast_type(value, type_)
             value = ArgumentHandler._validate_choice(value, choices, forbiddens)
             return value
         except _InvalidArgumentError as e:
