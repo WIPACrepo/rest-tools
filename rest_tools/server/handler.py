@@ -95,6 +95,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.route_stats = route_stats
 
     @wtt.spanned(
+        span_namer=wtt.SpanNamer(use_this_arg='self.request.method'),
         kind=wtt.SpanKind.SERVER,
         these=["self.request.method", "self.request.path"],
         carrier="self.request.headers",
