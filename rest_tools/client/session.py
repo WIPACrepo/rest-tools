@@ -17,7 +17,7 @@ from requests_futures.sessions import FuturesSession  # type: ignore[import]
 def AsyncSession(
     retries: int = 10,
     backoff_factor: float = 0.3,
-    method_whitelist: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    allowed_methods: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
 ) -> FuturesSession:
     """Return a Session object with full retry capabilities.
@@ -25,7 +25,7 @@ def AsyncSession(
     Args:
         retries (int): number of retries
         backoff_factor (float): speed factor for retries (in seconds)
-        method_whitelist (iterable): http methods to retry on
+        allowed_methods (iterable): http methods to retry on
         status_forcelist (iterable): http status codes to retry on
 
     Returns:
@@ -38,7 +38,7 @@ def AsyncSession(
         read=retries,
         redirect=retries,
         # status=retries,
-        method_whitelist=method_whitelist,
+        allowed_methods=allowed_methods,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
     )
@@ -51,7 +51,7 @@ def AsyncSession(
 def Session(
     retries: int = 10,
     backoff_factor: float = 0.3,
-    method_whitelist: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    allowed_methods: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
 ) -> requests.Session:
     """Return a Session object with full retry capabilities.
@@ -59,7 +59,7 @@ def Session(
     Args:
         retries (int): number of retries
         backoff_factor (float): speed factor for retries (in seconds)
-        method_whitelist (iterable): http methods to retry on
+        allowed_methods (iterable): http methods to retry on
         status_forcelist (iterable): http status codes to retry on
 
     Returns:
@@ -72,7 +72,7 @@ def Session(
         read=retries,
         redirect=retries,
         # status=retries,
-        method_whitelist=method_whitelist,
+        allowed_methods=allowed_methods,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
     )
