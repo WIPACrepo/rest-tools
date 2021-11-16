@@ -165,7 +165,11 @@ class RestClient:
             self.logger.info('json data: %r', content)
             raise
 
-    @wtt.spanned(these=['method', 'path', 'self.address'], kind=wtt.SpanKind.CLIENT)
+    @wtt.spanned(
+        span_namer=wtt.SpanNamer(use_this_arg='method'),
+        these=['method', 'path', 'self.address'],
+        kind=wtt.SpanKind.CLIENT
+    )
     async def request(
         self,
         method: str,
@@ -196,7 +200,11 @@ class RestClient:
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
-    @wtt.spanned(these=['method', 'path', 'self.address'], kind=wtt.SpanKind.CLIENT)
+    @wtt.spanned(
+        span_namer=wtt.SpanNamer(use_this_arg='method'),
+        these=['method', 'path', 'self.address'],
+        kind=wtt.SpanKind.CLIENT
+    )
     def request_seq(
         self,
         method: str,
@@ -225,7 +233,11 @@ class RestClient:
         finally:
             self.session = s
 
-    @wtt.spanned(these=['method', 'path', 'self.address'], kind=wtt.SpanKind.CLIENT)
+    @wtt.spanned(
+        span_namer=wtt.SpanNamer(use_this_arg='method'),
+        these=['method', 'path', 'self.address'],
+        kind=wtt.SpanKind.CLIENT
+    )
     def request_stream(
         self,
         method: str,
