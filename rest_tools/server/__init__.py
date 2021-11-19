@@ -1,8 +1,6 @@
 """Sub-package __init__."""
 
-from .auth import Auth, OpenIDAuth
-from .config import from_environment
-from .daemon import Daemon
+
 from .handler import (
     RestHandler,
     RestHandlerSetup,
@@ -21,8 +19,4 @@ __all__ = [
     "catch_error",
     "role_authorization",
     "scope_role_auth",
-    "Auth",
-    "OpenIDAuth",
-    "Daemon",
-    "from_environment",
 ]

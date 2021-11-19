@@ -18,7 +18,7 @@ import jwt
 import requests
 import wipac_telemetry.tracing_tools as wtt
 
-from ..server import OpenIDAuth
+from ..utils.auth import OpenIDAuth
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 

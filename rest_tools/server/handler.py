@@ -15,8 +15,8 @@ import tornado.httpclient
 import tornado.web
 import wipac_telemetry.tracing_tools as wtt
 
+from ..utils.auth import Auth, OpenIDAuth
 from . import arghandler
-from .auth import Auth, OpenIDAuth
 from .stats import RouteStats
 
 logger = logging.getLogger('rest')

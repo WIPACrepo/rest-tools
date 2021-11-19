@@ -13,7 +13,7 @@ import unittest
 import jwt
 
 # local imports
-from rest_tools.server import auth
+from rest_tools.utils import auth
 
 logger = logging.getLogger('auth_test')
 

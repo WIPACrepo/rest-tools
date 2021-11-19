@@ -10,7 +10,7 @@ import tempfile
 import unittest
 
 # local imports
-from rest_tools.server import from_environment
+from rest_tools.utils import from_environment
 
 logger = logging.getLogger('config_test')
 
