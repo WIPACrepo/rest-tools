@@ -2,6 +2,9 @@
 
 <!--next-version-placeholder-->
 
+## v1.2.1 (2021-12-29)
+
+
 ## v1.2.0 (2021-11-19)
 ### Feature
 * Move More Modules to `utils` Sub-Package ([#54](https://github.com/WIPACrepo/rest-tools/issues/54)) ([`7244afc`](https://github.com/WIPACrepo/rest-tools/commit/7244afca10e62dc1c53fe1d35d406841e09babc8))
