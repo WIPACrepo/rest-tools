@@ -125,6 +125,7 @@ class RestClient:
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Tuple[str, Dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
@@ -149,8 +150,14 @@ class RestClient:
         if self.token_func:
             self._get_token()
 
+        if not headers:
+            headers = {}
+
         if self.access_token:
-            self.session.headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
+            headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
+
+        if headers:
+            kwargs['headers'] = headers
 
         return (url, kwargs)
 
@@ -175,6 +182,7 @@ class RestClient:
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -184,11 +192,12 @@ class RestClient:
             method (str): the http method
             path (str): the url path on the server
             args (dict): any arguments to pass
+            headers (dict): any headers to pass to the request
 
         Returns:
             dict: json dict or raw string
         """
-        url, kwargs = self._prepare(method, path, args)
+        url, kwargs = self._prepare(method, path, args, headers)
         try:
             # session: AsyncSession; So, self.session.request() -> Future
             r: requests.Response = await asyncio.wrap_future(self.session.request(method, url, **kwargs))  # type: ignore[arg-type]
@@ -210,6 +219,7 @@ class RestClient:
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -219,6 +229,7 @@ class RestClient:
             method (str): the http method
             path (str): the url path on the server
             args (dict): any arguments to pass
+            headers (dict): any headers to pass to the request
 
         Returns:
             dict: json dict or raw string
@@ -226,7 +237,7 @@ class RestClient:
         s = self.session
         try:
             self.open(sync=True)
-            url, kwargs = self._prepare(method, path, args)
+            url, kwargs = self._prepare(method, path, args, headers)
             r = self.session.request(method, url, **kwargs)
             r.raise_for_status()
             return self._decode(r.content)
@@ -243,6 +254,7 @@ class RestClient:
         method: str,
         path: str,
         args: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
         chunk_size: Optional[int] = 8096,
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.
@@ -255,6 +267,7 @@ class RestClient:
             method (str): the http method
             path (str): the url path on the server
             args (dict): any arguments to pass
+            headers (dict): any headers to pass to the request
             chunk_size (int): chunk size (see above)
 
         Returns:
@@ -266,7 +279,7 @@ class RestClient:
         s = self.session
         try:
             self.open(sync=True)
-            url, kwargs = self._prepare(method, path, args)
+            url, kwargs = self._prepare(method, path, args, headers)
             resp = self.session.request(method, url, stream=True, **kwargs)
             resp.raise_for_status()
             for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):
@@ -306,6 +319,7 @@ class OpenIDRestClient(RestClient):
 
         self.access_token = None
         self.refresh_token: Optional[Union[str, bytes]] = refresh_token
+        self.token_func = True  # type: ignore
         self._get_token()
 
     def _get_token(self) -> None:
@@ -343,8 +357,3 @@ class OpenIDRestClient(RestClient):
 
         raise Exception('No token available')
 
-    def _prepare(self, *args: Any, **kwargs: Any) -> Tuple[str, Dict[str, Any]]:
-        self._get_token()
-        if self.access_token:
-            self.session.headers['Authorization'] = 'Bearer ' + _to_str(self.access_token)
-        return super()._prepare(*args, **kwargs)

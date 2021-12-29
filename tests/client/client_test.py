@@ -45,6 +45,9 @@ async def test_10_request(requests_mock: Mock) -> None:
     ret = await rpc.request("POST", "test", {})
 
     assert requests_mock.called
+    auth_parts = requests_mock.last_request.headers['Authorization'].split(' ', 1)
+    assert auth_parts[0].lower() == 'bearer'
+    assert auth_parts[1] == 'passkey'
     assert ret == result
 
     result2 = {"result2": "the result 2"}
@@ -100,6 +103,18 @@ async def test_22_request(requests_mock: Mock) -> None:
 
     with pytest.raises(Exception):
         _ = await rpc.request("GET", "test", {})
+
+
+@pytest.mark.asyncio  # type: ignore[misc]
+async def test_30_request(requests_mock: Mock) -> None:
+    """Test `async request()` with headers."""
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
+    requests_mock.get("/test", content=b"")
+    ret = await rpc.request("GET", "test", {}, {'foo': 'bar'})
+
+    assert requests_mock.called
+    assert requests_mock.last_request.headers['foo'] == 'bar'
+    assert ret is None
 
 
 def test_90_request_seq(requests_mock: Mock) -> None:
