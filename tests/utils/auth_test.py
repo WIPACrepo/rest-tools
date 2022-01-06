@@ -11,49 +11,42 @@ import time
 import unittest
 
 import jwt
+import pytest
 
 # local imports
 from rest_tools.utils import auth
-
-logger = logging.getLogger('auth_test')
-
-
-class auth_test(unittest.TestCase):
-    def setUp(self):
-        super(auth_test,self).setUp()
-        self.test_dir = tempfile.mkdtemp(dir=os.getcwd())
-
-        def cleanup():
-            shutil.rmtree(self.test_dir)
-
-        self.addCleanup(cleanup)
-
-    def test_01_create_token(self):
-        a = auth.Auth('secret')
-        now = time.time()
-        tok = a.create_token('subj', expiration=20, type='foo')
-
-        data = jwt.decode(tok, 'secret', algorithms=['HS512'])
-        self.assertEqual(data['sub'], 'subj')
-        self.assertEqual(data['type'], 'foo')
-        self.assertLess(data['exp'], now+21)
-        self.assertGreater(data['nbf'], now-1)
-
-    def test_10_validate(self):
-        a = auth.Auth('secret')
-        now = time.time()
-        tok = a.create_token('subj', expiration=20, type='foo')
-        data = a.validate(tok)
-        self.assertEqual(data['sub'], 'subj')
-        self.assertEqual(data['type'], 'foo')
-
-        tok = jwt.encode({'sub':'subj','exp':now-1}, 'secret', algorithm='HS512')
-        with self.assertRaises(Exception):
-            a.validate(tok)
+from ..util import *
 
 
-def load_tests(loader, tests, pattern):
-    suite = unittest.TestSuite()
-    alltests = loader.getTestCaseNames(auth_test)
-    suite.addTests(loader.loadTestsFromNames(alltests,auth_test))
-    return suite
+def test_auth_create_token():
+    a = auth.Auth('secret')
+    now = time.time()
+    tok = a.create_token('subj', expiration=20, type='foo')
+
+    data = jwt.decode(tok, 'secret', algorithms=['HS512'])
+    assert data['sub'] == 'subj'
+    assert data['type'] == 'foo'
+    assert data['exp'] < now+21
+    assert data['nbf'] > now-1
+
+def test_auth_validate():
+    a = auth.Auth('secret')
+    now = time.time()
+    tok = a.create_token('subj', expiration=20, type='foo')
+    data = a.validate(tok)
+    assert data['sub'] == 'subj'
+    assert data['type'] == 'foo'
+
+    tok = jwt.encode({'sub':'subj','exp':now-1}, 'secret', algorithm='HS512')
+    with pytest.raises(Exception):
+        a.validate(tok)
+
+def test_auth_rsa(gen_keys_bytes):
+    a = auth.Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
+    tok = a.create_token('subj', expiration=20, type='foo')
+    data = jwt.decode(tok, gen_keys_bytes[1], algorithms=['RS256'])
+    assert data['sub'] == 'subj'
+
+    data = a.validate(tok)
+    assert data['sub'] == 'subj'
+

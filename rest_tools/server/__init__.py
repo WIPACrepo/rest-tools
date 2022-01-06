@@ -4,6 +4,7 @@
 from .handler import (
     RestHandler,
     RestHandlerSetup,
+    OpenIDLoginHandler,
     authenticated,
     catch_error,
     role_authorization,
@@ -15,6 +16,7 @@ __all__ = [
     "RestServer",
     "RestHandlerSetup",
     "RestHandler",
+    "OpenIDLoginHandler",
     "authenticated",
     "catch_error",
     "role_authorization",

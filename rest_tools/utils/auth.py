@@ -13,7 +13,7 @@ class Auth:
     """
     Handle authentication of JWT tokens.
     """
-    
+
     def __init__(self, secret, pub_secret=None, issuer='IceProd', algorithm='HS512', expiration=31622400, expiration_temp=86400):
         self.secret = secret
         self.pub_secret = pub_secret if pub_secret else secret
@@ -22,7 +22,7 @@ class Auth:
         self.max_exp = expiration
         self.max_exp_temp = expiration_temp
 
-    def create_token(self, subject, expiration=None, type='temp', payload=None):
+    def create_token(self, subject, expiration=None, type='temp', payload=None, headers=None):
         """
         Create a token.
 
@@ -50,7 +50,7 @@ class Auth:
             'type': type,
         })
 
-        token = jwt.encode(payload, self.secret, algorithm=self.algorithm)
+        token = jwt.encode(payload, self.secret, algorithm=self.algorithm, headers=headers)
         return token
 
     def validate(self, token, **kwargs):
@@ -85,24 +85,27 @@ class OpenIDAuth:
     def __init__(self, url):
         self.url = url if url.endswith('/') else url+'/'
         self.public_keys = {}
+        self.provider_info = {}
         self.token_url = None
 
         self._refresh_keys()
 
     def _refresh_keys(self):
         try:
-            # discovery
-            r = requests.get(self.url+'.well-known/openid-configuration')
-            r.raise_for_status()
-            provider_info = r.json()
+            if not self.provider_info:
+                # discovery
+                r = requests.get(self.url+'.well-known/openid-configuration')
+                r.raise_for_status()
+                self.provider_info = r.json()
 
-            # get token url
-            self.token_url = provider_info['token_endpoint']
+                # get token url
+                self.token_url = self.provider_info['token_endpoint']
 
             # get keys
-            r = requests.get(provider_info['jwks_uri'])
+            r = requests.get(self.provider_info['jwks_uri'])
             r.raise_for_status()
             for jwk in r.json()['keys']:
+                logging.debug(f'jwk: {jwk}')
                 kid = jwk['kid']
                 logging.info(f'loaded JWT key {kid}')
                 self.public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))

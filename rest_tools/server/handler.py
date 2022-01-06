@@ -3,16 +3,22 @@
 # fmt:off
 # pylint: skip-file
 
+import base64
 import logging
 import time
 from collections import defaultdict
 from functools import partial, wraps
-from typing import Any, List, Optional
+import hmac
+from typing import Any, Dict, List, Optional, Union
+import urllib.parse
 
 import rest_tools
+from tornado.auth import OAuth2Mixin
 import tornado.gen
 import tornado.httpclient
+import tornado.httputil
 import tornado.web
+import tornado.escape
 import wipac_telemetry.tracing_tools as wtt
 
 from ..utils.auth import Auth, OpenIDAuth
@@ -351,3 +357,110 @@ def scope_role_auth(**_auth):
             return await method(self, *args, **kwargs)
         return wrapper
     return make_wrapper
+
+
+class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
+    """
+    Handle OpenID Connect logins.
+
+    Requires the `login_url` application setting to be a full url.
+    """
+    def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
+        super().initialize(**kwargs)
+        if not isinstance(self.auth, OpenIDAuth):
+            raise RuntimeError('OpenID Connect auth not set up')
+        self._OAUTH_AUTHORIZE_URL = self.auth.provider_info['authorization_endpoint']
+        self._OAUTH_ACCESS_TOKEN_URL = self.auth.provider_info['token_endpoint']
+        self._OAUTH_LOGOUT_URL = self.auth.provider_info['end_session_endpoint']
+        self._OAUTH_USERINFO_URL = self.auth.provider_info['userinfo_endpoint']
+        self.oauth_client_id = oauth_client_id
+        self.oauth_client_secret = oauth_client_secret
+        if oauth_client_scope:
+            self.oauth_client_scope = oauth_client_scope.split()
+        else:
+            self.oauth_client_scope = ['offline_access', 'profile', 'groups']
+
+    async def get_authenticated_user(
+        self, redirect_uri: str, code: str
+    ) -> Dict[str, Any]:
+        http = self.get_auth_http_client()
+        body = urllib.parse.urlencode({
+            'redirect_uri': redirect_uri,
+            'code': code,
+            'client_id': self.oauth_client_id,
+            'client_secret': self.oauth_client_secret,
+            'grant_type': 'authorization_code',
+        })
+        response = await http.fetch(
+            self._OAUTH_ACCESS_TOKEN_URL,
+            method='POST',
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            body=body,
+        )
+        ret = tornado.escape.json_decode(response.body)
+        if not ret.get('id_token', ''):
+            response = await http.fetch(
+                self._OAUTH_USERINFO_URL,
+                method='GET',
+                headers={'Authorization': f'Bearer {ret["access_token"]}'},
+            )
+            ret['id_token'] = tornado.escape.json_decode(response.body)
+
+        self.auth.validate(ret['id_token'])
+        return ret
+
+    def _decode_state(self, state: Union[bytes, str]) -> str:
+        data = tornado.escape.json_decode(base64.b64decode(state))
+        _, token, _ = self._decode_xsrf_token(data.pop('xsrf'))
+        _, expected_token, _ = self._get_raw_xsrf_token()
+        if not token:
+            raise tornado.web.HTTPError(403, reason="'state' argument has invalid format")
+        if not hmac.compare_digest(tornado.escape.utf8(token), tornado.escape.utf8(expected_token)):
+            raise tornado.web.HTTPError(403, reason="XSRF cookie does not match state argument")
+        return data
+
+    def _encode_state(self, data: Dict[str, Any]) -> bytes:
+        data2 = data.copy()  # make a copy to not add xsrf to source dict
+        data2['xsrf'] = self.xsrf_token.decode('utf-8')
+        return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8'))
+
+    @catch_error
+    async def get(self):
+        if self.get_argument('code', False):
+            data = self._decode_state(self.get_argument('state'))
+            user = await self.get_authenticated_user(
+                redirect_uri=self.get_login_url(),
+                code=self.get_argument('code'),
+            )
+            logger.debug(f'user tokens: {user}')
+            # Save the user with e.g. set_secure_cookie
+            self.set_secure_cookie('access_token', user['access_token'],
+                                   expires_days=1.0*user['expires_in']/3600/24)
+            if 'refresh_token' in user:
+                self.set_secure_cookie('refresh_token', user['refresh_token'],
+                                       expires_days=1.0*user.get('refresh_expires_in', 86400)/3600/24)
+            self.set_secure_cookie('identity', user['id_token'],
+                                   expires_days=1.0*user.get('refresh_expires_in', 86400)/3600/24)
+            if data.get('redirect', None):
+                url = data['redirect']
+                if 'state' in data:
+                    url = tornado.httputil.url_concact(url, {'state': data['state']})
+                self.redirect(url)
+            elif self.settings.get('debug', False):
+                self.write(user)
+            else:
+                raise tornado.web.HTTPError(400, 'missing redirect')
+        else:
+            state = {}
+            if self.get_argument('redirect', False):
+                state['redirect'] = self.get_argument('redirect')
+            elif not self.settings.get('debug', False):
+                raise tornado.web.HTTPError(400, 'missing redirect')
+            if self.get_argument('state', False):
+                state['state'] = self.get_argument('state')
+            await self.authorize_redirect(
+                redirect_uri=self.get_login_url(),
+                client_id=self.oauth_client_id,
+                scope=self.oauth_client_scope,
+                extra_params={"state": self._encode_state(state)},
+                response_type='code')
