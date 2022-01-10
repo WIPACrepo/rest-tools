@@ -406,7 +406,7 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             )
             ret['id_token'] = tornado.escape.json_decode(response.body)
 
-        self.auth.validate(ret['id_token'])
+        self.auth.validate(ret['access_token'])
         return ret
 
     def _decode_state(self, state: Union[bytes, str]) -> str:
@@ -426,20 +426,24 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
 
     @catch_error
     async def get(self):
-        if self.get_argument('code', False):
+        if self.get_argument('error', False):
+            err = self.get_argument('error_description', None)
+            if not err:
+                err = 'unknown oauth2 error'
+            raise tornado.web.HTTPError(400, reason=err)
+        elif self.get_argument('code', False):
             data = self._decode_state(self.get_argument('state'))
             user = await self.get_authenticated_user(
                 redirect_uri=self.get_login_url(),
                 code=self.get_argument('code'),
             )
-            logger.debug(f'user tokens: {user}')
             # Save the user with e.g. set_secure_cookie
             self.set_secure_cookie('access_token', user['access_token'],
                                    expires_days=1.0*user['expires_in']/3600/24)
             if 'refresh_token' in user:
                 self.set_secure_cookie('refresh_token', user['refresh_token'],
                                        expires_days=1.0*user.get('refresh_expires_in', 86400)/3600/24)
-            self.set_secure_cookie('identity', user['id_token'],
+            self.set_secure_cookie('identity', tornado.escape.json_encode(user['id_token']),
                                    expires_days=1.0*user.get('refresh_expires_in', 86400)/3600/24)
             if data.get('redirect', None):
                 url = data['redirect']
@@ -449,7 +453,7 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             elif self.settings.get('debug', False):
                 self.write(user)
             else:
-                raise tornado.web.HTTPError(400, 'missing redirect')
+                raise tornado.web.HTTPError(400, reason='missing redirect')
         else:
             state = {}
             if self.get_argument('redirect', False):
@@ -458,7 +462,7 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
                 raise tornado.web.HTTPError(400, 'missing redirect')
             if self.get_argument('state', False):
                 state['state'] = self.get_argument('state')
-            await self.authorize_redirect(
+            self.authorize_redirect(
                 redirect_uri=self.get_login_url(),
                 client_id=self.oauth_client_id,
                 scope=self.oauth_client_scope,

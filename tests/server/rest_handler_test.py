@@ -8,7 +8,7 @@ from rest_tools.server import *
 from rest_tools.server.stats import RouteStats
 from rest_tools.utils.auth import Auth, OpenIDAuth
 import jwt.algorithms
-from tornado.web import Application
+from tornado.web import Application, HTTPError
 
 from ..util import *
 
@@ -121,8 +121,8 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
     token = auth.create_token('sub', headers={'kid': '123'})
 
     user_info = {
-        'id_token': token,
-        'access_token': 'accesssssss',
+        'id_token': '{"id": "foo"}',
+        'access_token': token,
         'expires_in': 3600,
     }
     async def fn(*args, **kwargs):
@@ -181,18 +181,16 @@ async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock)
     handler = OpenIDLoginHandler(application, request, **ret)
 
     # first-time get
-    async def fn(*args, **kwargs):
-        pass
-    handler.authorize_redirect = MagicMock(side_effect=fn)
-
+    handler.authorize_redirect = MagicMock()
     request.body = ''
     await handler.get()
     handler.authorize_redirect.assert_called()
 
     # get with code
+    token = auth.create_token('sub', headers={'kid': '123'})
     user_info = {
-        'id_token': 'token',
-        'access_token': 'accesssssss',
+        'id_token': '{"id": "foo"}',
+        'access_token': token,
         'expires_in': 3600,
     }
     async def fn2(*args, **Kwargs):
@@ -205,3 +203,12 @@ async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock)
     await handler.get()
     handler.write.assert_called()
     assert handler.write.call_args[0][0] == user_info
+
+    # get with error
+    request.body = '{"error": true, "error_description": "the error"}'
+    handler._decode_state = MagicMock(return_value={})
+    handler.authorize_redirect = MagicMock()
+    with pytest.raises(HTTPError, match='the error'):
+        await handler.get()
+    handler.authorize_redirect.assert_not_called()
+
