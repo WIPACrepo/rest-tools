@@ -439,12 +439,12 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             )
             # Save the user with e.g. set_secure_cookie
             self.set_secure_cookie('access_token', user['access_token'],
-                                   expires_days=1.0*user['expires_in']/3600/24)
+                                   expires_days=float(user['expires_in'])/3600/24)
             if 'refresh_token' in user:
                 self.set_secure_cookie('refresh_token', user['refresh_token'],
-                                       expires_days=1.0*user.get('refresh_expires_in', 86400)/3600/24)
+                                       expires_days=float(user.get('refresh_expires_in', 86400))/3600/24)
             self.set_secure_cookie('identity', tornado.escape.json_encode(user['id_token']),
-                                   expires_days=1.0*user.get('refresh_expires_in', 86400)/3600/24)
+                                   expires_days=float(user.get('refresh_expires_in', 86400))/3600/24)
             if data.get('redirect', None):
                 url = data['redirect']
                 if 'state' in data:
