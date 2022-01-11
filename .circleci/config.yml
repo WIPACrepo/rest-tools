@@ -13,7 +13,7 @@ jobs:
                 . env/bin/activate
                 pip install pycycle
                 pycycle --here --verbose
-                pytest -vvvvv --tb=short --mypy --flake8
+                pytest -vvvvv --tb=short
 
     mypy:
         docker:
