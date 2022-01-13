@@ -1,5 +1,6 @@
 # For most recent version see:
 # https://github.com/WIPACrepo/wipac-dev-tools/blob/main/.github/workflows/python-linters.yml
+# Copy any updates to wipac-dev-tools.
 
 name: Python Linters
 
