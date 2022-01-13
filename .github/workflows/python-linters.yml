@@ -13,7 +13,7 @@ jobs:
         python-root-list: "."
 
         use-flake8: true
-        extra-flake8-options: "--ignore=E203,E231,E226,E501,W503"
+        extra-flake8-options: "--ignore=E203,E231,E226,E302,E305,E501,W503,W504"
 
         use-mypy: true
         extra-mypy-options: ""
