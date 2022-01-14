@@ -1,6 +1,4 @@
 flake8
-lxml
-lxml-stubs
 mypy
 pytest
 pytest-asyncio
