@@ -33,7 +33,7 @@ class FruitsHanlder(RestHandler):
     @role_authorization(roles=["admin", "user"])
     async def get(self) -> None:
         """Write existing fruits."""
-        assert tracing_tools.get_current_span().parent.span_id
+        assert tracing_tools.get_current_span().parent.span_id  # type: ignore[attr-defined]
 
         logging.info("fruits: %r", self.fruit)
 
