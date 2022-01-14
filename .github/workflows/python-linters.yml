@@ -21,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install mypy types-requests
+      - run: pip install mypy
       - run: pip install .
+      - run: mypy --install-types --non-interactive .
       - run: mypy --exclude build/ .
