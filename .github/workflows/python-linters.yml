@@ -24,5 +24,4 @@ jobs:
       - run: pip install mypy
       - run: pip install -r requirements-dev.txt
       - run: pip install .
-      - run: pip freeze
       - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ .
