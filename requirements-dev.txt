@@ -1,6 +1,9 @@
 flake8
+lxml
+lxml-stubs
 mypy
 pytest
 pytest-asyncio
 pytest-mock
-types-requests
+types-requests==2.26.3
+wheel
