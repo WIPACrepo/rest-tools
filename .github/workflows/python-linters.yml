@@ -23,6 +23,6 @@ jobs:
       - uses: actions/setup-python@v2
       - run: pip install mypy
       - run: |
-          [ -e "requirements-dev.txt" ] && pip install -r requirements-dev.txt
+          ([ -e "requirements-dev.txt" ] && pip install -r requirements-dev.txt) || echo "no dev reqs"
       - run: pip install .
       - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ .
