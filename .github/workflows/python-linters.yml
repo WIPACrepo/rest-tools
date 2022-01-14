@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - run: pip install mypy
-      - run: [ -e "requirements-dev.txt" ] && pip install -r requirements-dev.txt
+      - run: |
+        [ -e "requirements-dev.txt" ] && pip install -r requirements-dev.txt
       - run: pip install .
       - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ .
