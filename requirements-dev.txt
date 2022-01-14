@@ -3,5 +3,3 @@ mypy
 pytest
 pytest-asyncio
 pytest-mock
-types-requests==2.26.3
-wheel
