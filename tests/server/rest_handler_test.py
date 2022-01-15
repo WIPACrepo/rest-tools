@@ -133,10 +133,12 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
         'access_token': token,
         'expires_in': 3600,
     }
+
     async def fn(*args, **kwargs):
         ret = MagicMock()
         ret.body = json.dumps(user_info)
         return ret
+
     handler.get_auth_http_client = MagicMock()
     handler.get_auth_http_client.return_value.fetch = MagicMock(side_effect=fn)
     ret = await handler.get_authenticated_user('redirect', 'code')
