@@ -4,11 +4,15 @@ Daemonize a process.
 Based on: http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
 Taken from: https://github.com/WIPACrepo/iceprod/blob/master/iceprod/server/daemon.py
 """
-import sys
-import os
-import time
+
+# fmt:off
+
 import atexit
+import os
 import signal
+import sys
+import time
+
 
 class Daemon(object):
     """
@@ -190,4 +194,3 @@ class Daemon(object):
         """Restart the daemon"""
         self.stop()
         self.start()
-

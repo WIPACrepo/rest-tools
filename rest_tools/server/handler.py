@@ -4,22 +4,22 @@
 # pylint: skip-file
 
 import base64
+import hmac
 import logging
 import time
+import urllib.parse
 from collections import defaultdict
 from functools import partial, wraps
-import hmac
 from typing import Any, Dict, List, Optional, Union
-import urllib.parse
 
 import rest_tools
-from tornado.auth import OAuth2Mixin
+import tornado.escape
 import tornado.gen
 import tornado.httpclient
 import tornado.httputil
 import tornado.web
-import tornado.escape
 import wipac_telemetry.tracing_tools as wtt
+from tornado.auth import OAuth2Mixin
 
 from ..utils.auth import Auth, OpenIDAuth
 from . import arghandler
@@ -262,10 +262,10 @@ def catch_error(method):
         try:
             return await method(self, *args, **kwargs)
         except tornado.web.HTTPError:
-            raise # tornado can handle this
+            raise  # tornado can handle this
         except tornado.httpclient.HTTPError:
-            raise # tornado can handle this
-        except Exception as e:
+            raise  # tornado can handle this
+        except Exception:
             logger.warning('Error in website handler', exc_info=True)
             try:
                 self.statsd.incr(self.__class__.__name__+'.error')

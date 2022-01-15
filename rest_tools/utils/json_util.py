@@ -27,6 +27,7 @@ class json_compressor:
     @staticmethod
     def compress(obj):
         return base64.b64encode(zlib.compress(obj)) if obj else b''
+
     @staticmethod
     def uncompress(obj):
         return zlib.decompress(base64.b64decode(obj)).decode('utf-8') if obj else ''
@@ -36,6 +37,7 @@ class datetime_converter:
     @staticmethod
     def dumps(obj):
         return obj.isoformat()
+
     @staticmethod
     def loads(obj,name=None):
         if ':' in obj:
@@ -58,17 +60,20 @@ class datetime_converter:
             # must be date
             return datetime.strptime( obj, "%Y-%m-%d")
 
+
 class date_converter(datetime_converter):
     @staticmethod
     def loads(obj,name=None):
         d = datetime_converter.loads(obj)
         return date(d.year,d.month,d.day)
 
+
 class time_converter(datetime_converter):
     @staticmethod
     def loads(obj,name=None):
         d = datetime_converter.loads(obj)
         return time(d.hour,d.minute,d.second,d.microsecond)
+
 
 class binary_converter:
     """note that is is really only for decode of json, since python bytes are
@@ -80,6 +85,7 @@ class binary_converter:
     def loads(obj,name=None):
         return base64.b64decode(obj).decode('utf-8')
 
+
 class bytearray_converter:
     @staticmethod
     def dumps(obj,name=None):
@@ -88,6 +94,7 @@ class bytearray_converter:
     def loads(obj,name=None):
         return bytearray(base64.b64decode(obj))
 
+
 class set_converter:
     @staticmethod
     def dumps(obj):
@@ -95,6 +102,7 @@ class set_converter:
     @staticmethod
     def loads(obj,name=None):
         return set(obj)
+
 
 class var_converter:
     @staticmethod
@@ -129,6 +137,7 @@ class repr_converter:
             ret = globals()['type'](args)
         return ret
 
+
 JSONConverters = {
     'datetime':datetime_converter,
     'date':date_converter,
@@ -138,6 +147,7 @@ JSONConverters = {
     'OrderedDict':repr_converter,
     'set':set_converter,
 }
+
 
 def objToJSON(obj):
     if isinstance(obj,(dict,list,tuple,str,int,float,bool)) or obj is None:
@@ -149,6 +159,7 @@ def objToJSON(obj):
         else:
             logger.error('name: %s, obj: %r', name, obj)
             raise Exception('Cannot encode %s class to JSON'%name)
+
 
 def JSONToObj(obj):
     ret = obj

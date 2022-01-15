@@ -46,7 +46,7 @@ args = RestHandlerSetup({
     },
     'debug': True
 })
-args['fruit'] = {} # this could be a DB, but a dict works for now
+args['fruit'] = {}  # this could be a DB, but a dict works for now
 
 server = RestServer(debug=True)
 server.add_route('/api/fruits', Fruits, args)

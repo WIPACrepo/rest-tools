@@ -1,16 +1,18 @@
-import pytest
+"""Test REST Handler."""
+
+# fmt:off
+
 import json
 import logging
-
 from unittest.mock import MagicMock
 
-from rest_tools.server import *
-from rest_tools.server.stats import RouteStats
-from rest_tools.utils.auth import Auth, OpenIDAuth
 import jwt.algorithms
+import pytest
+from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup
+from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
-from ..util import *
+from ..util import gen_keys, gen_keys_bytes  # noqa: F401
 
 
 def test_rest_handler_setup(requests_mock):
@@ -35,10 +37,12 @@ def test_rest_handler_setup(requests_mock):
     ret = RestHandlerSetup({'rest_api': {'auth_key': 'foo'}})
     assert ret['module_auth_key'] == 'foo'
 
+
 def test_rest_handler_initialize():
     rh = RestHandler()
     rh.initialize(debug=True)
     assert rh.debug
+
 
 def test_rest_handler_get_current_user():
     a = Auth('secret')
@@ -55,6 +59,7 @@ def test_rest_handler_get_current_user():
     assert rh.auth_data['foo'] == 'bar'
     assert rh.auth_key == token
 
+
 def test_rest_handler_get_json_body_argument():
     rh = RestHandler()
     rh.initialize()
@@ -66,6 +71,7 @@ def test_rest_handler_get_json_body_argument():
     with pytest.raises(Exception):
         rh.get_json_body_argument('baz')
 
+
 def test_rest_handler_get_argument():
     rh = RestHandler()
     rh.initialize()
@@ -76,6 +82,7 @@ def test_rest_handler_get_argument():
 
     with pytest.raises(Exception):
         rh.get_argument('baz')
+
 
 def test_openid_login_handler_initialize(requests_mock):
     handler = OpenIDLoginHandler()
@@ -96,8 +103,9 @@ def test_openid_login_handler_initialize(requests_mock):
     assert handler._OAUTH_LOGOUT_URL == 'http://foo/logout'
     assert handler._OAUTH_USERINFO_URL == 'http://foo/userinfo'
 
+
 @pytest.mark.asyncio
-async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_bytes, requests_mock):
+async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
     handler = OpenIDLoginHandler()
 
     auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
@@ -134,6 +142,7 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
     ret = await handler.get_authenticated_user('redirect', 'code')
     assert ret == user_info
 
+
 def test_openid_login_handler_encode_decode_state(requests_mock):
     application = Application([], cookie_secret='secret')
 
@@ -154,8 +163,9 @@ def test_openid_login_handler_encode_decode_state(requests_mock):
     data2 = handler._decode_state(state)
     assert data == data2
 
+
 @pytest.mark.asyncio
-async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock):
+async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
     application = Application([], cookie_secret='secret', login_url='/login', debug=True)
 
     auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
@@ -193,8 +203,10 @@ async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock)
         'access_token': token,
         'expires_in': 3600,
     }
+
     async def fn2(*args, **Kwargs):
         return user_info
+
     handler.get_authenticated_user = MagicMock(side_effect=fn2)
 
     request.body = '{"code": "thecode", "state": "state"}'
@@ -211,4 +223,3 @@ async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock)
     with pytest.raises(HTTPError, match='the error'):
         await handler.get()
     handler.authorize_redirect.assert_not_called()
-
