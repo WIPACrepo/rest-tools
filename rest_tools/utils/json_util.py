@@ -47,18 +47,18 @@ class datetime_converter:
                     center = 'T'
                 # must be datetime
                 if '.' in obj:
-                    return datetime.strptime( obj, "%Y-%m-%d"+center+"%H:%M:%S.%f")
+                    return datetime.strptime(obj, "%Y-%m-%d"+center+"%H:%M:%S.%f")
                 else:
-                    return datetime.strptime( obj, "%Y-%m-%d"+center+"%H:%M:%S")
+                    return datetime.strptime(obj, "%Y-%m-%d"+center+"%H:%M:%S")
             else:
                 # must be time
                 if '.' in obj:
-                    return datetime.strptime( obj, "%H:%M:%S.%f")
+                    return datetime.strptime(obj, "%H:%M:%S.%f")
                 else:
-                    return datetime.strptime( obj, "%H:%M:%S")
+                    return datetime.strptime(obj, "%H:%M:%S")
         else:
             # must be date
-            return datetime.strptime( obj, "%Y-%m-%d")
+            return datetime.strptime(obj, "%Y-%m-%d")
 
 
 class date_converter(datetime_converter):
@@ -81,6 +81,7 @@ class binary_converter:
     @staticmethod
     def dumps(obj,name=None):
         return base64.b64encode(obj)
+
     @staticmethod
     def loads(obj,name=None):
         return base64.b64decode(obj).decode('utf-8')
@@ -90,6 +91,7 @@ class bytearray_converter:
     @staticmethod
     def dumps(obj,name=None):
         return base64.b64encode(str(obj))
+
     @staticmethod
     def loads(obj,name=None):
         return bytearray(base64.b64decode(obj))
@@ -99,6 +101,7 @@ class set_converter:
     @staticmethod
     def dumps(obj):
         return list(obj)
+
     @staticmethod
     def loads(obj,name=None):
         return set(obj)
@@ -108,6 +111,7 @@ class var_converter:
     @staticmethod
     def dumps(obj):
         return obj.__dict__
+
     @staticmethod
     def loads(obj,name=None):
         ret = getattr(dataclasses,name)()
@@ -123,6 +127,7 @@ class repr_converter:
     @staticmethod
     def dumps(obj):
         return repr(obj)
+
     @staticmethod
     def loads(obj,name=None):
         parts = obj.split('(',1)
