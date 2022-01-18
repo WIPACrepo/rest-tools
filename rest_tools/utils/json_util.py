@@ -27,6 +27,7 @@ class json_compressor:
     @staticmethod
     def compress(obj):
         return base64.b64encode(zlib.compress(obj)) if obj else b''
+
     @staticmethod
     def uncompress(obj):
         return zlib.decompress(base64.b64decode(obj)).decode('utf-8') if obj else ''
@@ -36,6 +37,7 @@ class datetime_converter:
     @staticmethod
     def dumps(obj):
         return obj.isoformat()
+
     @staticmethod
     def loads(obj,name=None):
         if ':' in obj:
@@ -45,18 +47,19 @@ class datetime_converter:
                     center = 'T'
                 # must be datetime
                 if '.' in obj:
-                    return datetime.strptime( obj, "%Y-%m-%d"+center+"%H:%M:%S.%f")
+                    return datetime.strptime(obj, "%Y-%m-%d"+center+"%H:%M:%S.%f")
                 else:
-                    return datetime.strptime( obj, "%Y-%m-%d"+center+"%H:%M:%S")
+                    return datetime.strptime(obj, "%Y-%m-%d"+center+"%H:%M:%S")
             else:
                 # must be time
                 if '.' in obj:
-                    return datetime.strptime( obj, "%H:%M:%S.%f")
+                    return datetime.strptime(obj, "%H:%M:%S.%f")
                 else:
-                    return datetime.strptime( obj, "%H:%M:%S")
+                    return datetime.strptime(obj, "%H:%M:%S")
         else:
             # must be date
-            return datetime.strptime( obj, "%Y-%m-%d")
+            return datetime.strptime(obj, "%Y-%m-%d")
+
 
 class date_converter(datetime_converter):
     @staticmethod
@@ -64,11 +67,13 @@ class date_converter(datetime_converter):
         d = datetime_converter.loads(obj)
         return date(d.year,d.month,d.day)
 
+
 class time_converter(datetime_converter):
     @staticmethod
     def loads(obj,name=None):
         d = datetime_converter.loads(obj)
         return time(d.hour,d.minute,d.second,d.microsecond)
+
 
 class binary_converter:
     """note that is is really only for decode of json, since python bytes are
@@ -76,36 +81,30 @@ class binary_converter:
     @staticmethod
     def dumps(obj,name=None):
         return base64.b64encode(obj)
+
     @staticmethod
     def loads(obj,name=None):
         return base64.b64decode(obj).decode('utf-8')
+
 
 class bytearray_converter:
     @staticmethod
     def dumps(obj,name=None):
         return base64.b64encode(str(obj))
+
     @staticmethod
     def loads(obj,name=None):
         return bytearray(base64.b64decode(obj))
+
 
 class set_converter:
     @staticmethod
     def dumps(obj):
         return list(obj)
+
     @staticmethod
     def loads(obj,name=None):
         return set(obj)
-
-class var_converter:
-    @staticmethod
-    def dumps(obj):
-        return obj.__dict__
-    @staticmethod
-    def loads(obj,name=None):
-        ret = getattr(dataclasses,name)()
-        for k in obj:
-            setattr(ret,k,obj[k])
-        return ret
 
 
 # do some default conversions
@@ -115,6 +114,7 @@ class repr_converter:
     @staticmethod
     def dumps(obj):
         return repr(obj)
+
     @staticmethod
     def loads(obj,name=None):
         parts = obj.split('(',1)
@@ -129,6 +129,7 @@ class repr_converter:
             ret = globals()['type'](args)
         return ret
 
+
 JSONConverters = {
     'datetime':datetime_converter,
     'date':date_converter,
@@ -138,6 +139,7 @@ JSONConverters = {
     'OrderedDict':repr_converter,
     'set':set_converter,
 }
+
 
 def objToJSON(obj):
     if isinstance(obj,(dict,list,tuple,str,int,float,bool)) or obj is None:
@@ -149,6 +151,7 @@ def objToJSON(obj):
         else:
             logger.error('name: %s, obj: %r', name, obj)
             raise Exception('Cannot encode %s class to JSON'%name)
+
 
 def JSONToObj(obj):
     ret = obj

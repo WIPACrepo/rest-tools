@@ -3,19 +3,15 @@
 # fmt:off
 # pylint: skip-file
 
-import logging
-import os
-import shutil
-import tempfile
 import time
-import unittest
 
 import jwt
 import pytest
 
 # local imports
 from rest_tools.utils import auth
-from ..util import *
+
+from ..util import gen_keys, gen_keys_bytes  # noqa: F401 # gen_keys_bytes uses gen_keys
 
 
 def test_auth_create_token():
@@ -29,6 +25,7 @@ def test_auth_create_token():
     assert data['exp'] < now+21
     assert data['nbf'] > now-1
 
+
 def test_auth_validate():
     a = auth.Auth('secret')
     now = time.time()
@@ -41,7 +38,8 @@ def test_auth_validate():
     with pytest.raises(Exception):
         a.validate(tok)
 
-def test_auth_rsa(gen_keys_bytes):
+
+def test_auth_rsa(gen_keys_bytes):  # noqa: F811
     a = auth.Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
     tok = a.create_token('subj', expiration=20, type='foo')
     data = jwt.decode(tok, gen_keys_bytes[1], algorithms=['RS256'])
@@ -49,4 +47,3 @@ def test_auth_rsa(gen_keys_bytes):
 
     data = a.validate(tok)
     assert data['sub'] == 'subj'
-

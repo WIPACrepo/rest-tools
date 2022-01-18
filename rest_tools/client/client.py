@@ -205,7 +205,7 @@ class RestClient:
             return self._decode(r.content)
         except requests.exceptions.HTTPError as e:
             if method == 'DELETE' and e.response.status_code == 404:
-                raise # skip the logging for an expected error
+                raise  # skip the logging for an expected error
             self.logger.info('bad request: %s %s %r', method, path, args, exc_info=True)
             raise
 
@@ -356,4 +356,3 @@ class OpenIDRestClient(RestClient):
                 return
 
         raise Exception('No token available')
-

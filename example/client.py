@@ -4,11 +4,14 @@ Example client code.
 Add some fruit to the server, then read them back.
 """
 
+# fmt: off
+
 import asyncio
 import logging
 
 from rest_tools.client import RestClient
-from rest_tools.server import Auth
+from rest_tools.utils import Auth
+
 
 async def main():
     admin_token = Auth('secret').create_token('foo', payload={'role': 'admin'})

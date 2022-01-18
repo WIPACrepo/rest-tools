@@ -24,8 +24,8 @@ def tornado_logger(handler):
     else:
         log_method = logging.error
     request_time = 1000.0 * handler.request.request_time()
-    log_method("%d %s %.2fms", handler.get_status(),
-            handler._request_summary(), request_time)
+    log_method("%d %s %.2fms", handler.get_status(), handler._request_summary(), request_time)
+
 
 class RestServer:
     def __init__(self, log_function=None, cookie_secret=None, max_body_size=None, **kwargs):
@@ -64,8 +64,7 @@ class RestServer:
 
         if self.http_server:
             self.http_server.stop()
-        self.http_server = tornado.httpserver.HTTPServer(
-                app, xheaders=True, max_body_size=self.max_body_size)
+        self.http_server = tornado.httpserver.HTTPServer(app, xheaders=True, max_body_size=self.max_body_size)
         self.http_server.bind(port, address=address, family=socket.AF_INET)
         self.http_server.start()
 
