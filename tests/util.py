@@ -3,16 +3,20 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 
 
-@pytest.fixture(scope="session")
-def gen_keys():
+def _gen_keys():
     priv = generate_private_key(65537, 2048)
     pub = priv.public_key()
     return (priv, pub)
 
 
 @pytest.fixture(scope="session")
+def gen_keys():
+    return _gen_keys()
+
+
+@pytest.fixture(scope="session")
 def gen_keys_bytes():
-    priv, pub = gen_keys()
+    priv, pub = _gen_keys()
 
     priv_pem = priv.private_bytes(
         encoding=serialization.Encoding.PEM,
