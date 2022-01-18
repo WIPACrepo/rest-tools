@@ -11,8 +11,8 @@ def gen_keys():
 
 
 @pytest.fixture(scope="session")
-def gen_keys_bytes(gen_keys):
-    priv, pub = gen_keys
+def gen_keys_bytes():
+    priv, pub = gen_keys()
 
     priv_pem = priv.private_bytes(
         encoding=serialization.Encoding.PEM,
