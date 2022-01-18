@@ -24,5 +24,6 @@ jobs:
       - run: pip install mypy
       - run: |
           ([ -e "requirements-dev.txt" ] && pip install -r requirements-dev.txt) || echo "no dev reqs"
-      - run: pip install .
+      - run: |
+          ([ -e "setup.py" ] && pip install .) || pip install -r requirements.txt
       - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ .
