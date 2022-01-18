@@ -107,19 +107,6 @@ class set_converter:
         return set(obj)
 
 
-class var_converter:
-    @staticmethod
-    def dumps(obj):
-        return obj.__dict__
-
-    @staticmethod
-    def loads(obj,name=None):
-        ret = getattr(dataclasses,name)()
-        for k in obj:
-            setattr(ret,k,obj[k])
-        return ret
-
-
 # do some default conversions
 
 
