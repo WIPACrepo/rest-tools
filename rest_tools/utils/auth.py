@@ -49,6 +49,7 @@ class _AuthValidate:
 
         return token
 
+
 class Auth(_AuthValidate):
     """
     Handle authentication of JWT tokens.

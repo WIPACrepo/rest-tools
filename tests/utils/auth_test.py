@@ -28,7 +28,6 @@ def test_auth_create_token():
 
 def test_auth_validate():
     a = auth.Auth('secret')
-    now = time.time()
     tok = a.create_token('subj', expiration=20, type='foo')
     data = a.validate(tok)
     assert data['sub'] == 'subj'
@@ -38,24 +37,24 @@ def test_auth_validate():
     with pytest.raises(jwt.exceptions.ExpiredSignatureError):
         a.validate(tok)
 
+
 def test_auth_validate_aud():
     a = auth.Auth('secret', audience=['bar'])
-    now = time.time()
     tok = a.create_token('subj', expiration=20, type='foo', payload={'aud': 'foo'})
     with pytest.raises(jwt.exceptions.InvalidAudienceError):
         a.validate(tok)
 
     a.validate(tok, audience='foo')
 
+
 def test_auth_validate_aud_none():
     a = auth.Auth('secret', audience=None)
-    now = time.time()
     tok = a.create_token('subj', expiration=20, type='foo')
     a.validate(tok)
 
+
 def test_auth_validate_iss():
     a = auth.Auth('secret', issuer='foo')
-    now = time.time()
     tok = a.create_token('subj', expiration=20, type='foo')
     data = a.validate(tok)
     assert data['iss'] == 'foo'
@@ -63,12 +62,13 @@ def test_auth_validate_iss():
     with pytest.raises(jwt.exceptions.InvalidIssuerError):
         a._validate(tok, 'secret', issuers=['bar'])
 
+
 def test_auth_validate_iss_none():
     a = auth.Auth('secret', issuer='foo')
-    now = time.time()
     tok = a.create_token('subj', expiration=20, type='foo')
     data = a._validate(tok, 'secret')
     assert data['iss'] == 'foo'
+
 
 def test_auth_rsa(gen_keys_bytes):  # noqa: F811
     a = auth.Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
@@ -79,7 +79,8 @@ def test_auth_rsa(gen_keys_bytes):  # noqa: F811
     data = a.validate(tok)
     assert data['sub'] == 'subj'
 
-def test_auth_rsa_aud_iss(gen_keys_bytes):
+
+def test_auth_rsa_aud_iss(gen_keys_bytes):  # noqa: F811
     a = auth.Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], issuer='foo', audience=['bar'], issuers=['foo'], algorithm='RS256')
     tok = a.create_token('subj', expiration=20, type='foo', payload={'aud': 'bar'})
     a.validate(tok)
