@@ -4,11 +4,19 @@ Example server code.
 Make a fruit API.
 """
 
+# fmt: off
+
 import asyncio
 import logging
 
-from rest_tools.client import json_decode
-from rest_tools.server import RestServer, RestHandler, RestHandlerSetup, role_authorization
+from rest_tools.server import (
+    RestHandler,
+    RestHandlerSetup,
+    RestServer,
+    role_authorization,
+)
+from rest_tools.utils.json_util import json_decode
+
 
 class Fruits(RestHandler):
     def initialize(self, fruit, *args, **kwargs):
@@ -38,7 +46,7 @@ args = RestHandlerSetup({
     },
     'debug': True
 })
-args['fruit'] = {} # this could be a DB, but a dict works for now
+args['fruit'] = {}  # this could be a DB, but a dict works for now
 
 server = RestServer(debug=True)
 server.add_route('/api/fruits', Fruits, args)

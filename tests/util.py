@@ -9,6 +9,7 @@ def gen_keys():
     pub = priv.public_key()
     return (priv, pub)
 
+
 @pytest.fixture(scope="session")
 def gen_keys_bytes(gen_keys):
     priv, pub = gen_keys
@@ -16,11 +17,11 @@ def gen_keys_bytes(gen_keys):
     priv_pem = priv.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )
     pub_pem = pub.public_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
     print(priv_pem, pub_pem)
     return (priv_pem, pub_pem)

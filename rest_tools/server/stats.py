@@ -1,8 +1,14 @@
-from collections import deque
-import statistics
-import random
-import time
+"""Route stats."""
+
+
+# fmt:off
+
 import logging
+import random
+import statistics
+import time
+from collections import deque
+
 
 class RouteStats:
     """

@@ -4,16 +4,20 @@ Daemonize a process.
 Based on: http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
 Taken from: https://github.com/WIPACrepo/iceprod/blob/master/iceprod/server/daemon.py
 """
-import sys
-import os
-import time
+
+# fmt:off
+
 import atexit
+import os
 import signal
+import sys
+import time
+
 
 class Daemon(object):
     """
     A generic daemon class.
-    
+
     Usage:
       d=Daemon(pidfile - filename for pidfile (required)
                runner - function to execute in daemon (required)
@@ -47,34 +51,34 @@ class Daemon(object):
 
     def _daemonize(self):
         """
-        do the UNIX double-fork magic, see Stevens' "Advanced 
+        do the UNIX double-fork magic, see Stevens' "Advanced
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
-        try: 
-            pid = os.fork() 
+        try:
+            pid = os.fork()
             if pid > 0:
                 # exit first parent
-                sys.exit(0) 
-        except OSError as e: 
+                sys.exit(0)
+        except OSError as e:
             sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
-    
+
         # decouple from parent environment
-        os.chdir(self.chdir) 
-        os.setsid() 
-        os.umask(self.umask) 
-    
+        os.chdir(self.chdir)
+        os.setsid()
+        os.umask(self.umask)
+
         # do second fork
-        try: 
-            pid = os.fork() 
+        try:
+            pid = os.fork()
             if pid > 0:
                 # exit from second parent
-                sys.exit(0) 
-        except OSError as e: 
+                sys.exit(0)
+        except OSError as e:
             sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
-            sys.exit(1) 
-    
+            sys.exit(1)
+
         # redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
@@ -84,7 +88,7 @@ class Daemon(object):
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
-    
+
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
@@ -149,7 +153,7 @@ class Daemon(object):
         if pid:
             message = "pidfile %s already exist. Daemon already running?"
             raise Exception(message % self.pidfile)
-        
+
         # Start the daemon
         self._daemonize()
         self.runner()
@@ -190,4 +194,3 @@ class Daemon(object):
         """Restart the daemon"""
         self.stop()
         self.start()
-
