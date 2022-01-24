@@ -9,12 +9,56 @@ import jwt
 import requests
 
 
-class Auth:
+class _AuthValidate:
+    def __init__(self, audience=None, issuers=None, algorithms=None):
+        self.audience = audience
+        self.issuers = issuers
+        self.algorithms = algorithms if algorithms else ['RS256','RS512']
+
+    def _validate(self, token, key, **kwargs):
+        options = {}
+
+        # required claims
+        claims = ['exp', 'iat', 'nbf', 'iss']
+        claims.extend(kwargs.pop('require', []))
+        options['require'] = claims
+
+        # configure the audience to validate
+        audience = kwargs.pop('audience', None)
+        if not audience:
+            audience = self.audience
+        if not audience:
+            options['verify_aud'] = False
+        else:
+            if isinstance(audience, str):
+                audience = [audience]
+            kwargs['audience'] = audience
+
+        # configure issuers to validate
+        issuers = kwargs.pop('issuers', None)
+        if not issuers:
+            iss = kwargs.pop('issuer', None)
+            if iss:
+                issuers = [iss]
+            else:
+                issuers = self.issuers
+
+        token = jwt.decode(token, key, algorithms=self.algorithms, options=options, **kwargs)
+        if issuers and token['iss'] not in issuers:
+            raise jwt.exceptions.InvalidIssuerError()
+
+        return token
+
+
+class Auth(_AuthValidate):
     """
     Handle authentication of JWT tokens.
     """
 
-    def __init__(self, secret, pub_secret=None, issuer='IceProd', algorithm='HS512', expiration=31622400, expiration_temp=86400):
+    def __init__(self, secret, pub_secret=None, issuer='IceProd', algorithm='HS512', expiration=31622400, expiration_temp=86400, **kwargs):
+        if 'algorithms' not in kwargs:
+            kwargs['algorithms'] = [algorithm]
+        super().__init__(**kwargs)
         self.secret = secret
         self.pub_secret = pub_secret if pub_secret else secret
         self.issuer = issuer
@@ -67,22 +111,13 @@ class Auth:
         Raises:
             Exception on failure to validate.
         """
-        try:
-            ret = jwt.decode(token, self.pub_secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
-        except jwt.exceptions.InvalidAudienceError:
-            if 'audience' not in kwargs:
-                kwargs['audience'] = ['ANY']
-                ret = jwt.decode(token, self.pub_secret, issuer=self.issuer, algorithms=[self.algorithm], **kwargs)
-            else:
-                raise
-        if 'type' not in ret:
-            raise Exception('no type information')
-        return ret
+        return self._validate(token, self.pub_secret, issuer=self.issuer, required=['type'], **kwargs)
 
 
-class OpenIDAuth:
+class OpenIDAuth(_AuthValidate):
     """Handle validation of JWT tokens using OpenID .well-known auto-discovery."""
-    def __init__(self, url):
+    def __init__(self, url, **kwargs):
+        super().__init__(**kwargs)
         self.url = url if url.endswith('/') else url+'/'
         self.public_keys = {}
         self.provider_info = {}
@@ -112,7 +147,7 @@ class OpenIDAuth:
         except Exception:
             logging.warning('failed to refresh OpenID keys', exc_info=True)
 
-    def validate(self, token, audience=None):
+    def validate(self, token, **kwargs):
         """
         Validate a token.
 
@@ -131,14 +166,6 @@ class OpenIDAuth:
             self._refresh_keys()
         if header['kid'] in self.public_keys:
             key = self.public_keys[header['kid']]
-            options = {}
-            kwargs = {}
-            if not audience:
-                options['verify_aud'] = False
-            elif audience.lower() == 'any':
-                kwargs['audience'] = ['ANY']
-            else:
-                kwargs['audience'] = [audience]
-            return jwt.decode(token, key, algorithms=['RS256','RS512'], options=options, **kwargs)
+            return self._validate(token, key, **kwargs)
         else:
             raise Exception(f'JWT key {header["kid"]} not found')

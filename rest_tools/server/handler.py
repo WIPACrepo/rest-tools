@@ -43,10 +43,13 @@ def RestHandlerSetup(config={}):
     auth_url = ''
     module_auth_key = ''
     if 'auth' in config:
+        kwargs = {}
+        if 'audience' in config['auth']:
+            kwargs['audience'] = config['auth']['audience']
+        if 'issuers' in config['auth']:
+            kwargs['issuers'] = config['auth']['issuers']
         if 'secret' in config['auth']:
-            kwargs = {
-                'secret': config['auth']['secret']
-            }
+            kwargs['secret'] = config['auth']['secret']
             if 'issuer' in config['auth']:
                 kwargs['issuer'] = config['auth']['issuer']
             if 'algorithm' in config['auth']:
@@ -57,7 +60,9 @@ def RestHandlerSetup(config={}):
                 kwargs['expiration_temp'] = config['auth']['expiration_temp']
             auth = Auth(**kwargs)
         elif 'openid_url' in config['auth']:
-            auth = OpenIDAuth(config['auth']['openid_url'])
+            if 'algorithms' in config['auth']:
+                kwargs['algorithms'] = config['auth']['algorithms']
+            auth = OpenIDAuth(config['auth']['openid_url'], **kwargs)
             if auth.token_url:
                 auth_url = auth.token_url
         if 'url' in config['auth']:

@@ -28,6 +28,12 @@ def test_rest_handler_setup(requests_mock):
     ret = RestHandlerSetup({'auth': {'secret': 'foo'}})
     assert isinstance(ret['auth'], Auth)
 
+    # test audience and issuers
+    ret = RestHandlerSetup({'auth': {'secret': 'foo', 'audience': 'bar', 'issuer': 'baz', 'issuers': ['baz']}})
+    assert isinstance(ret['auth'], Auth)
+    tok = ret['auth'].create_token('subj', expiration=20, type='foo', payload={'aud': 'bar'})
+    ret['auth'].validate(tok)
+
     requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({'token_endpoint': 'bar'}))
     ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
     assert isinstance(ret['auth'], OpenIDAuth)
