@@ -19,7 +19,7 @@ class _AuthValidate:
         options = {}
 
         # required claims
-        claims = ['exp', 'iat', 'nbf', 'iss']
+        claims = ['exp', 'iat', 'iss']
         claims.extend(kwargs.pop('require', []))
         options['require'] = claims
 
