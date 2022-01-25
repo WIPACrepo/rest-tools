@@ -411,7 +411,12 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             )
             ret['id_token'] = tornado.escape.json_decode(response.body)
 
-        self.auth.validate(ret['access_token'])
+        try:
+            self.auth.validate(ret['access_token'])
+        except Exception:
+            if self.debug:
+                logger.debug(f'bad token: {ret}')
+            raise
         return ret
 
     def _decode_state(self, state: Union[bytes, str]) -> str:

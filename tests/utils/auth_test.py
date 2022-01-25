@@ -23,7 +23,6 @@ def test_auth_create_token():
     assert data['sub'] == 'subj'
     assert data['type'] == 'foo'
     assert data['exp'] < now+21
-    assert data['nbf'] > now-1
 
 
 def test_auth_validate():
