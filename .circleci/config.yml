@@ -1,20 +1,31 @@
 version: 2
 
 jobs:
+
     test:
         docker:
-            - image: circleci/python:3.8.5
-              environment:
-                PYTEST_ADDOPTS: tests/
+            - image: circleci/python:3.10
         steps:
             - checkout
-            - run: ./setupenv.sh
             - run: |
                 pip install --user tox
                 tox -vv
+
+    pycycle:
+        docker:
+            - image: circleci/python:3.10
+        steps:
+            - checkout
+            - run: |
+                pip install --user tox pycycle
+                tox --notest -vv
+                . .tox/py/bin/activate
+                pycycle --here --verbose
+
 
 workflows:
     version: 2
     build_and_test:
         jobs:
             - test
+            - pycycle
