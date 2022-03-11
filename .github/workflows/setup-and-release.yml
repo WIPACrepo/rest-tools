@@ -1,0 +1,72 @@
+# For most recent version see:
+# https://github.com/WIPACrepo/wipac-dev-tools/blob/main/.github/workflows/setup-and-release.yml
+# Copy any updates to wipac-dev-tools.
+
+name: Setup and Release
+
+on: [push]
+
+jobs:
+
+  build-setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Git config
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Build setup.cfg + README.md (and commit)
+        run: |
+          pip3 install requests wipac-dev-tools
+          echo $GITHUB_REPOSITORY
+          python3 -m wipac_dev_tools.setup_builder setup.cfg $GITHUB_REPOSITORY
+          git add setup.cfg
+          git commit -m "<bot> update setup.cfg" || true
+          git add README.md || true
+          git commit -m "<bot> update README.md" || true
+
+      - name: Build requirements.txt (and commit)
+        run: |
+          pip3 install pip-tools
+          pip-compile --upgrade
+          git add .
+          git commit -m "<bot> update requirements.txt" || true
+
+      - name: Push changes
+        run: |
+          status=`git status 2>&1 | tee`
+          ahead=`echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
+          if [ "$ahead" -eq "1" ]; then
+            echo "no changes needed"
+            exit 0
+          fi
+          git push
+          echo "changes pushed (rest of workflow canceled)"
+          exit 1  # prevent dependent job(s) since there's changes to the code
+
+  release:
+    needs: build-setup
+    runs-on: ubuntu-latest
+    concurrency: release
+
+    steps:
+    - uses: actions/checkout@v2
+      if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
+      with:
+        fetch-depth: 0
+
+    - name: Python Semantic Release
+      if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
+      uses: relekang/python-semantic-release@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        repository_username: __token__
+        repository_password: ${{ secrets.PYPI_TOKEN }}
