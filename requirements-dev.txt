@@ -1,3 +1,4 @@
+cryptography
 flake8
 httpretty
 mypy
