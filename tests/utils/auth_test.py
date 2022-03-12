@@ -11,7 +11,10 @@ import pytest
 # local imports
 from rest_tools.utils import auth
 
-from ..util import gen_keys, gen_keys_bytes  # noqa: F401 # gen_keys_bytes uses gen_keys
+from .fixtures import (  # noqa: F401 # gen_keys_bytes uses gen_keys
+    gen_keys,
+    gen_keys_bytes,
+)
 
 
 def test_auth_create_token():

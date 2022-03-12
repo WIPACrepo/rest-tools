@@ -12,7 +12,7 @@ from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup
 from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
-from ..util import gen_keys, gen_keys_bytes  # noqa: F401
+from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
 
 
 def test_rest_handler_setup(requests_mock):
