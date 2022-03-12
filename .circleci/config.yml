@@ -4,7 +4,7 @@ jobs:
 
     test:
         docker:
-            - image: circleci/python:3.10
+            - image: circleci/python:3.8
         steps:
             - checkout
             - run: |
@@ -13,7 +13,7 @@ jobs:
 
     pycycle:
         docker:
-            - image: circleci/python:3.10
+            - image: circleci/python:3.8
         steps:
             - checkout
             - run: |
