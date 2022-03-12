@@ -4,5 +4,6 @@ mypy
 pytest
 pytest-asyncio
 pytest-mock
+requests-futures
 types-requests==2.26.3
 wheel
