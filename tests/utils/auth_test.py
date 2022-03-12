@@ -7,13 +7,14 @@ import time
 
 import jwt
 import pytest
-from fixtures import (  # noqa: F401 # gen_keys_bytes uses gen_keys
-    gen_keys,
-    gen_keys_bytes,
-)
 
 # local imports
 from rest_tools.utils import auth
+
+from .fixtures import (  # noqa: F401 # gen_keys_bytes uses gen_keys
+    gen_keys,
+    gen_keys_bytes,
+)
 
 
 def test_auth_create_token():
