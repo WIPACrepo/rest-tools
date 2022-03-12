@@ -14,7 +14,7 @@ from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
 sys.path.append(".")
-from .fixtures import gen_keys, gen_keys_bytes  # noqa: E402, F401
+from fixtures import gen_keys, gen_keys_bytes  # noqa: E402, F401
 
 
 def test_rest_handler_setup(requests_mock):

@@ -13,7 +13,7 @@ import pytest
 from rest_tools.utils import auth
 
 sys.path.append(".")
-from .fixtures import (  # noqa: E402, F401 # gen_keys_bytes uses gen_keys
+from fixtures import (  # noqa: E402, F401 # gen_keys_bytes uses gen_keys
     gen_keys,
     gen_keys_bytes,
 )
