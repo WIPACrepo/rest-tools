@@ -3,20 +3,17 @@
 # fmt:off
 # pylint: skip-file
 
-import sys
 import time
 
 import jwt
 import pytest
-
-# local imports
-from rest_tools.utils import auth
-
-sys.path.append(".")
-from fixtures import (  # noqa: E402, F401 # gen_keys_bytes uses gen_keys
+from fixtures import (  # noqa: F401 # gen_keys_bytes uses gen_keys
     gen_keys,
     gen_keys_bytes,
 )
+
+# local imports
+from rest_tools.utils import auth
 
 
 def test_auth_create_token():
