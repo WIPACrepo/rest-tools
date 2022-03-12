@@ -20,6 +20,7 @@ jobs:
                 pip install --user tox pycycle
                 tox --notest -vv
                 . .tox/py/bin/activate
+                cd ./rest_tools
                 pycycle --here --verbose
 
 
