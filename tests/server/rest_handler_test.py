@@ -4,6 +4,7 @@
 
 import json
 import logging
+import sys
 from unittest.mock import MagicMock
 
 import jwt.algorithms
@@ -12,7 +13,8 @@ from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup
 from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
-from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
+sys.path.append(".")
+from .fixtures import gen_keys, gen_keys_bytes  # noqa: E402, F401
 
 
 def test_rest_handler_setup(requests_mock):
