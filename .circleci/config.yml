@@ -29,6 +29,7 @@ jobs:
                 pip install -e .[telemetry]
                 cd examples/
                 ./run_client_server.sh
+                sleep 60  # should be enough time to finish
 
     pycycle:
         docker:
