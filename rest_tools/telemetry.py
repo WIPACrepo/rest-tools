@@ -2,24 +2,61 @@
 
 # pylint:skip-file
 
-from typing import Any, Dict, Optional
+from enum import Enum
+from functools import wraps
+from typing import Any, Callable, Dict, Optional, TypeVar, cast
 
+#
+# First, try to import then implement wipac-telemetry
+#
 try:
     import wipac_telemetry.tracing_tools as wtt
+
+    evented = wtt.evented
+    spanned = wtt.spanned
+    SpanNamer = wtt.SpanNamer
+    SpanKind = wtt.SpanKind
+
+    def set_current_span_attribute(key: str, value: Any) -> None:
+        wtt.get_current_span().set_attribute(key, value)
+
+    def inject_span_carrier_if_recording(carrier: Optional[Dict[str, Any]]) -> None:
+        if wtt.get_current_span().is_recording():
+            wtt.propagations.inject_span_carrier(carrier)
+
+
+#
+# Otherwise, dummy-implement every call
+#
 except ImportError:
-    pass
 
+    # fmt: off
+    FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
-def set_current_span_attribute(key: str, value: Any) -> None:
-    wtt.get_current_span().set_attribute(key, value)
+    def dummy_decorator(func: FuncT) -> FuncT:
+        @wraps(func)
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
+            return func(*args, **kwargs)
+        return cast(FuncT, wrapped)
+    # fmt:on
 
+    def dummy_func(*args: Any, **kwargs: Any) -> None:
+        pass
 
-def inject_span_carrier_if_recording(carrier: Optional[Dict[str, Any]]) -> None:
-    if wtt.get_current_span().is_recording():
-        wtt.propagations.inject_span_carrier(carrier)
+    class DummyClass:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
 
+    evented = dummy_decorator  # type: ignore[assignment]
+    spanned = dummy_decorator  # type: ignore[assignment]
+    SpanNamer = DummyClass  # type: ignore[assignment, misc]
 
-evented = wtt.evented
-spanned = wtt.spanned
-SpanNamer = wtt.SpanNamer
-SpanKind = wtt.SpanKind
+    class SpanKind(Enum):  # type: ignore[no-redef]
+        INTERNAL = 0
+        SERVER = 1
+        CLIENT = 2
+        PRODUCER = 3
+        CONSUMER = 4
+
+    set_current_span_attribute = dummy_func
+    inject_span_carrier_if_recording = dummy_func
