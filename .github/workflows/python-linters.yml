@@ -27,4 +27,4 @@ jobs:
       - run: |
           ([ -e "setup.py" ] && pip install .) || pip install `find . -name 'requirements.txt' | rev | sed -z 's/\n/ r- /g' | rev`
       - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ . || \
-             (echo "no type packages installed:" && mypy --namespace-packages --exclude build/ .) # just run normally if no type packages to install
+             mypy --namespace-packages --exclude build/ . # just run normally if no type packages to install
