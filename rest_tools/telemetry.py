@@ -33,7 +33,13 @@ except ImportError:
     # fmt: off
     FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
-    def dummy_decorator(func: FuncT) -> FuncT:
+    def evented(func: FuncT) -> FuncT:  # type: ignore[misc]
+        @wraps(func)
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
+            return func(*args, **kwargs)
+        return cast(FuncT, wrapped)
+
+    def spanned(func: FuncT) -> FuncT:  # type: ignore[misc]
         @wraps(func)
         def wrapped(*args: Any, **kwargs: Any) -> Any:
             return func(*args, **kwargs)
@@ -47,8 +53,6 @@ except ImportError:
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-    evented = dummy_decorator  # type: ignore[assignment]
-    spanned = dummy_decorator  # type: ignore[assignment]
     SpanNamer = DummyClass  # type: ignore[assignment, misc]
 
     class SpanKind(Enum):  # type: ignore[no-redef]
