@@ -11,6 +11,15 @@ jobs:
                 pip install --user tox
                 tox -vv
 
+    test-w-telemetry:
+        docker:
+            - image: circleci/python:3.8
+        steps:
+            - checkout
+            - run: |
+                pip install --user tox wipac-telemetry
+                tox -vv
+
     pycycle:
         docker:
             - image: circleci/python:3.8
@@ -28,4 +37,5 @@ workflows:
     build_and_test:
         jobs:
             - test
+            - test-w-telemetry
             - pycycle
