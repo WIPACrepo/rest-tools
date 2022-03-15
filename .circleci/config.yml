@@ -50,4 +50,5 @@ workflows:
         jobs:
             - test
             - test-w-telemetry
+            - integrate-w-telemetry
             - pycycle
