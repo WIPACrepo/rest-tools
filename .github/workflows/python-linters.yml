@@ -26,5 +26,4 @@ jobs:
           ([ -e "requirements-dev.txt" ] && pip install -r requirements-dev.txt) || echo "no dev reqs"
       - run: |
           ([ -e "setup.py" ] && pip install .) || pip install `find . -name 'requirements.txt' | rev | sed -z 's/\n/ r- /g' | rev`
-      - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ . || \
-             mypy --namespace-packages --exclude build/ . # just run normally if no type packages to install
+      - run: mypy --install-types --namespace-packages --non-interactive --exclude build/ . || mypy --namespace-packages --exclude build/ . # just run normally if no type packages to install
