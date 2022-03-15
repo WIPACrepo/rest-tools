@@ -14,8 +14,11 @@ pyjwt==2.3.0
     # via wipac-rest-tools (setup.py)
 requests==2.27.1
     # via
+    #   requests-futures
     #   wipac-dev-tools
     #   wipac-rest-tools (setup.py)
+requests-futures==1.0.0
+    # via wipac-rest-tools (setup.py)
 tornado==6.1
     # via wipac-rest-tools (setup.py)
 urllib3==1.26.8
