@@ -8,7 +8,7 @@ import logging
 
 from rest_tools.client import RestClient  # noqa: E402 # pylint: disable=C0413,E0401
 from rest_tools.utils import Auth  # noqa: E402 # pylint: disable=C0413,E0401
-from wipac_telemetry import tracing_tools
+from wipac_telemetry import tracing_tools  # type: ignore[import]
 
 
 @tracing_tools.spanned()

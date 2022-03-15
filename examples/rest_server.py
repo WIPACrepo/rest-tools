@@ -16,7 +16,7 @@ from rest_tools.server import (  # noqa: E402 # pylint: disable=C0413,E0401
 from rest_tools.utils.json_util import (  # noqa: E402 # pylint: disable=C0413,E0401
     json_decode,
 )
-from wipac_telemetry import tracing_tools
+from wipac_telemetry import tracing_tools  # type: ignore[import]
 
 
 class FruitsHanlder(RestHandler):
