@@ -20,6 +20,18 @@ jobs:
                 pip install --user tox wipac-telemetry
                 tox -vv
 
+    integrate-w-telemetry:
+        docker:
+            - image: circleci/python:3.8
+        steps:
+            - checkout
+            - run: |
+                pip install --user tox wipac-telemetry
+                tox --notest -vv
+                . .tox/py/bin/activate
+                tests/integrate/run_client_server.sh
+
+
     pycycle:
         docker:
             - image: circleci/python:3.8

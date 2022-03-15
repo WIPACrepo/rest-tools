@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, Optional, TypeVar, cast
 # First, try to import then implement wipac-telemetry
 #
 try:
-    import wipac_telemetry.tracing_tools as wtt
+    import wipac_telemetry.tracing_tools as wtt  # type: ignore[import]  # ignore for CI/CD
 
     evented = wtt.evented
     spanned = wtt.spanned
