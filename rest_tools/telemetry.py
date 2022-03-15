@@ -31,20 +31,19 @@ try:
 except ImportError:
 
     # fmt: off
-    FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+    # See: https://stackoverflow.com/a/69030553
+    F = TypeVar("F", bound=Callable[..., Any])
 
-    def evented(func: FuncT) -> FuncT:  # type: ignore[misc]
-        @wraps(func)
-        def wrapped(*args: Any, **kwargs: Any) -> Any:
-            return func(*args, **kwargs)
-        return cast(FuncT, wrapped)
-
-    def spanned(func: FuncT) -> FuncT:  # type: ignore[misc]
-        @wraps(func)
-        def wrapped(*args: Any, **kwargs: Any) -> Any:
-            return func(*args, **kwargs)
-        return cast(FuncT, wrapped)
+    def dummy_wrapper(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+        def decorator(fn: F) -> F:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                return fn(*args, **kwargs)
+            return cast(F, wrapper)
+        return decorator
     # fmt:on
+
+    evented = dummy_wrapper
+    spanned = dummy_wrapper
 
     def dummy_func(*args: Any, **kwargs: Any) -> None:
         pass
