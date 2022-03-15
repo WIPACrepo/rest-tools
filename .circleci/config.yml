@@ -29,7 +29,8 @@ jobs:
                 pip install --user tox wipac-telemetry
                 tox --notest -vv
                 . .tox/py/bin/activate
-                tests/integrate/run_client_server.sh
+                cd tests/integrate/
+                ./run_client_server.sh
 
 
     pycycle:
