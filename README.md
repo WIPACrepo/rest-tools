@@ -1,3 +1,6 @@
+<!--- Top of README Badges (automated) --->
+[![CircleCI](https://img.shields.io/circleci/build/github/WIPACrepo/rest-tools)](https://app.circleci.com/pipelines/github/WIPACrepo/rest-tools?branch=master&filter=all) [![PyPI](https://img.shields.io/pypi/v/wipac-rest-tools)](https://pypi.org/project/wipac-rest-tools/) [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/WIPACrepo/rest-tools?include_prereleases)](https://github.com/WIPACrepo/rest-tools/) [![PyPI - License](https://img.shields.io/pypi/l/wipac-rest-tools)](https://github.com/WIPACrepo/rest-tools/blob/master/LICENSE) [![Lines of code](https://img.shields.io/tokei/lines/github/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/) [![GitHub issues](https://img.shields.io/github/issues/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/issues?q=is%3Aissue+sort%3Aupdated-desc+is%3Aopen) [![GitHub pull requests](https://img.shields.io/github/issues-pr/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/pulls?q=is%3Apr+sort%3Aupdated-desc+is%3Aopen) 
+<!--- End of README Badges (automated) --->
 # rest-tools
 
 This project contains REST tools in python, as common code for multiple other
@@ -8,8 +11,6 @@ so is fully asyncronous.
 
 Note that both the client and server assume starting the asyncio loop
 happens elsewhere - they do not start the loop themselves.
-
-[![CircleCI](https://circleci.com/gh/WIPACrepo/rest-tools/tree/master.svg?style=shield)](https://circleci.com/gh/WIPACrepo/rest-tools/tree/master) <sup>(master branch)</sup>
 
 ## Client
 

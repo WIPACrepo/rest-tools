@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
-import wipac_telemetry.tracing_tools as wtt
 
+from .. import telemetry as wtt
 from ..utils.auth import OpenIDAuth
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
@@ -132,8 +132,7 @@ class RestClient:
             args = {}
 
         # auto-inject the current span's info into the HTTP headers
-        if wtt.get_current_span().is_recording():
-            wtt.propagations.inject_span_carrier(self.session.headers)  # type: ignore[arg-type]
+        wtt.inject_span_carrier_if_recording(self.session.headers)  # type: ignore[arg-type]
 
         if path.startswith('/'):
             path = path[1:]

@@ -18,9 +18,9 @@ import tornado.gen
 import tornado.httpclient
 import tornado.httputil
 import tornado.web
-import wipac_telemetry.tracing_tools as wtt
 from tornado.auth import OAuth2Mixin
 
+from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
 from . import arghandler
 from .stats import RouteStats
@@ -141,7 +141,7 @@ class RestHandler(tornado.web.RequestHandler):
             self.auth_data = data
             self.auth_key = token
             if "role" in self.auth_data:
-                wtt.get_current_span().set_attribute('self.auth_data.role', self.auth_data['role'])
+                wtt.set_current_span_attribute('self.auth_data.role', self.auth_data['role'])
             return data['sub']
         # Auth Failed
         except Exception:
