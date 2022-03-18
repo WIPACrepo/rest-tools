@@ -2,6 +2,9 @@
 
 <!--next-version-placeholder-->
 
+## v1.3.1 (2022-03-18)
+
+
 ## v1.3.0 (2022-03-16)
 ### Feature
 * Updates for PyPI Publish ([#62](https://github.com/WIPACrepo/rest-tools/issues/62)) ([`0ad4ec7`](https://github.com/WIPACrepo/rest-tools/commit/0ad4ec78426c855b7d349220f673c1b7f47399ed))
