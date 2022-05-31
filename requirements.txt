@@ -25,5 +25,5 @@ typing-extensions==4.2.0
     # via wipac-dev-tools
 urllib3==1.26.9
     # via requests
-wipac-dev-tools==1.2.1
+wipac-dev-tools==1.2.2
     # via wipac-rest-tools (setup.py)
