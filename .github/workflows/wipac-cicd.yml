@@ -63,11 +63,15 @@ jobs:
   py-tests:
     needs: [py-versions]
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
-          python-version: ${{ fromJSON(needs.py-versions.outputs.matrix).py3_versions[0] }}
+          python-version: ${{ matrix.py3_versions }}
       - name: Setup Dependencies
         run: |
           pip install --upgrade pip wheel setuptools
