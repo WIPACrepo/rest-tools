@@ -310,7 +310,7 @@ class OpenIDRestClient(RestClient):
         refresh_token: str,
         client_id: str,
         client_secret: Optional[str] = None,
-        update_func: Optional[Callable[[str, Optional[str]], None]] = None,
+        update_func: Optional[Callable[[Union[str, bytes], Optional[Union[str, bytes]]], None]] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(address, **kwargs)
