@@ -6,7 +6,7 @@ import logging
 import signal
 import sys
 from contextlib import contextmanager
-from typing import Any, Iterable, Generator
+from typing import Any, Iterable, Iterator
 from unittest.mock import Mock
 
 import pytest
@@ -186,7 +186,7 @@ def _jsonify(val: bytes) -> Any:
     return json.loads(val.strip()) if val.strip() else None
 
 
-def _json_stream(iterable: Iterable) -> Generator[Any, None, None]:
+def _json_stream(iterable: Iterable[Any]) -> Iterator[Any]:
     for val in iterable:
         ret = _jsonify(val)
         if ret:  # no blanks
