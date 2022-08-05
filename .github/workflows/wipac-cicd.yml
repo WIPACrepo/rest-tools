@@ -104,8 +104,8 @@ jobs:
       - name: Run Integration Test
         run: |
           cd examples/
-          python run_server.py &
-          python run_client.py
+          python rest_server.py &
+          python rest_client.py
 
   release:
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
