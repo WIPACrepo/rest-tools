@@ -45,7 +45,6 @@ jobs:
         uses: WIPACrepo/wipac-dev-py-versions-action@v1.1
 
   pip-install:
-    # FUTURE DEV: this can be expanded to run actual tests instead of just pip installing
     needs: [py-versions]
     runs-on: ubuntu-latest
     strategy:
@@ -61,9 +60,56 @@ jobs:
           pip install --upgrade pip wheel setuptools
           pip install .
 
+  py-tests:
+    needs: [py-versions]
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.py3_versions }}
+      - name: Setup Dependencies
+        run: |
+          pip install --upgrade pip wheel setuptools
+          pip install .[tests]
+      - name: Run Tests
+        run: |
+          python -m pytest tests --tb=short --log-level=INFO
+          pycycle --here --verbose
+
+  py-tests-telemetry:
+    needs: [py-versions]
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.py3_versions }}
+      - name: Setup Dependencies
+        run: |
+          pip install --upgrade pip wheel setuptools
+          pip install .[telemetry,tests]
+      - name: Run Tests
+        run: |
+          python -m pytest tests --tb=short --log-level=INFO
+          pycycle --here --verbose
+      - name: Run Integration Test
+        run: |
+          cd examples/
+          python rest_server.py &
+          python rest_client.py
+
   release:
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
-    needs: [py-setup, pip-install]
+    needs: [pip-install, py-tests, py-tests-telemetry]
     runs-on: ubuntu-latest
     concurrency: release
     steps:

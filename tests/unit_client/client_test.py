@@ -6,7 +6,7 @@ import logging
 import signal
 import sys
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Iterable, Iterator
 from unittest.mock import Mock
 
 import pytest
@@ -186,6 +186,13 @@ def _jsonify(val: bytes) -> Any:
     return json.loads(val.strip()) if val.strip() else None
 
 
+def _json_stream(iterable: Iterable[Any]) -> Iterator[Any]:
+    for val in iterable:
+        ret = _jsonify(val)
+        if ret:  # no blanks
+            yield ret
+
+
 @httprettified  # type: ignore[misc]
 def test_100_request_stream() -> None:
     """Test `request_stream()`.
@@ -205,7 +212,7 @@ def test_100_request_stream() -> None:
     ]
     rpc = RestClient(mock_url, "passkey", timeout=1)
 
-    json_stream = [j for t in expected_stream if (j := _jsonify(t))]  # no blanks
+    json_stream = list(_json_stream(expected_stream))
 
     # test multiple times
     for test_num in range(2):
@@ -220,7 +227,7 @@ def test_100_request_stream() -> None:
 
         with _in_time(10, "Iterating by line is taking forever!"):
             for i, resp in enumerate(response_stream):
-                print(f"{resp=}")
+                print(f"resp={resp}")
                 assert resp == json_stream[i]
 
     # now w/ chunk sizes
@@ -238,7 +245,7 @@ def test_100_request_stream() -> None:
 
         with _in_time(10, "Iterating by line is taking forever w/ chunks!"):
             for i, resp in enumerate(response_stream):
-                print(f"{resp=}")
+                print(f"resp={resp}")
                 assert resp == json_stream[i]
 
 
@@ -305,7 +312,7 @@ def test_102_request_stream() -> None:
         [b'"w/o-a-newline"'],
     ]
     for expected_stream in one_liners:
-        json_stream = [j for t in expected_stream if (j := _jsonify(t))]  # no blanks
+        json_stream = list(_json_stream(expected_stream))
 
         # test multiple times
         for test_num in range(2):
@@ -320,7 +327,7 @@ def test_102_request_stream() -> None:
 
             with _in_time(10, "Iterating by line is taking forever!"):
                 for i, resp in enumerate(response_stream):
-                    print(f"{resp=}")
+                    print(f"resp={resp}")
                     assert resp == json_stream[i]
 
         # now w/ chunk sizes
@@ -338,5 +345,5 @@ def test_102_request_stream() -> None:
 
             with _in_time(10, "Iterating by line is taking forever w/ chunks!"):
                 for i, resp in enumerate(response_stream):
-                    print(f"{resp=}")
+                    print(f"resp={resp}")
                     assert resp == json_stream[i]
