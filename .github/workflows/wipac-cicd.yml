@@ -79,11 +79,37 @@ jobs:
       - name: Run Tests
         run: |
           python -m pytest tests --tb=short --log-level=INFO
+          pycycle --here --verbose
 
+  py-tests-telemetry:
+    needs: [py-versions]
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.py3_versions }}
+      - name: Setup Dependencies
+        run: |
+          pip install --upgrade pip wheel setuptools
+          pip install .[telemetry,tests]
+      - name: Run Tests
+        run: |
+          python -m pytest tests --tb=short --log-level=INFO
+          pycycle --here --verbose
+      - name: Run Integration Test
+        run: |
+          cd examples/
+          python run_server.py &
+          python run_client.py
 
   release:
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
-    needs: [pip-install, py-tests]
+    needs: [pip-install, py-tests, py-tests-telemetry]
     runs-on: ubuntu-latest
     concurrency: release
     steps:
