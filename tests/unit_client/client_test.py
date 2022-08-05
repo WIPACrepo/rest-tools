@@ -227,7 +227,7 @@ def test_100_request_stream() -> None:
 
         with _in_time(10, "Iterating by line is taking forever!"):
             for i, resp in enumerate(response_stream):
-                print(f"{resp=}")
+                print(f"resp={resp}")
                 assert resp == json_stream[i]
 
     # now w/ chunk sizes
@@ -245,7 +245,7 @@ def test_100_request_stream() -> None:
 
         with _in_time(10, "Iterating by line is taking forever w/ chunks!"):
             for i, resp in enumerate(response_stream):
-                print(f"{resp=}")
+                print(f"resp={resp}")
                 assert resp == json_stream[i]
 
 
@@ -327,7 +327,7 @@ def test_102_request_stream() -> None:
 
             with _in_time(10, "Iterating by line is taking forever!"):
                 for i, resp in enumerate(response_stream):
-                    print(f"{resp=}")
+                    print(f"resp={resp}")
                     assert resp == json_stream[i]
 
         # now w/ chunk sizes
@@ -345,5 +345,5 @@ def test_102_request_stream() -> None:
 
             with _in_time(10, "Iterating by line is taking forever w/ chunks!"):
                 for i, resp in enumerate(response_stream):
-                    print(f"{resp=}")
+                    print(f"resp={resp}")
                     assert resp == json_stream[i]
