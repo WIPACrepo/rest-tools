@@ -310,7 +310,7 @@ class OpenIDRestClient(RestClient):
         refresh_token: str,
         client_id: str,
         client_secret: Optional[str] = None,
-        update_func: Optional[Callable[[str, Optional[str]], []]] = None,
+        update_func: Optional[Callable[[str, Optional[str]], None]] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(address, **kwargs)
@@ -356,7 +356,7 @@ class OpenIDRestClient(RestClient):
                 self.logger.debug('OpenID token refreshed')
                 self.access_token = req['access_token']
                 self.refresh_token = req['refresh_token'] if 'refresh_token' in req else None
-                if self.update_func:
+                if self.access_token and self.update_func:
                     self.update_func(self.access_token, self.refresh_token)
                 return
 
