@@ -298,9 +298,10 @@ class OpenIDRestClient(RestClient):
         token_url (str): base address of token service
         refresh_token (str): initial refresh token
         client_id (str): client id
-        client_secret (str): client secret
-        timeout (int): request timeout
-        retries (int): number of retries to attempt
+        client_secret (str): client secret (optional - required for refresh tokens)
+        update_func (callable): a function that gets called when the access and refresh tokens are updated (optional)
+        timeout (int): request timeout (optional)
+        retries (int): number of retries to attempt (optional)
     """
     def __init__(
         self,
@@ -308,7 +309,8 @@ class OpenIDRestClient(RestClient):
         token_url: str,
         refresh_token: str,
         client_id: str,
-        client_secret: str,
+        client_secret: Optional[str] = None,
+        update_func: Optional[Callable[[str, Optional[str]], []]] = None,
         **kwargs: Any
     ) -> None:
         super().__init__(address, **kwargs)
@@ -319,6 +321,7 @@ class OpenIDRestClient(RestClient):
         self.access_token = None
         self.refresh_token: Optional[Union[str, bytes]] = refresh_token
         self.token_func = True  # type: ignore
+        self.update_func = update_func
         self._get_token()
 
     def _get_token(self) -> None:
@@ -326,7 +329,7 @@ class OpenIDRestClient(RestClient):
             # check if expired
             try:
                 data = self.auth.validate(self.access_token)
-                if data['exp'] < time.time()-5:
+                if data['exp'] < time.time()-self._token_expire_delay_offset:
                     raise Exception()
                 return
             except Exception:
@@ -339,8 +342,9 @@ class OpenIDRestClient(RestClient):
                 'grant_type': 'refresh_token',
                 'refresh_token': self.refresh_token,
                 'client_id': self.client_id,
-                'client_secret': self.client_secret,
             }
+            if self.client_secret:
+                args['client_secret'] = self.client_secret
 
             try:
                 r = requests.post(self.auth.token_url, data=args)
@@ -352,6 +356,8 @@ class OpenIDRestClient(RestClient):
                 self.logger.debug('OpenID token refreshed')
                 self.access_token = req['access_token']
                 self.refresh_token = req['refresh_token'] if 'refresh_token' in req else None
+                if self.update_func:
+                    self.update_func(self.access_token, self.refresh_token)
                 return
 
         raise Exception('No token available')
