@@ -45,7 +45,6 @@ jobs:
         uses: WIPACrepo/wipac-dev-py-versions-action@v1.1
 
   pip-install:
-    # FUTURE DEV: this can be expanded to run actual tests instead of just pip installing
     needs: [py-versions]
     runs-on: ubuntu-latest
     strategy:
@@ -61,9 +60,26 @@ jobs:
           pip install --upgrade pip wheel setuptools
           pip install .
 
+  py-tests:
+    needs: [py-versions]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ fromJSON(needs.py-versions.outputs.matrix).py3_versions[0] }}
+      - name: Setup Dependencies
+        run: |
+          pip install --upgrade pip wheel setuptools
+          pip install .[tests]
+      - name: Run Tests
+        run: |
+          python -m pytest tests --tb=short --log-level=INFO
+
+
   release:
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
-    needs: [py-setup, pip-install]
+    needs: [pip-install, py-tests]
     runs-on: ubuntu-latest
     concurrency: release
     steps:
