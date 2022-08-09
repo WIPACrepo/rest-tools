@@ -383,24 +383,27 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
         if oauth_client_scope:
             self.oauth_client_scope = oauth_client_scope.split()
         else:
-            self.oauth_client_scope = ['offline_access', 'profile', 'groups']
+            self.oauth_client_scope = ['profile', 'groups']
+            if oauth_client_secret:
+                self.oauth_client_scope.append('offline_access')
 
     async def get_authenticated_user(
         self, redirect_uri: str, code: str
     ) -> Dict[str, Any]:
         http = self.get_auth_http_client()
-        body = urllib.parse.urlencode({
+        body = {
             'redirect_uri': redirect_uri,
             'code': code,
             'client_id': self.oauth_client_id,
-            'client_secret': self.oauth_client_secret,
             'grant_type': 'authorization_code',
-        })
+        }
+        if self.oauth_client_secret:
+            body['client_secret'] = self.oauth_client_secret
         response = await http.fetch(
             self._OAUTH_ACCESS_TOKEN_URL,
             method='POST',
             headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            body=body,
+            body=urllib.parse.urlencode(body),
         )
         ret = tornado.escape.json_decode(response.body)
         if not ret.get('id_token', ''):
@@ -447,14 +450,23 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
                 redirect_uri=self.get_login_url(),
                 code=self.get_argument('code'),
             )
+
+            # set expire times (can be 0 in user data, which is an invalid cookie)
+            access_expire = user.get('expires_in', 0)
+            if not access_expire:
+                access_expire = 1800
+            refresh_expire = user.get('refresh_expires_in', 0)
+            if not refresh_expire:
+                refresh_expire = 86400
+
             # Save the user with e.g. set_secure_cookie
             self.set_secure_cookie('access_token', user['access_token'],
-                                   expires_days=float(user['expires_in'])/3600/24)
+                                   expires_days=float(access_expire)/3600/24)
             if 'refresh_token' in user:
                 self.set_secure_cookie('refresh_token', user['refresh_token'],
-                                       expires_days=float(user.get('refresh_expires_in', 86400))/3600/24)
+                                       expires_days=float(refresh_expire)/3600/24)
             self.set_secure_cookie('identity', tornado.escape.json_encode(user['id_token']),
-                                   expires_days=float(user.get('refresh_expires_in', 86400))/3600/24)
+                                   expires_days=float(refresh_expire)/3600/24)
             if data.get('redirect', None):
                 url = data['redirect']
                 if 'state' in data:
@@ -466,8 +478,11 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
                 raise tornado.web.HTTPError(400, reason='missing redirect')
         else:
             state = {}
-            if self.get_argument('redirect', False):
-                state['redirect'] = self.get_argument('redirect')
+            redirect = self.get_argument('next', None)
+            if not redirect:
+                redirect = self.get_argument('redirect', None)
+            if redirect:
+                state['redirect'] = redirect
             elif not self.settings.get('debug', False):
                 raise tornado.web.HTTPError(400, 'missing redirect')
             if self.get_argument('state', False):
