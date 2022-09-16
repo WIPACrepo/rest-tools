@@ -4,15 +4,17 @@
 #
 #    pip-compile
 #
-certifi==2022.6.15
+cachetools==5.2.0
+    # via wipac-rest-tools (setup.py)
+certifi==2022.9.14
     # via requests
 cffi==1.15.1
     # via cryptography
-charset-normalizer==2.1.0
+charset-normalizer==2.1.1
     # via requests
-cryptography==37.0.4
+cryptography==38.0.1
     # via pyjwt
-idna==3.3
+idna==3.4
     # via requests
 pycparser==2.21
     # via cffi
@@ -29,7 +31,7 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.3.0
     # via wipac-dev-tools
-urllib3==1.26.11
+urllib3==1.26.12
     # via requests
-wipac-dev-tools==1.3.1
+wipac-dev-tools==1.5.0
     # via wipac-rest-tools (setup.py)
