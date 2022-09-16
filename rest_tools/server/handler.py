@@ -12,7 +12,7 @@ import urllib.parse
 from collections import defaultdict
 from functools import partial, wraps
 import secrets
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, MutableMapping, Optional, Union
 
 from cachetools import TTLCache
 import rest_tools
@@ -373,7 +373,7 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
 
     Requires the `login_url` application setting to be a full url.
     """
-    _pkcs_challenges = TTLCache(maxsize=10000, ttl=3600)
+    _pkcs_challenges: MutableMapping[str, str] = TTLCache(maxsize=10000, ttl=3600)
 
     def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
         super().initialize(**kwargs)
