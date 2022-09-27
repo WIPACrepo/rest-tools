@@ -4,14 +4,17 @@
 # pylint: skip-file
 
 import base64
+import hashlib
 import hmac
 import logging
 import time
 import urllib.parse
 from collections import defaultdict
 from functools import partial, wraps
-from typing import Any, Dict, List, Optional, Union
+import secrets
+from typing import Any, Dict, List, MutableMapping, Optional, Union
 
+from cachetools import TTLCache
 import rest_tools
 import tornado.escape
 import tornado.gen
@@ -370,6 +373,8 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
 
     Requires the `login_url` application setting to be a full url.
     """
+    _pkcs_challenges: MutableMapping[str, str] = TTLCache(maxsize=10000, ttl=3600)
+
     def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
         super().initialize(**kwargs)
         if not isinstance(self.auth, OpenIDAuth):
@@ -387,8 +392,21 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             if oauth_client_secret:
                 self.oauth_client_scope.append('offline_access')
 
+    @classmethod
+    def create_pkce_challenge(cls) -> str:
+        code_verifier = secrets.token_urlsafe(64)
+        code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode('utf-8')).digest()).decode('utf-8').split('=')[0]
+        cls._pkcs_challenges[code_challenge] = code_verifier
+        return code_challenge
+
+    @classmethod
+    def get_pkce_verifier(cls, challenge: str) -> str:
+        if challenge in cls._pkcs_challenges:
+            return cls._pkcs_challenges[challenge]
+        raise KeyError('invalid pkce challenge')
+
     async def get_authenticated_user(
-        self, redirect_uri: str, code: str
+        self, redirect_uri: str, code: str, state: Dict[str, Any]
     ) -> Dict[str, Any]:
         http = self.get_auth_http_client()
         body = {
@@ -399,6 +417,13 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
         }
         if self.oauth_client_secret:
             body['client_secret'] = self.oauth_client_secret
+        else:
+            # use PKCE
+            code_challenge = state.get('code_challenge', None)
+            if not code_challenge:
+                raise tornado.web.HTTPError(400, reason='missing PKCE code challenge')
+            body['code_verifier'] = self.get_pkce_verifier(code_challenge)
+
         response = await http.fetch(
             self._OAUTH_ACCESS_TOKEN_URL,
             method='POST',
@@ -449,6 +474,7 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             user = await self.get_authenticated_user(
                 redirect_uri=self.get_login_url(),
                 code=self.get_argument('code'),
+                state=data,
             )
 
             # set expire times (can be 0 in user data, which is an invalid cookie)
@@ -487,9 +513,17 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
                 raise tornado.web.HTTPError(400, 'missing redirect')
             if self.get_argument('state', False):
                 state['state'] = self.get_argument('state')
+            extra_params = {}
+            if not self.oauth_client_secret:
+                # use PKCE  https://www.rfc-editor.org/rfc/rfc7636
+                extra_params['code_challenge'] = self.create_pkce_challenge()
+                extra_params['code_challenge_method'] = 'S256'
+                state['code_challenge'] = extra_params['code_challenge']
+            extra_params["state"] = self._encode_state(state)
+
             self.authorize_redirect(
                 redirect_uri=self.get_login_url(),
                 client_id=self.oauth_client_id,
                 scope=self.oauth_client_scope,
-                extra_params={"state": self._encode_state(state)},
+                extra_params=extra_params,
                 response_type='code')

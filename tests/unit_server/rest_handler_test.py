@@ -148,7 +148,8 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
 
     handler.get_auth_http_client = MagicMock()
     handler.get_auth_http_client.return_value.fetch = MagicMock(side_effect=fn)
-    ret = await handler.get_authenticated_user('redirect', 'code')
+    state = {}
+    ret = await handler.get_authenticated_user('redirect', 'code', state)
     assert ret == user_info
 
 
