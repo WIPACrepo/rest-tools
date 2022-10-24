@@ -367,6 +367,45 @@ def scope_role_auth(**_auth):
     return make_wrapper
 
 
+def keycloak_role_auth(**_auth):
+    """Handle RBAC authorization using keycloak realm roles.
+    Like :py:func:`authenticated`, this requires the Authorization header
+    to be filled with a valid token.  Note that calling both decorators
+    is not necessary, as this decorator will perform authentication
+    checking as well.
+
+    Args:
+        roles (list): The roles to match
+        prefix (str): The token prefix (default: realm_access.roles)
+    Raises:
+        :py:class:`tornado.web.HTTPError`
+    """
+    def make_wrapper(method):
+        @authenticated
+        @catch_error
+        @wraps(method)
+        async def wrapper(self, *args, **kwargs):
+            roles = _auth.get('roles', [])
+            prefix = _auth.get('prefix', 'realm_access.roles').split('.')
+
+            auth_roles = self.auth_data
+            while prefix:
+                auth_roles = auth_roles.get(prefix[0], {})
+                prefix = prefix[1:]
+
+            authorized = set(roles).intersection(auth_roles)
+
+            if not authorized:
+                logging.info('roles: %r', roles)
+                logging.info('token_roles: %r', auth_roles)
+                logging.info('role mismatch')
+                raise tornado.web.HTTPError(403, reason="authorization failed")
+
+            return await method(self, *args, **kwargs)
+        return wrapper
+    return make_wrapper
+
+
 class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
     """
     Handle OpenID Connect logins.
