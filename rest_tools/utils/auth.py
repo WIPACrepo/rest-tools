@@ -93,6 +93,8 @@ class Auth(_AuthValidate):
             'iat': now,
             'type': type,
         })
+        times = timegm(datetime.now(tz=timezone.utc).utctimetuple()),timegm(datetime.utcnow().utctimetuple()),int(time.time()),timegm(time.gmtime(time.time()))
+        logging.info(f'{times}')
 
         token = jwt.encode(payload, self.secret, algorithm=self.algorithm, headers=headers)
         return token
