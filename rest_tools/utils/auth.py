@@ -4,8 +4,6 @@
 import json
 import logging
 import time
-from datetime import datetime, timezone
-from calendar import timegm
 
 import jwt
 import requests
@@ -95,8 +93,6 @@ class Auth(_AuthValidate):
             'iat': now,
             'type': type,
         })
-        times = timegm(datetime.now(tz=timezone.utc).utctimetuple()),timegm(datetime.utcnow().utctimetuple()),int(time.time()),timegm(time.gmtime(time.time()))
-        logging.info(f'{times}')
 
         token = jwt.encode(payload, self.secret, algorithm=self.algorithm, headers=headers)
         return token
