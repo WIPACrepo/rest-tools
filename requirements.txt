@@ -18,7 +18,7 @@ idna==3.4
     # via requests
 pycparser==2.21
     # via cffi
-pyjwt[crypto]==2.6.0
+pyjwt[crypto]==2.5.0
     # via wipac-rest-tools (setup.py)
 requests==2.28.1
     # via
@@ -29,6 +29,8 @@ requests-futures==1.0.0
     # via wipac-rest-tools (setup.py)
 tornado==6.2
     # via wipac-rest-tools (setup.py)
+types-cryptography==3.3.23.1
+    # via pyjwt
 typing-extensions==4.4.0
     # via wipac-dev-tools
 urllib3==1.26.12
