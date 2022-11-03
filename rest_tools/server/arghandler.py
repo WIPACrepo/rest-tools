@@ -64,7 +64,7 @@ class ArgumentHandler:
             ValueError -- if typecast fails and `server_side_error=True`
             _InvalidArgumentError -- if typecast fails and `server_side_error=False`
         """
-        if not type_:
+        if type_ is None or type_ == type(None):
             return value
 
         try:
