@@ -57,7 +57,6 @@ class ArgumentHandler:
         """Cast `value` to `cast_type` type.
 
         Keyword Arguments:
-            none_is_ok {bool} -- indicate if `value` can also be `None` (default: {False})
             server_side_error {bool} -- *see "Raises" below* (default: {False})
 
         Raises:
@@ -65,9 +64,6 @@ class ArgumentHandler:
             _InvalidArgumentError -- if typecast fails and `server_side_error=False`
         """
         if not type_:
-            return value
-
-        if value is None and none_is_ok:
             return value
 
         try:
@@ -172,9 +168,8 @@ class ArgumentHandler:
                 raise _make_400_error(name, e)
 
         # Else: Optional (aka use default value)
-        ArgumentHandler._cast_type(
-            default, type_, none_is_ok=True, server_side_error=True
-        )
+        if default is not None:
+            ArgumentHandler._cast_type(default, type_, server_side_error=True)
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             return ArgumentHandler.get_json_body_argument(
