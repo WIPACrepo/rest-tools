@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest  # type: ignore[import]
 import tornado.web
-from rest_tools.server.arghandler import _InvalidArgumentError, ArgumentHandler
+from rest_tools.server.arghandler import ArgumentHandler, _InvalidArgumentError
 from rest_tools.server.handler import RestHandler
 
 
@@ -126,8 +126,8 @@ def test_03_validate_choice__errors() -> None:
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
 
 
-def test_04_check_type() -> None:
-    """Test `_check_type()`."""
+ def test_04_cast_type() -> None:
+    """Test `_cast_type()`."""
     vals = [
         "abcdef",
         1,
@@ -141,26 +141,25 @@ def test_04_check_type() -> None:
     for val in vals:
         print(val)
         # Passing Cases:
-        ArgumentHandler._check_type(val, type(val))
-        ArgumentHandler._check_type(val, None)  # type=None is always allowed
-        ArgumentHandler._check_type(None, type(val), none_is_ok=True)
+        ArgumentHandler._cast_type(val, type(val))
+        ArgumentHandler._cast_type(val, None)  # type=None is always allowed
 
         # Error Cases:
 
         # None is not allowed
         if val is not None:
             with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._check_type(None, type(val))
+                ArgumentHandler._cast_type(None, type(val))
             with pytest.raises(ValueError):
-                ArgumentHandler._check_type(None, type(val), server_side_error=True)
+                ArgumentHandler._cast_type(None, type(val), server_side_error=True)
 
         # type-mismatch  # pylint: disable=C0123
         for o_type in [type(o) for o in vals if type(o) != type(val)]:
             print(o_type)
             with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._check_type(val, o_type)
+                ArgumentHandler._cast_type(val, o_type)
             with pytest.raises(ValueError):
-                ArgumentHandler._check_type(val, o_type, server_side_error=True)
+                ArgumentHandler._cast_type(val, o_type, server_side_error=True)
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
