@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest  # type: ignore[import]
 import tornado.web
-from rest_tools.server.arghandler import _InvalidArgumentError, ArgumentHandler
+from rest_tools.server.arghandler import ArgumentHandler, _InvalidArgumentError
 from rest_tools.server.handler import RestHandler
 
 
@@ -20,18 +20,22 @@ def rest_handler() -> RestHandler:
 def test_00_cast_type() -> None:
     """Test `_cast_type()`."""
     # None - no casting
-    assert ArgumentHandler._cast_type("string", None) == "string"
-    assert ArgumentHandler._cast_type("0", None) == "0"
-    assert ArgumentHandler._cast_type("2.5", None) == "2.5"
+    # assert ArgumentHandler._cast_type("string", None) == "string"
+    # assert ArgumentHandler._cast_type("0", None) == "0"
+    # assert ArgumentHandler._cast_type("2.5", None) == "2.5"
     # str
     assert ArgumentHandler._cast_type("string", str) == "string"
     assert ArgumentHandler._cast_type("", str) == ""
     assert ArgumentHandler._cast_type(0, str) == "0"
     # int
     assert ArgumentHandler._cast_type("1", int) == 1
+    assert ArgumentHandler._cast_type(1.0, int) == 1
     assert ArgumentHandler._cast_type("1", int) != "1"
     # float
     assert ArgumentHandler._cast_type("2.5", float) == 2.5
+    assert ArgumentHandler._cast_type("2.0", float) == 2.0
+    assert ArgumentHandler._cast_type("123", float) == 123.0
+    assert ArgumentHandler._cast_type(4, float) == 4.0
     # True
     assert ArgumentHandler._cast_type("1", bool) is True
     assert ArgumentHandler._cast_type(1, bool) is True
@@ -126,10 +130,10 @@ def test_03_validate_choice__errors() -> None:
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
 
 
-def test_04_check_type() -> None:
-    """Test `_check_type()`."""
+def test_04_cast_type() -> None:
+    """Test `_cast_type()`."""
     vals = [
-        "abcdef",
+        "abcdefghijklmopqrstuvwxyz",
         1,
         None,
         ["this is", "a list"],
@@ -138,29 +142,40 @@ def test_04_check_type() -> None:
         {"but this": "is a dict"},
     ]
 
+    def agreeable_type(typ: Any, val: Any) -> bool:
+        if val is None:
+            return False
+        try:
+            typ(val)
+            return True
+        except Exception:
+            return False
+
     for val in vals:
         print(val)
         # Passing Cases:
-        ArgumentHandler._check_type(val, type(val))
-        ArgumentHandler._check_type(val, None)  # type=None is always allowed
-        ArgumentHandler._check_type(None, type(val), none_is_ok=True)
+        # assert val == ArgumentHandler._cast_type(val, None)  # None is always allowed
+        for o_type in [type(o) for o in vals if agreeable_type(type(o), val)]:
+            print(o_type)
+            out = ArgumentHandler._cast_type(val, o_type)
+            assert isinstance(out, o_type)
 
         # Error Cases:
 
         # None is not allowed
         if val is not None:
             with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._check_type(None, type(val))
+                ArgumentHandler._cast_type(None, type(val))
             with pytest.raises(ValueError):
-                ArgumentHandler._check_type(None, type(val), server_side_error=True)
+                ArgumentHandler._cast_type(None, type(val), server_side_error=True)
 
         # type-mismatch  # pylint: disable=C0123
-        for o_type in [type(o) for o in vals if type(o) != type(val)]:
+        for o_type in [type(o) for o in vals if not agreeable_type(type(o), val)]:
             print(o_type)
             with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._check_type(val, o_type)
-            with pytest.raises(ValueError):
-                ArgumentHandler._check_type(val, o_type, server_side_error=True)
+                ArgumentHandler._cast_type(val, o_type)
+            with pytest.raises((ValueError, TypeError)):
+                ArgumentHandler._cast_type(val, o_type, server_side_error=True)
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
@@ -175,8 +190,7 @@ def test_10_default(rhga: Mock, pjba: Mock, rest_handler: RestHandler) -> None:
         print(default)
         pjba.return_value = {}
         rhga.return_value = default
-        ret = rest_handler.get_argument("arg", default=default)
-        assert ret == default
+        assert default == rest_handler.get_argument("arg", default=default)
 
     # w/ typing
     for default in ["string", 100, 50.5]:
@@ -212,12 +226,11 @@ def test_20_get_argument_no_body(
         # w/o typing
         pjba.return_value = {}
         rhga.return_value = val
-        ret = rest_handler.get_argument(arg, default=None)
-        assert ret == val
+        assert val == rest_handler.get_argument(arg, default=None)
         # w/ typing
         pjba.return_value = {}
         rhga.return_value = val
-        ret = rest_handler.get_argument(arg, default=None, type=type_)
+        ret = rest_handler.get_argument(arg, default=None, type=type_)  # type: ignore  # dynamic types aren't real-world issues
         assert ret == type_(val) or (val == "False" and ret is False and type_ == bool)
 
     # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
@@ -254,15 +267,13 @@ def test_30_get_json_body_argument(pjba: Mock, rest_handler: RestHandler) -> Non
     for arg, val in body.items():
         print(arg)
         pjba.return_value = body
-        ret = rest_handler.get_json_body_argument(arg)
-        assert ret == val
+        assert val == rest_handler.get_json_body_argument(arg)
 
     # Default Use Cases
     for arg, val in body.items():
         print(arg)
         pjba.return_value = {a: v for a, v in body.items() if a != arg}
-        ret = rest_handler.get_json_body_argument(arg, default="Terry")
-        assert ret == "Terry"
+        assert "Terry" == rest_handler.get_json_body_argument(arg, default="Terry")
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
@@ -303,10 +314,10 @@ def test_32_get_json_body_argument_typechecking(
 
     pjba.return_value = {"foo": ["a", "bc"]}
 
-    ret = rest_handler.get_json_body_argument("foo", default=None, type=list)
+    ret2 = rest_handler.get_json_body_argument("foo", default=None, type=list)
 
     pjba.assert_called()
-    assert ret == ["a", "bc"]
+    assert ret2 == ["a", "bc"]
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
@@ -322,19 +333,9 @@ def test_33_get_json_body_argument_typechecking__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_json_body_argument("foo", default=None, type=float)
-    error_msg = "HTTP 400: `foo`: (TypeError) NINETY-NINE (<class 'str'>) is not <class 'float'>"
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-
-    # # #
-
-    # strings shouldn't become lists
-    pjba.return_value = {"baz": "I'm not a list"}
-
-    with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_json_body_argument("baz", default=None, type=list)
-    error_msg = "HTTP 400: `baz`: (TypeError) I'm not a list (<class 'str'>) is not <class 'list'>"
+    error_msg = (
+        "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
+    )
     assert str(e.value) == error_msg
 
     pjba.assert_called()
@@ -352,7 +353,7 @@ def test_40_get_argument_args_and_body(
     # TODO - patch based on argument: https://stackoverflow.com/a/16162316/13156561
     pjba.return_value = {"foo": 14}
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -371,7 +372,7 @@ def test_41_get_argument_args_and_body(
     pjba.return_value = {}
     rhga.return_value = 55
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_called_with("foo", None, strip=True)
@@ -390,7 +391,7 @@ def test_42_get_argument_args_and_body(
     pjba.return_value = {"baz": 7}
     rhga.return_value = 90
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_called_with("foo", None, strip=True)
@@ -409,7 +410,7 @@ def test_43_get_argument_args_and_body(
     pjba.return_value = {"foo": 1}
     rhga.return_value = -8
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -441,11 +442,11 @@ def test_44_get_argument_args_and_body(
     pjba.return_value = {"foo": ["a", "bc"]}
     rhga.return_value = "1 2 3"
 
-    ret = rest_handler.get_argument("foo", default=None, type=list)
+    ret2 = rest_handler.get_argument("foo", default=None, type=list)
 
     pjba.assert_called()
     rhga.assert_not_called()
-    assert ret == ["a", "bc"]
+    assert ret2 == ["a", "bc"]
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
@@ -465,21 +466,9 @@ def test_45_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("foo", default=None, type=float)
-    error_msg = "HTTP 400: `foo`: (TypeError) NINETY-NINE (<class 'str'>) is not <class 'float'>"
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-
-    # # #
-
-    # strings shouldn't become lists
-    pjba.return_value = {"baz": "I'm not a list"}
-    rhga.return_value = "me neither"
-
-    with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("baz", default=None, type=list)
-    error_msg = "HTTP 400: `baz`: (TypeError) I'm not a list (<class 'str'>) is not <class 'list'>"
+    error_msg = (
+        "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
+    )
     assert str(e.value) == error_msg
 
     pjba.assert_called()
