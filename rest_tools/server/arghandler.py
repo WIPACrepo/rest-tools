@@ -64,7 +64,7 @@ class ArgumentHandler:
             ValueError -- if typecast fails and `server_side_error=True`
             _InvalidArgumentError -- if typecast fails and `server_side_error=False`
         """
-        if type_ is None or type_ == type(None):
+        if type_ is None:
             return value
 
         try:
@@ -75,8 +75,8 @@ class ArgumentHandler:
             elif isinstance(value, str) and (type_ == bool) and (value != ""):
                 value = strtobool(value)  # ~> ValueError
             else:
-                value = type_(value)  # ~> ValueError
-        except ValueError as e:
+                value = type_(value)  # ~> ValueError or TypeError
+        except (ValueError, TypeError) as e:
             if server_side_error:
                 raise
             else:
