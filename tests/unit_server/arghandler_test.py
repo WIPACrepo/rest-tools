@@ -126,7 +126,7 @@ def test_03_validate_choice__errors() -> None:
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
 
 
- def test_04_cast_type() -> None:
+def test_04_cast_type() -> None:
     """Test `_cast_type()`."""
     vals = [
         "abcdef",
