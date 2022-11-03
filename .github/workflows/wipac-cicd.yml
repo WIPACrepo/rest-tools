@@ -80,7 +80,7 @@ jobs:
           pip install .[tests]
       - name: Run Tests
         run: |
-          python -m pytest tests --tb=short --log-level=INFO
+          python -m pytest tests --tb=short --log-level=INFO -vvv
           pycycle --here --verbose
 
   py-tests-telemetry:
