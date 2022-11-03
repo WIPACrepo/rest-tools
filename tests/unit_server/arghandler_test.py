@@ -29,9 +29,13 @@ def test_00_cast_type() -> None:
     assert ArgumentHandler._cast_type(0, str) == "0"
     # int
     assert ArgumentHandler._cast_type("1", int) == 1
+    assert ArgumentHandler._cast_type(1.0, int) == 1
     assert ArgumentHandler._cast_type("1", int) != "1"
     # float
     assert ArgumentHandler._cast_type("2.5", float) == 2.5
+    assert ArgumentHandler._cast_type("2.0", float) == 2.0
+    assert ArgumentHandler._cast_type("123", float) == 123.0
+    assert ArgumentHandler._cast_type(4, float) == 4.0
     # True
     assert ArgumentHandler._cast_type("1", bool) is True
     assert ArgumentHandler._cast_type(1, bool) is True
@@ -138,11 +142,21 @@ def test_04_cast_type() -> None:
         {"but this": "is a dict"},
     ]
 
+    def agreeable_type(typ: Any, val: Any) -> bool:
+        try:
+            typ(val)
+            return True
+        except:
+            return False
+
     for val in vals:
         print(val)
         # Passing Cases:
-        ArgumentHandler._cast_type(val, type(val))
-        ArgumentHandler._cast_type(val, None)  # type=None is always allowed
+        assert val == ArgumentHandler._cast_type(val, None)  # None is always allowed
+        for o_type in [type(o) for o in vals if agreeable_type(type(o), val)]:
+            print(o_type)
+            out = ArgumentHandler._cast_type(val, o_type)
+            assert isinstance(out, o_type)
 
         # Error Cases:
 
@@ -154,7 +168,7 @@ def test_04_cast_type() -> None:
                 ArgumentHandler._cast_type(None, type(val), server_side_error=True)
 
         # type-mismatch  # pylint: disable=C0123
-        for o_type in [type(o) for o in vals if type(o) != type(val)]:
+        for o_type in [type(o) for o in vals if not agreeable_type(type(o), val)]:
             print(o_type)
             with pytest.raises(_InvalidArgumentError):
                 ArgumentHandler._cast_type(val, o_type)
