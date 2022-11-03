@@ -158,7 +158,7 @@ def test_04_cast_type() -> None:
             print(o_type)
             with pytest.raises(_InvalidArgumentError):
                 ArgumentHandler._cast_type(val, o_type)
-            with pytest.raises(ValueError):
+            with pytest.raises((ValueError, TypeError)):
                 ArgumentHandler._cast_type(val, o_type, server_side_error=True)
 
 
@@ -469,20 +469,6 @@ def test_45_get_argument_args_and_body__errors(
     error_msg = (
         "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
     )
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-
-    # # #
-
-    # strings shouldn't become lists
-    pjba.return_value = {"baz": "I'm not a list"}
-    rhga.return_value = "me neither"
-
-    with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("baz", default=None, type=list)
-    error_msg = "HTTP 400: `baz`: (ValueError) could not convert string to list: 'I'm not a list'"
     assert str(e.value) == error_msg
 
     pjba.assert_called()
