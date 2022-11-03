@@ -148,7 +148,7 @@ def test_04_cast_type() -> None:
         try:
             typ(val)
             return True
-        except:
+        except Exception:
             return False
 
     for val in vals:
