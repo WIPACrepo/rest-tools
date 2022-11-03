@@ -86,8 +86,8 @@ class ArgumentHandler:
 
     @staticmethod
     def _validate_choice(
-        value: Any, choices: Optional[List[Any]], forbiddens: Optional[List[Any]]
-    ) -> Any:
+        value: T, choices: Optional[List[Any]], forbiddens: Optional[List[Any]]
+    ) -> T:
         """Check that `value` is in `choices` and not in `forbiddens`.
 
         Raise _InvalidArgumentError if qualification fails.
