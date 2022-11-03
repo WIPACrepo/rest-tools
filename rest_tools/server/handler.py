@@ -212,7 +212,7 @@ class RestHandler(tornado.web.RequestHandler):
     def get_json_body_argument(
         self,
         name: str,
-        default: Union[Any, None],
+        default: Any,
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
     ) -> Any:
@@ -222,7 +222,7 @@ class RestHandler(tornado.web.RequestHandler):
     def get_json_body_argument(
         self,
         name: str,
-        default: Union[T, Any, None] = arghandler.NO_DEFAULT,
+        default: Union[T, Any] = arghandler.NO_DEFAULT,
         type: Union[Type[T], None] = None,
         choices: Union[Optional[List[T]], Optional[List[Any]]] = None,
         forbiddens: Union[Optional[List[T]], Optional[List[Any]]] = None,
@@ -264,7 +264,7 @@ class RestHandler(tornado.web.RequestHandler):
     def get_argument(
         self,
         name: str,
-        default: Union[Any, None],
+        default: Any,
         strip: bool,
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
@@ -275,8 +275,8 @@ class RestHandler(tornado.web.RequestHandler):
     def get_argument(
         self,
         name: str,
-        default: Union[T, Any, None] = arghandler.NO_DEFAULT,
-        strip: bool = True,
+        default: Union[T, Any] = arghandler.NO_DEFAULT,
+        strip: bool=True,
         type: Union[Type[T], None] = None,
         choices: Union[Optional[List[T]], Optional[List[Any]]] = None,
         forbiddens: Union[Optional[List[T]], Optional[List[Any]]] = None,
