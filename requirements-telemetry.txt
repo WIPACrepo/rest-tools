@@ -16,7 +16,7 @@ charset-normalizer==2.1.1
     # via requests
 coloredlogs==15.0.1
     # via wipac-telemetry
-cryptography==38.0.1
+cryptography==38.0.3
     # via pyjwt
 deprecated==1.2.13
     # via opentelemetry-api
