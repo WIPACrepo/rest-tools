@@ -2,12 +2,14 @@
 
 
 import json
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, cast
 
 import tornado.web
 from wipac_dev_tools import strtobool
 
 from ..utils.json_util import json_decode
+
+T = TypeVar("T")
 
 
 class _NoDefaultValue:  # pylint: disable=R0903
@@ -50,10 +52,9 @@ class ArgumentHandler:
     @staticmethod
     def _cast_type(
         value: Any,
-        type_: Optional[type],
-        none_is_ok: bool = False,
+        type_: Optional[Type[T]],
         server_side_error: bool = False,
-    ) -> Any:
+    ) -> T:
         """Cast `value` to `cast_type` type.
 
         Keyword Arguments:
@@ -106,10 +107,10 @@ class ArgumentHandler:
         request_body: bytes,
         name: str,
         default: Any,
-        type_: Optional[type],
+        type_: Optional[Type[T]],
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
-    ) -> Any:
+    ) -> T:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
@@ -138,10 +139,10 @@ class ArgumentHandler:
         name: str,
         default: Any,
         strip: bool,
-        type_: Optional[type],
+        type_: Optional[Type[T]],
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
-    ) -> Any:
+    ) -> T:
         """Get argument from query base-arguments / JSON-decoded request-body.
 
         Try from `get_json_body_argument()` first, then from
