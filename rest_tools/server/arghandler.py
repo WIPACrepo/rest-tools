@@ -75,7 +75,7 @@ class ArgumentHandler:
             elif isinstance(value, str) and (type_ == bool) and (value != ""):
                 value = strtobool(value)  # ~> ValueError
             else:
-                value = type_(value)  # ~> ValueError or TypeError
+                value = type_(value)  # type: ignore  # ~> ValueError or TypeError
         except (ValueError, TypeError) as e:
             if server_side_error:
                 raise
@@ -171,8 +171,9 @@ class ArgumentHandler:
                         forbiddens,
                     )
                 else:
-                    return ArgumentHandler._validate_choice(
-                        str_val, choices, forbiddens
+                    return cast(  # this was Optional[str] but that info would get lost anyways
+                        Any,
+                        ArgumentHandler._validate_choice(str_val, choices, forbiddens),
                     )
             except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
                 raise _make_400_error(name, e)
@@ -199,6 +200,11 @@ class ArgumentHandler:
                     forbiddens,
                 )
             else:
-                return ArgumentHandler._validate_choice(str_val, choices, forbiddens)
+                return (
+                    cast(  # this was Optional[str] but that info would get lost anyways
+                        Any,
+                        ArgumentHandler._validate_choice(str_val, choices, forbiddens),
+                    )
+                )
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)

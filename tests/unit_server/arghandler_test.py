@@ -190,8 +190,7 @@ def test_10_default(rhga: Mock, pjba: Mock, rest_handler: RestHandler) -> None:
         print(default)
         pjba.return_value = {}
         rhga.return_value = default
-        ret = rest_handler.get_argument("arg", default=default)
-        assert ret == default
+        assert default == rest_handler.get_argument("arg", default=default)
 
     # w/ typing
     for default in ["string", 100, 50.5]:
@@ -227,8 +226,7 @@ def test_20_get_argument_no_body(
         # w/o typing
         pjba.return_value = {}
         rhga.return_value = val
-        ret = rest_handler.get_argument(arg, default=None)
-        assert ret == val
+        assert val == rest_handler.get_argument(arg, default=None)
         # w/ typing
         pjba.return_value = {}
         rhga.return_value = val
@@ -269,8 +267,7 @@ def test_30_get_json_body_argument(pjba: Mock, rest_handler: RestHandler) -> Non
     for arg, val in body.items():
         print(arg)
         pjba.return_value = body
-        ret = rest_handler.get_json_body_argument(arg)
-        assert ret == val
+        assert val == rest_handler.get_json_body_argument(arg)
 
     # Default Use Cases
     for arg, val in body.items():
@@ -318,10 +315,10 @@ def test_32_get_json_body_argument_typechecking(
 
     pjba.return_value = {"foo": ["a", "bc"]}
 
-    ret = rest_handler.get_json_body_argument("foo", default=None, type=list)
+    ret2 = rest_handler.get_json_body_argument("foo", default=None, type=list)
 
     pjba.assert_called()
-    assert ret == ["a", "bc"]
+    assert ret2 == ["a", "bc"]
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
@@ -357,7 +354,7 @@ def test_40_get_argument_args_and_body(
     # TODO - patch based on argument: https://stackoverflow.com/a/16162316/13156561
     pjba.return_value = {"foo": 14}
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -376,7 +373,7 @@ def test_41_get_argument_args_and_body(
     pjba.return_value = {}
     rhga.return_value = 55
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_called_with("foo", None, strip=True)
@@ -395,7 +392,7 @@ def test_42_get_argument_args_and_body(
     pjba.return_value = {"baz": 7}
     rhga.return_value = 90
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_called_with("foo", None, strip=True)
@@ -414,7 +411,7 @@ def test_43_get_argument_args_and_body(
     pjba.return_value = {"foo": 1}
     rhga.return_value = -8
 
-    ret = rest_handler.get_argument("foo", default=None)
+    ret: int = rest_handler.get_argument("foo", default=None)
 
     pjba.assert_called()
     rhga.assert_not_called()
@@ -446,11 +443,11 @@ def test_44_get_argument_args_and_body(
     pjba.return_value = {"foo": ["a", "bc"]}
     rhga.return_value = "1 2 3"
 
-    ret = rest_handler.get_argument("foo", default=None, type=list)
+    ret2 = rest_handler.get_argument("foo", default=None, type=list)
 
     pjba.assert_called()
     rhga.assert_not_called()
-    assert ret == ["a", "bc"]
+    assert ret2 == ["a", "bc"]
 
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
