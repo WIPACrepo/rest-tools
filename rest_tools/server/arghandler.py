@@ -1,11 +1,11 @@
 """Handle argument parsing, defaulting, and casting."""
 
 
-import distutils.util
 import json
 from typing import Any, Callable, Dict, List, Optional, cast
 
 import tornado.web
+from wipac_dev_tools import strtobool
 
 from ..utils.json_util import json_decode
 
@@ -58,7 +58,7 @@ class ArgumentHandler:
 
         try:
             if isinstance(value, str) and (type_ == bool) and (value != ""):
-                value = bool(distutils.util.strtobool(value))
+                value = strtobool(value)
             else:
                 value = type_(value)
         except ValueError as e:
