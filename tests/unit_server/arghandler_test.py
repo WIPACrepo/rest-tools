@@ -129,7 +129,7 @@ def test_03_validate_choice__errors() -> None:
 def test_04_cast_type() -> None:
     """Test `_cast_type()`."""
     vals = [
-        "abcdef",
+        "abcdefghijklmopqrstuvwxyz",
         1,
         None,
         ["this is", "a list"],
