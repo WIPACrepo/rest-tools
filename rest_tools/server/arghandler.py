@@ -126,7 +126,7 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         try:
-            value = ArgumentHandler._cast_type(value, type_)
+            # value = ArgumentHandler._cast_type(value, type_)
             value = ArgumentHandler._validate_choice(default, choices, forbiddens)
             return value
         except _InvalidArgumentError as e:
