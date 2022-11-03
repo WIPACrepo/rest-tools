@@ -165,8 +165,8 @@ class ArgumentHandler:
                 raise _make_400_error(name, e)
             # check query/base and body arguments
             try:
-                value = rest_handler_get_argument(name, strip=strip)
-                value = ArgumentHandler._cast_type(value, type_)
+                str_value = rest_handler_get_argument(name, strip=strip)
+                value = ArgumentHandler._cast_type(str_value, type_)
                 value = ArgumentHandler._validate_choice(value, choices, forbiddens)
                 return value
             except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
@@ -185,9 +185,9 @@ class ArgumentHandler:
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
         # check query base-arguments
-        value = rest_handler_get_argument(name, default, strip=strip)
+        str_value = rest_handler_get_argument(name, default, strip=strip)
         try:
-            value = ArgumentHandler._cast_type(value, type_)
+            value = ArgumentHandler._cast_type(str_value, type_)
             value = ArgumentHandler._validate_choice(value, choices, forbiddens)
             return value
         except _InvalidArgumentError as e:
