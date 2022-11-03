@@ -143,6 +143,8 @@ def test_04_cast_type() -> None:
     ]
 
     def agreeable_type(typ: Any, val: Any) -> bool:
+        if val is None:
+            return False
         try:
             typ(val)
             return True
