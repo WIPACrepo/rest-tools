@@ -48,21 +48,38 @@ class ArgumentHandler:
     """
 
     @staticmethod
-    def _cast_type(value: Any, type_: Optional[type]) -> Any:
+    def _cast_type(
+        value: Any,
+        type_: Optional[type],
+        none_is_ok: bool = False,
+        server_side_error: bool = False,
+    ) -> Any:
         """Cast `value` to `cast_type` type.
 
-        Raise _InvalidArgumentError if qualification fails.
+        Keyword Arguments:
+            none_is_ok {bool} -- indicate if `value` can also be `None` (default: {False})
+            server_side_error {bool} -- *see "Raises" below* (default: {False})
+
+        Raises:
+            ValueError -- if typecast fails and `server_side_error=True`
+            _InvalidArgumentError -- if typecast fails and `server_side_error=False`
         """
         if not type_:
             return value
 
+        if value is None and none_is_ok:
+            return value
+
         try:
             if isinstance(value, str) and (type_ == bool) and (value != ""):
-                value = strtobool(value)
+                value = strtobool(value)  # ~> ValueError
             else:
-                value = type_(value)
+                value = type_(value)  # ~> ValueError
         except ValueError as e:
-            raise _InvalidArgumentError(f"(ValueError) {e}")
+            if server_side_error:
+                raise
+            else:
+                raise _InvalidArgumentError(f"(ValueError) {e}")
 
         return value
 
@@ -89,39 +106,6 @@ class ArgumentHandler:
         return value
 
     @staticmethod
-    def _check_type(
-        value: Any,
-        type_: Optional[type],
-        none_is_ok: bool = False,
-        server_side_error: bool = False,
-    ) -> Any:
-        """Check the type of `value`.
-
-        Keyword Arguments:
-            none_is_ok {bool} -- indicate if `value` can also be `None` (default: {False})
-            server_side_error {bool} -- *see "Raises" below* (default: {False})
-
-        Raises:
-            ValueError -- if type check fails and `server_side_error=True`
-            _InvalidArgumentError -- if type check fails and `server_side_error=False`
-        """
-        if not type_:
-            return value
-
-        if not isinstance(value, type_):
-            # wait, is None okay?
-            if value is None and none_is_ok:
-                return value
-            # raise!
-            msg = f"{value} ({type(value)}) is not {type_}{' or None' if none_is_ok else ''}"
-            if server_side_error:
-                raise ValueError(msg)
-            else:
-                raise _InvalidArgumentError("(TypeError) " + msg)
-
-        return value
-
-    @staticmethod
     def get_json_body_argument(  # pylint: disable=R0913
         request_body: bytes,
         name: str,
@@ -133,8 +117,8 @@ class ArgumentHandler:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
+            value = ArgumentHandler._cast_type(value, type_)
             value = ArgumentHandler._validate_choice(value, choices, forbiddens)
-            value = ArgumentHandler._check_type(value, type_)
             return value
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
@@ -145,8 +129,8 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         try:
+            value = ArgumentHandler._cast_type(value, type_)
             value = ArgumentHandler._validate_choice(default, choices, forbiddens)
-            value = ArgumentHandler._check_type(value, type_)
             return value
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
@@ -188,7 +172,7 @@ class ArgumentHandler:
                 raise _make_400_error(name, e)
 
         # Else: Optional (aka use default value)
-        ArgumentHandler._check_type(
+        ArgumentHandler._cast_type(
             default, type_, none_is_ok=True, server_side_error=True
         )
         # check JSON-body arguments
