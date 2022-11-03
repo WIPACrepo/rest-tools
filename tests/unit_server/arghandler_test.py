@@ -344,18 +344,6 @@ def test_33_get_json_body_argument_typechecking__errors(
 
     pjba.assert_called()
 
-    # # #
-
-    # strings shouldn't become lists
-    pjba.return_value = {"baz": "I'm not a list"}
-
-    with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_json_body_argument("baz", default=None, type=list)
-    error_msg = "HTTP 400: `baz`: (ValueError) could not convert string to list: 'I'm not a list'"
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-
 
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
 @patch("tornado.web.RequestHandler.get_argument")
