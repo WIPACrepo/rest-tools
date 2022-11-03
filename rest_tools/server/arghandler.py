@@ -52,7 +52,7 @@ class ArgumentHandler:
     @staticmethod
     def _cast_type(
         value: Any,
-        type_: Optional[Type[T]],
+        type_: Type[T],
         server_side_error: bool = False,
     ) -> T:
         """Cast `value` to `cast_type` type.
@@ -65,7 +65,7 @@ class ArgumentHandler:
             _InvalidArgumentError -- if typecast fails and `server_side_error=False`
         """
         if type_ is None:
-            return value
+            raise ValueError("argument 'type_' cannot be 'None'")
 
         try:
             if value is None:
@@ -118,9 +118,9 @@ class ArgumentHandler:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
-            value = ArgumentHandler._cast_type(value, type_)
-            value = ArgumentHandler._validate_choice(value, choices, forbiddens)
-            return value
+            if type_:
+                value = ArgumentHandler._cast_type(value, type_)
+            return ArgumentHandler._validate_choice(value, choices, forbiddens)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
             if isinstance(default, type(NO_DEFAULT)):
@@ -130,9 +130,7 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         try:
-            # value = ArgumentHandler._cast_type(value, type_)
-            value = ArgumentHandler._validate_choice(default, choices, forbiddens)
-            return value
+            return ArgumentHandler._validate_choice(default, choices, forbiddens)
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
 
@@ -165,15 +163,22 @@ class ArgumentHandler:
                 raise _make_400_error(name, e)
             # check query/base and body arguments
             try:
-                str_value = rest_handler_get_argument(name, strip=strip)
-                value = ArgumentHandler._cast_type(str_value, type_)
-                value = ArgumentHandler._validate_choice(value, choices, forbiddens)
-                return value
+                str_val = rest_handler_get_argument(name, strip=strip)
+                if type_:
+                    return ArgumentHandler._validate_choice(
+                        ArgumentHandler._cast_type(str_val, type_),
+                        choices,
+                        forbiddens,
+                    )
+                else:
+                    return ArgumentHandler._validate_choice(
+                        str_val, choices, forbiddens
+                    )
             except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
                 raise _make_400_error(name, e)
 
         # Else: Optional (aka use default value)
-        if default is not None:
+        if default is not None and type_:
             ArgumentHandler._cast_type(default, type_, server_side_error=True)
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
@@ -185,10 +190,15 @@ class ArgumentHandler:
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
         # check query base-arguments
-        str_value = rest_handler_get_argument(name, default, strip=strip)
         try:
-            value = ArgumentHandler._cast_type(str_value, type_)
-            value = ArgumentHandler._validate_choice(value, choices, forbiddens)
-            return value
+            str_val = rest_handler_get_argument(name, default, strip=strip)
+            if type_:
+                return ArgumentHandler._validate_choice(
+                    ArgumentHandler._cast_type(str_val, type_),
+                    choices,
+                    forbiddens,
+                )
+            else:
+                return ArgumentHandler._validate_choice(str_val, choices, forbiddens)
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)
