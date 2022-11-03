@@ -321,7 +321,9 @@ def test_33_get_json_body_argument_typechecking__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_json_body_argument("foo", default=None, type=float)
-    error_msg = "HTTP 400: `foo`: (TypeError) NINETY-NINE (<class 'str'>) is not <class 'float'>"
+    error_msg = (
+        "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
+    )
     assert str(e.value) == error_msg
 
     pjba.assert_called()
@@ -333,7 +335,7 @@ def test_33_get_json_body_argument_typechecking__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_json_body_argument("baz", default=None, type=list)
-    error_msg = "HTTP 400: `baz`: (TypeError) I'm not a list (<class 'str'>) is not <class 'list'>"
+    error_msg = "HTTP 400: `baz`: (ValueError) could not convert string to list: 'I'm not a list'"
     assert str(e.value) == error_msg
 
     pjba.assert_called()
@@ -464,7 +466,9 @@ def test_45_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("foo", default=None, type=float)
-    error_msg = "HTTP 400: `foo`: (TypeError) NINETY-NINE (<class 'str'>) is not <class 'float'>"
+    error_msg = (
+        "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
+    )
     assert str(e.value) == error_msg
 
     pjba.assert_called()
@@ -478,7 +482,7 @@ def test_45_get_argument_args_and_body__errors(
 
     with pytest.raises(tornado.web.HTTPError) as e:
         rest_handler.get_argument("baz", default=None, type=list)
-    error_msg = "HTTP 400: `baz`: (TypeError) I'm not a list (<class 'str'>) is not <class 'list'>"
+    error_msg = "HTTP 400: `baz`: (ValueError) could not convert string to list: 'I'm not a list'"
     assert str(e.value) == error_msg
 
     pjba.assert_called()
