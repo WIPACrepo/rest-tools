@@ -68,7 +68,11 @@ class ArgumentHandler:
             return value
 
         try:
-            if isinstance(value, str) and (type_ == bool) and (value != ""):
+            if value is None:
+                raise ValueError(
+                    f"value cannot be cast to {type_.__name__} from 'None'"
+                )
+            elif isinstance(value, str) and (type_ == bool) and (value != ""):
                 value = strtobool(value)  # ~> ValueError
             else:
                 value = type_(value)  # ~> ValueError
