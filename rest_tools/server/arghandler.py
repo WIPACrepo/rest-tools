@@ -171,7 +171,8 @@ class ArgumentHandler:
                         forbiddens,
                     )
                 else:
-                    return cast(  # this was Optional[str] but that info would get lost anyways
+                    return cast(
+                        # this was Optional[str] but that info would get lost anyways
                         Any,
                         ArgumentHandler._validate_choice(str_val, choices, forbiddens),
                     )
@@ -200,11 +201,10 @@ class ArgumentHandler:
                     forbiddens,
                 )
             else:
-                return (
-                    cast(  # this was Optional[str] but that info would get lost anyways
-                        Any,
-                        ArgumentHandler._validate_choice(str_val, choices, forbiddens),
-                    )
+                return cast(
+                    # this was Optional[str] but that info would get lost anyways
+                    Any,
+                    ArgumentHandler._validate_choice(str_val, choices, forbiddens),
                 )
         except _InvalidArgumentError as e:
             raise _make_400_error(name, e)

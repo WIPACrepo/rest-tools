@@ -230,7 +230,7 @@ def test_20_get_argument_no_body(
         # w/ typing
         pjba.return_value = {}
         rhga.return_value = val
-        ret = rest_handler.get_argument(arg, default=None, type=type_)
+        ret = rest_handler.get_argument(arg, default=None, type=type_)  # type: ignore  # dynamic types aren't real-world issues
         assert ret == type_(val) or (val == "False" and ret is False and type_ == bool)
 
     # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
@@ -273,8 +273,7 @@ def test_30_get_json_body_argument(pjba: Mock, rest_handler: RestHandler) -> Non
     for arg, val in body.items():
         print(arg)
         pjba.return_value = {a: v for a, v in body.items() if a != arg}
-        ret = rest_handler.get_json_body_argument(arg, default="Terry")
-        assert ret == "Terry"
+        assert "Terry" == rest_handler.get_json_body_argument(arg, default="Terry")
 
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
