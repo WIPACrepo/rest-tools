@@ -21,7 +21,7 @@ def test_00_cast_type() -> None:
     """Test `_cast_type()`."""
     # None - no casting
     # assert ArgumentHandler._cast_type("string", None) == "string"
-    assert ArgumentHandler._cast_type("0", None) == "0"
+    # assert ArgumentHandler._cast_type("0", None) == "0"
     # assert ArgumentHandler._cast_type("2.5", None) == "2.5"
     # str
     assert ArgumentHandler._cast_type("string", str) == "string"
