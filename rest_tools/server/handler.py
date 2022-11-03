@@ -12,17 +12,7 @@ import time
 import urllib.parse
 from collections import defaultdict
 from functools import partial, wraps
-from typing import (
-    Any,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import Any, Dict, List, MutableMapping, Optional, Type, TypeVar, Union
 
 import rest_tools
 import tornado.escape
@@ -196,37 +186,14 @@ class RestHandler(tornado.web.RequestHandler):
         self.write(data)
         self.finish()
 
-    @overload
     def get_json_body_argument(
         self,
         name: str,
-        default: T,
-        type: Type[T],
-        choices: Optional[List[T]],
-        forbiddens: Optional[List[T]],
+        default: Any = arghandler.NO_DEFAULT,
+        type: Optional[Type[T]] = None,
+        choices: Optional[List[Any]] = None,
+        forbiddens: Optional[List[Any]] = None,
     ) -> T:
-        """A fully-typehinted version."""
-        ...
-
-    @overload
-    def get_json_body_argument(
-        self,
-        name: str,
-        default: Any,
-        choices: Optional[List[Any]],
-        forbiddens: Optional[List[Any]],
-    ) -> Any:
-        """A typehint-agnostic version."""
-        ...
-
-    def get_json_body_argument(
-        self,
-        name: str,
-        default: Union[T, Any] = arghandler.NO_DEFAULT,
-        type: Union[Type[T], None] = None,
-        choices: Union[Optional[List[T]], Optional[List[Any]]] = None,
-        forbiddens: Union[Optional[List[T]], Optional[List[Any]]] = None,
-    ) -> Union[T, Any]:
         """Get argument from the JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
@@ -247,40 +214,15 @@ class RestHandler(tornado.web.RequestHandler):
             self.request.body, name, default, type, choices, forbiddens
         )
 
-    @overload
     def get_argument(
         self,
         name: str,
-        default: T,
-        strip: bool,
-        type: Type[T],
-        choices: Optional[List[T]],
-        forbiddens: Optional[List[T]],
+        default: Any = arghandler.NO_DEFAULT,
+        strip: bool = True,
+        type: Optional[Type[T]] = None,
+        choices: Optional[List[Any]] = None,
+        forbiddens: Optional[List[Any]] = None,
     ) -> T:
-        """A fully-typehinted version."""
-        ...
-
-    @overload
-    def get_argument(
-        self,
-        name: str,
-        default: Any,
-        strip: bool,
-        choices: Optional[List[Any]],
-        forbiddens: Optional[List[Any]],
-    ) -> Any:
-        """A typehint-agnostic version."""
-        ...
-
-    def get_argument(
-        self,
-        name: str,
-        default: Union[T, Any] = arghandler.NO_DEFAULT,
-        strip: bool=True,
-        type: Union[Type[T], None] = None,
-        choices: Union[Optional[List[T]], Optional[List[Any]]] = None,
-        forbiddens: Union[Optional[List[T]], Optional[List[Any]]] = None,
-    ) -> Union[T, Any]:
         """Get argument from query base-arguments / JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
@@ -429,10 +371,11 @@ def scope_role_auth(**_auth):
 
 
 def keycloak_role_auth(**_auth):
-    """Handle RBAC authorization using keycloak realm roles. Like
-    :py:func:`authenticated`, this requires the Authorization header to be
-    filled with a valid token.  Note that calling both decorators is not
-    necessary, as this decorator will perform authentication checking as well.
+    """Handle RBAC authorization using keycloak realm roles.
+    Like :py:func:`authenticated`, this requires the Authorization header
+    to be filled with a valid token.  Note that calling both decorators
+    is not necessary, as this decorator will perform authentication
+    checking as well.
 
     Args:
         roles (list): The roles to match
@@ -467,7 +410,8 @@ def keycloak_role_auth(**_auth):
 
 
 class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
-    """Handle OpenID Connect logins.
+    """
+    Handle OpenID Connect logins.
 
     Requires the `login_url` application setting to be a full url.
     """
