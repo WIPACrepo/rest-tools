@@ -1,0 +1,32 @@
+# Dependabot
+
+version: 2
+
+updates:
+
+  - package-ecosystem: "github-actions"  # bump GHA packages
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    commit-message:
+      prefix: "dependabot: "
+      # include: ""  # currently only "scope" is allowed
+    open-pull-requests-limit: 1  # this is per ecosystem
+      
+  - package-ecosystem: "pip"  # bump python deps
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    commit-message:
+      prefix: "dependabot: "
+      # include: ""  # currently only "scope" is allowed
+    allow:
+      - dependency-type: "direct"
+    versioning-strategy: increase-if-necessary  # this allows not-exactly-equals pip notations (~=, ==v1.2.*, etc.)
+    open-pull-requests-limit: 1  # this is per ecosystem
