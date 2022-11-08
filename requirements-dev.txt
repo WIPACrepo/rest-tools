@@ -18,7 +18,7 @@ cryptography==38.0.3
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
-exceptiongroup==1.0.0
+exceptiongroup==1.0.1
     # via pytest
 flake8==5.0.4
     # via wipac-rest-tools (setup.py)
@@ -30,7 +30,7 @@ iniconfig==1.1.1
     # via pytest
 mccabe==0.7.0
     # via flake8
-mypy==0.982
+mypy==0.990
     # via wipac-rest-tools (setup.py)
 mypy-extensions==0.4.3
     # via mypy
@@ -87,7 +87,7 @@ typing-extensions==4.4.0
     #   wipac-dev-tools
 urllib3==1.26.12
     # via requests
-wheel==0.37.1
+wheel==0.38.2
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.0
+wipac-dev-tools==1.6.7
     # via wipac-rest-tools (setup.py)
