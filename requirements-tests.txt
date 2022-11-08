@@ -30,7 +30,7 @@ crayons==0.4.0
     # via pycycle
 cryptography==38.0.3
     # via pyjwt
-exceptiongroup==1.0.0
+exceptiongroup==1.0.1
     # via pytest
 flake8==5.0.4
     # via wipac-rest-tools (setup.py)
@@ -107,5 +107,5 @@ typing-extensions==4.4.0
     # via wipac-dev-tools
 urllib3==1.26.12
     # via requests
-wipac-dev-tools==1.6.0
+wipac-dev-tools==1.6.7
     # via wipac-rest-tools (setup.py)
