@@ -1,23 +1,22 @@
 name: Add PR/Issue to Project
 
+
 on:
-  pull_request:
-    types:
-      - labeled
   issues:
     types:
+      - opened
+      - labeled
+  pull_request:
+    types:
+      - opened
       - labeled
 
 jobs:
   add-to-project:
-    name: Add to Project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v0.3.0
+      - uses: WIPACrepo/wipac-dev-project-action@v1
         with:
-          # You can target a repository in a different organization
-          # to the issue
-          project-url: https://github.com/orgs/WIPACrepo/projects/6
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          labeled: dependencies
-          label-operator: OR
+          github_token: ${{ secrets.ORG_PROJECT_TOKEN }}
+          organization: WIPACrepo
+          project_number: 6
