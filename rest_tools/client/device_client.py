@@ -5,8 +5,8 @@ import logging
 import time
 from typing import Dict, List, Optional
 
+import qrcode  # type: ignore[import]
 import requests
-import qrcode
 
 from ..utils.auth import OpenIDAuth
 from .openid_client import OpenIDRestClient

@@ -30,7 +30,7 @@ class ClientCredentialsAuth(OpenIDRestClient):
         client_secret: str,
         **kwargs: Any
     ) -> None:
-        super().__init__(self, address=address, token_url=token_url, client_id=client_id, client_secret=client_secret, **kwargs)
+        super().__init__(address=address, token_url=token_url, client_id=client_id, client_secret=client_secret, **kwargs)
         self.logger = logging.getLogger('ClientCredentialsAuth')
 
     def _get_token(self) -> None:
