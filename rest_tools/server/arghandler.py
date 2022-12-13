@@ -53,7 +53,7 @@ class ArgumentHandler:
     def _cast_type(
         value: Any,
         type_: Union[Type[T], Callable[[Any], T]],
-        strict_type: bool,
+        strict_type: bool = False,
         server_side_error: bool = False,
     ) -> T:
         """Cast `value` to `cast_type` type.
@@ -194,7 +194,7 @@ class ArgumentHandler:
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             return ArgumentHandler.get_json_body_argument(
-                request_body, name, NO_DEFAULT, type_, choices, forbiddens
+                request_body, name, NO_DEFAULT, type_, choices, forbiddens, strict_type
             )
         except tornado.web.MissingArgumentError:
             pass  # OK. Next, we'll try query base-arguments...
