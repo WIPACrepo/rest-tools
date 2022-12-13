@@ -2,7 +2,7 @@
 
 
 import json
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import tornado.web
 from wipac_dev_tools import strtobool
@@ -52,7 +52,7 @@ class ArgumentHandler:
     @staticmethod
     def _cast_type(
         value: Any,
-        type_: Type[T],
+        type_: Union[Type[T], Callable[[Any], T]],
         server_side_error: bool = False,
     ) -> T:
         """Cast `value` to `cast_type` type.
@@ -111,7 +111,7 @@ class ArgumentHandler:
         request_body: bytes,
         name: str,
         default: Any,
-        type_: Optional[Type[T]],
+        type_: Union[None, Type[T], Callable[[Any], T]],
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
     ) -> T:
@@ -141,7 +141,7 @@ class ArgumentHandler:
         name: str,
         default: Any,
         strip: bool,
-        type_: Optional[Type[T]],
+        type_: Union[None, Type[T], Callable[[Any], T]],
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
     ) -> T:
