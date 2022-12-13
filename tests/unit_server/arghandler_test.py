@@ -178,6 +178,26 @@ def test_04_cast_type() -> None:
                 ArgumentHandler._cast_type(val, o_type, server_side_error=True)
 
 
+def test_05_strict_type() -> None:
+    """Test `_cast_type(strict_type=True)`."""
+    bad_vals = {
+        str: [1, [], False],
+        bool: [1, "True", [], [False]],
+        int: [2.1, 9.0, "10", [], [5]],
+        list: ["not a list", {"a": 1}, 1],
+        float: [2, "1e4", [], [1.0]],
+    }
+
+    for o_type, values in bad_vals.items():
+        for val in values:
+            with pytest.raises(_InvalidArgumentError):
+                ArgumentHandler._cast_type(val, o_type, strict_type=True)
+            with pytest.raises((ValueError, TypeError)):
+                ArgumentHandler._cast_type(
+                    val, o_type, strict_type=True, server_side_error=True
+                )
+
+
 @patch("rest_tools.server.arghandler._parse_json_body_arguments")
 @patch("tornado.web.RequestHandler.get_argument")
 def test_10_default(rhga: Mock, pjba: Mock, rest_handler: RestHandler) -> None:
