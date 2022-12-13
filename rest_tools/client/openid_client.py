@@ -46,11 +46,12 @@ class OpenIDRestClient(RestClient):
         self.client_secret = client_secret
         self.update_func = update_func
 
+        super().__init__(address, logger=logging.getLogger('OpenIDRestClient'),
+                         token=self._openid_token, **kwargs)
+
         # initial call to verify things work
         self._openid_token()
 
-        super().__init__(address, logger=logging.getLogger('OpenIDRestClient'),
-                         token=self._openid_token, **kwargs)
 
     def _openid_token(self) -> str:
         # try the refresh token
