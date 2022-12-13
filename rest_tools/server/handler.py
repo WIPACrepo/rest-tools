@@ -160,6 +160,11 @@ class RestHandler(tornado.web.RequestHandler):
     @wtt.evented()
     def prepare(self):
         """Prepare before http-method request handlers."""
+        logger.debug(
+            f"{self.request.path} {self.request.method}("
+            f"{self.path_args}, {self.path_kwargs}) [{self.__class__.__name__}]"
+        )
+
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
