@@ -32,7 +32,7 @@ def test_10_success(well_known_mock, requests_mock: Mock) -> None:
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         return json_encode(device_result).encode("utf-8")
@@ -78,7 +78,7 @@ def test_21_device_bad_client(well_known_mock, requests_mock: Mock) -> None:
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         ctx.status_code = 401
@@ -100,7 +100,7 @@ def test_22_device_code_timeout(well_known_mock, requests_mock: Mock) -> None:
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         return json_encode(device_result).encode("utf-8")
@@ -112,7 +112,7 @@ def test_22_device_code_timeout(well_known_mock, requests_mock: Mock) -> None:
 
     def response2(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('token request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         if body['grant_type'][0] != 'refresh_token':
@@ -137,7 +137,7 @@ def test_23_device_code_denied(well_known_mock, requests_mock: Mock) -> None:
 
     def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         return json_encode(device_result).encode("utf-8")
@@ -149,7 +149,7 @@ def test_23_device_code_denied(well_known_mock, requests_mock: Mock) -> None:
 
     def response2(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('token request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         if body['grant_type'][0] != 'refresh_token':

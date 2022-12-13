@@ -52,7 +52,6 @@ class OpenIDRestClient(RestClient):
         # initial call to verify things work
         self._openid_token()
 
-
     def _openid_token(self) -> str:
         # try the refresh token
         args = {
