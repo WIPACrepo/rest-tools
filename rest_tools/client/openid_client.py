@@ -8,7 +8,6 @@ a json-encoded dictionary as necessary.
 
 # fmt:off
 import logging
-import time
 from typing import Any, Callable, Optional, Union
 
 import requests
@@ -68,7 +67,7 @@ class OpenIDRestClient(RestClient):
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
-            logger.debug('%r', exc.response.text)
+            self.logger.debug('%r', exc.response.text)
             try:
                 req = exc.response.json()
             except Exception:

@@ -1,11 +1,11 @@
 # fmt:off
 import logging
-import time
 from typing import Any
 
 import requests
 
-from .openid_client import OpenIDRestClient
+from .client import RestClient
+from ..utils.auth import OpenIDAuth
 
 
 class ClientCredentialsAuth(RestClient):
@@ -47,7 +47,7 @@ class ClientCredentialsAuth(RestClient):
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
-            logger.debug('%r', exc.response.text)
+            self.logger.debug('%r', exc.response.text)
             try:
                 req = exc.response.json()
             except Exception:
