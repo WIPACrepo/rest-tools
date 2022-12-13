@@ -47,7 +47,7 @@ class RestClient:
         token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
         timeout: float = 60.0,
         retries: int = 10,
-        logger: logging.Logger = None,
+        logger: Optional[logging.Logger] = None,
         **kwargs: Any
     ) -> None:
         self.address = address

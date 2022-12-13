@@ -77,7 +77,8 @@ class OpenIDRestClient(RestClient):
         else:
             self.logger.debug('OpenID token refreshed')
             access_token = req['access_token']
-            self.refresh_token = req['refresh_token'] if 'refresh_token' in req else None
-            if access_token and self.update_func:
-                self.update_func(access_token, self.refresh_token)
+            if 'refresh_token' in req:
+                self.refresh_token = req['refresh_token']
+                if access_token and self.update_func:
+                    self.update_func(access_token, self.refresh_token)
             return access_token

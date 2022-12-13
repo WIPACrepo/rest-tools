@@ -6,10 +6,7 @@ import pytest
 from requests import PreparedRequest
 
 from rest_tools.client import DeviceGrantAuth  # isort:skip # noqa # pylint: disable=C0413
-from rest_tools.utils.json_util import (  # isort:skip # noqa # pylint: disable=C0413
-    json_decode,
-    json_encode,
-)
+from rest_tools.utils.json_util import json_encode  # isort:skip # noqa # pylint: disable=C0413
 
 
 @pytest.fixture
@@ -49,7 +46,7 @@ def test_10_success(well_known_mock, requests_mock: Mock) -> None:
 
     def response2(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
-        body = urllib.parse.parse_qs(req.body)
+        body = urllib.parse.parse_qs(str(req.body))
         logging.debug('token request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         if body['grant_type'][0] != 'refresh_token':
