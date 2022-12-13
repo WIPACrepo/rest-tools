@@ -53,6 +53,7 @@ class ArgumentHandler:
     def _cast_type(
         value: Any,
         type_: Union[Type[T], Callable[[Any], T]],
+        strict_type: bool,
         server_side_error: bool = False,
     ) -> T:
         """Cast `value` to `cast_type` type.
@@ -71,6 +72,10 @@ class ArgumentHandler:
             if value is None:
                 raise ValueError(
                     f"value cannot be cast to {type_.__name__} from 'None'"
+                )
+            elif strict_type and not isinstance(value, type_):  # type: ignore[arg-type]
+                raise TypeError(
+                    f"type mismatch: {type_.__name__} (value is '{type(value)}')"
                 )
             elif isinstance(value, str) and (type_ == bool) and (value != ""):
                 value = strtobool(value)  # ~> ValueError
@@ -114,12 +119,13 @@ class ArgumentHandler:
         type_: Union[None, Type[T], Callable[[Any], T]],
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
+        strict_type: bool,
     ) -> T:
         """Get argument from the JSON-decoded request-body."""
         try:  # first, assume arg is required
             value = _parse_json_body_arguments(request_body)[name]
             if type_:
-                value = ArgumentHandler._cast_type(value, type_)
+                value = ArgumentHandler._cast_type(value, type_, strict_type)
             return ArgumentHandler._validate_choice(value, choices, forbiddens)
         except (KeyError, json.decoder.JSONDecodeError):
             # Required -> raise 400
@@ -144,6 +150,7 @@ class ArgumentHandler:
         type_: Union[None, Type[T], Callable[[Any], T]],
         choices: Optional[List[Any]],
         forbiddens: Optional[List[Any]],
+        strict_type: bool,
     ) -> T:
         """Get argument from query base-arguments / JSON-decoded request-body.
 
@@ -166,7 +173,7 @@ class ArgumentHandler:
                 str_val = rest_handler_get_argument(name, strip=strip)
                 if type_:
                     return ArgumentHandler._validate_choice(
-                        ArgumentHandler._cast_type(str_val, type_),
+                        ArgumentHandler._cast_type(str_val, type_, strict_type),
                         choices,
                         forbiddens,
                     )
@@ -181,7 +188,9 @@ class ArgumentHandler:
 
         # Else: Optional (aka use default value)
         if default is not None and type_:
-            ArgumentHandler._cast_type(default, type_, server_side_error=True)
+            ArgumentHandler._cast_type(
+                default, type_, strict_type, server_side_error=True
+            )
         # check JSON-body arguments
         try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
             return ArgumentHandler.get_json_body_argument(
@@ -196,7 +205,7 @@ class ArgumentHandler:
             str_val = rest_handler_get_argument(name, default, strip=strip)
             if type_:
                 return ArgumentHandler._validate_choice(
-                    ArgumentHandler._cast_type(str_val, type_),
+                    ArgumentHandler._cast_type(str_val, type_, strict_type),
                     choices,
                     forbiddens,
                 )
