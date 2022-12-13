@@ -62,6 +62,15 @@ def test_00_cast_type() -> None:
     assert ArgumentHandler._cast_type("abcd", list) == ["a", "b", "c", "d"]
     assert ArgumentHandler._cast_type("", list) == []
 
+    # callable
+    assert ArgumentHandler._cast_type("abcd", len) == 4
+    assert ArgumentHandler._cast_type("abcd", lambda x: 2 * len(x)) == 8
+
+    def triple_len(val: Any) -> int:
+        return 3 * len(val)
+
+    assert ArgumentHandler._cast_type("abcd", triple_len) == 12
+
 
 def test_01_cast_type__errors() -> None:
     """Test `_cast_type()`."""
