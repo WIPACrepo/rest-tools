@@ -12,7 +12,17 @@ import time
 import urllib.parse
 from collections import defaultdict
 from functools import partial, wraps
-from typing import Any, Dict, List, MutableMapping, Optional, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import rest_tools
 import tornado.escape
@@ -160,6 +170,8 @@ class RestHandler(tornado.web.RequestHandler):
     @wtt.evented()
     def prepare(self):
         """Prepare before http-method request handlers."""
+        logger.debug(f"{self.request.method} [{self.__class__.__name__}]")
+
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
@@ -190,9 +202,10 @@ class RestHandler(tornado.web.RequestHandler):
         self,
         name: str,
         default: Any = arghandler.NO_DEFAULT,
-        type: Optional[Type[T]] = None,
+        type: Union[None, Type[T], Callable[[Any],T]] = None,
         choices: Optional[List[Any]] = None,
         forbiddens: Optional[List[Any]] = None,
+        strict_type: bool = False,
     ) -> T:
         """Get argument from the JSON-decoded request-body.
 
@@ -203,15 +216,16 @@ class RestHandler(tornado.web.RequestHandler):
 
         Keyword Arguments:
             default -- a default value to use if the argument is not present
-            type -- optionally, typecast the argument's value (raise `400` for invalid value)
+            type -- typecast (or call a one-argument callable) with the argument's value (raise `400` for ValueError and/or TypeError)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
             forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
+            strict_type -- if True and `type` is passed, the arg's value is type-checked instead of type-casted
 
         Returns:
             the argument's value, possibly stripped/typecasted
         """
         return arghandler.ArgumentHandler.get_json_body_argument(
-            self.request.body, name, default, type, choices, forbiddens
+            self.request.body, name, default, type, choices, forbiddens, strict_type
         )
 
     def get_argument(
@@ -219,9 +233,10 @@ class RestHandler(tornado.web.RequestHandler):
         name: str,
         default: Any = arghandler.NO_DEFAULT,
         strip: bool = True,
-        type: Optional[Type[T]] = None,
+        type: Union[None, Type[T], Callable[[Any],T]] = None,
         choices: Optional[List[Any]] = None,
         forbiddens: Optional[List[Any]] = None,
+        strict_type: bool = False,
     ) -> T:
         """Get argument from query base-arguments / JSON-decoded request-body.
 
@@ -233,15 +248,24 @@ class RestHandler(tornado.web.RequestHandler):
         Keyword Arguments:
             default -- a default value to use if the argument is not present
             strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
-            type -- optionally, typecast the argument's value (raise `400` for invalid value)
+            type -- typecast (or call a one-argument callable) with the argument's value (raise `400` for ValueError and/or TypeError)
             choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
             forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
+            strict_type -- if True and `type` is passed, the arg's value is type-checked instead of type-casted
 
         Returns:
             the argument's value, possibly stripped/typecasted
         """
         return arghandler.ArgumentHandler.get_argument(
-            self.request.body, super().get_argument, name, default, strip, type, choices, forbiddens
+            self.request.body,
+            super().get_argument,
+            name,
+            default,
+            strip,
+            type,
+            choices,
+            forbiddens,
+            strict_type,
         )
 
 
