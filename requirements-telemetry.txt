@@ -64,6 +64,8 @@ pycparser==2.21
     # via cffi
 pyjwt[crypto]==2.5.0
     # via wipac-rest-tools (setup.py)
+qrcode==7.3.1
+    # via wipac-rest-tools (setup.py)
 requests==2.28.1
     # via
     #   opentelemetry-exporter-otlp-proto-http
