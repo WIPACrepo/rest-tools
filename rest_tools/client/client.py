@@ -38,6 +38,7 @@ class RestClient:
         retries (int): (optional) number of retries to attempt (default: 10)
         username (str): (optional) auth-basic username
         password (str): (optional) auth-basic password
+        logger (logging.Logger): (optional) supply a logger to use
     """
 
     def __init__(
@@ -46,13 +47,14 @@ class RestClient:
         token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
         timeout: float = 60.0,
         retries: int = 10,
+        logger: logging.Logger = None,
         **kwargs: Any
     ) -> None:
         self.address = address
         self.timeout = timeout
         self.retries = retries
         self.kwargs = kwargs
-        self.logger = logging.getLogger('RestClient')
+        self.logger = logger if logger else logging.getLogger('RestClient')
 
         # token handling
         self._token_expire_delay_offset = 5
