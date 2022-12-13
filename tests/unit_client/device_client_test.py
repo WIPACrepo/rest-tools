@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from unittest.mock import Mock
 import urllib.parse
 
@@ -16,7 +17,7 @@ def well_known_mock(requests_mock: Mock):
         'device_authorization_endpoint': 'http://test/device',
     }
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         return json_encode(result).encode("utf-8")
     requests_mock.get("http://test/.well-known/openid-configuration", content=response)
 
@@ -30,7 +31,7 @@ def test_10_success(well_known_mock, requests_mock: Mock) -> None:
         'interval': 0.1,
     }
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
@@ -44,7 +45,7 @@ def test_10_success(well_known_mock, requests_mock: Mock) -> None:
         'token_type': 'bearer',
     }
 
-    def response2(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response2(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('token request args: %r', body)
@@ -63,7 +64,7 @@ def test_20_device_unsupported(requests_mock: Mock) -> None:
         'token_endpoint': 'http://test/token',
     }
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         return json_encode(result).encode("utf-8")
     requests_mock.get("http://test/.well-known/openid-configuration", content=response)
 
@@ -76,7 +77,7 @@ def test_21_device_bad_client(well_known_mock, requests_mock: Mock) -> None:
         'error': 'invalid_client'
     }
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
@@ -98,7 +99,7 @@ def test_22_device_code_timeout(well_known_mock, requests_mock: Mock) -> None:
         'interval': 0.1,
     }
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
@@ -110,7 +111,7 @@ def test_22_device_code_timeout(well_known_mock, requests_mock: Mock) -> None:
         'error': 'expired_token'
     }
 
-    def response2(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response2(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('token request args: %r', body)
@@ -135,7 +136,7 @@ def test_23_device_code_denied(well_known_mock, requests_mock: Mock) -> None:
         'interval': 0.1,
     }
 
-    def response(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('device request args: %r', body)
@@ -147,7 +148,7 @@ def test_23_device_code_denied(well_known_mock, requests_mock: Mock) -> None:
         'error': 'access_denied'
     }
 
-    def response2(req: PreparedRequest, ctx: object) -> bytes:  # pylint: disable=W0613
+    def response2(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
         body = urllib.parse.parse_qs(str(req.body))
         logging.debug('token request args: %r', body)
