@@ -86,7 +86,12 @@ def DeviceGrantAuth(
         req = r.json()
     except requests.exceptions.HTTPError as exc:
         logger.debug('%r', exc.response.text)
-        raise RuntimeError('Device authorization failed') from exc
+        try:
+            req = exc.response.json()
+        except Exception:
+            req = {}
+        error = req.get('error', '')
+        raise RuntimeError(f'Device authorization failed: {error}') from exc
     except Exception as exc:
         raise RuntimeError('Device authorization failed') from exc
 
@@ -111,11 +116,10 @@ def DeviceGrantAuth(
             req = r.json()
         except requests.exceptions.HTTPError as exc:
             logger.debug('%r', exc.response.text)
-            req = {}
             try:
                 req = exc.response.json()
             except Exception:
-                pass
+                req = {}
             error = req.get('error', '')
             if error == 'authorization_pending':
                 continue
@@ -127,8 +131,7 @@ def DeviceGrantAuth(
             raise RuntimeError('Device authorization failed') from exc
         break
 
-    print(req)
-    refresh_token = req.get('refresh_token')
+    refresh_token = req['refresh_token']
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token)
