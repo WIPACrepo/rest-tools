@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from tornado.web import HTTPError
@@ -190,7 +190,3 @@ async def test_token_attribute_role_mapping_auth_groups():
     await f(self, 1, a='b')
     mock.assert_called_with(self, 1, a='b')
     assert self.auth_groups == ['bar', 'foo']  #: in sorted order
-
-
-
-

@@ -46,9 +46,10 @@ def catch_error(method):
             try:
                 self.statsd.incr(self.__class__.__name__+'.error')
             except Exception:
-                pass
+                pass  # ignore statsd errors
             message = 'Error in '+self.__class__.__name__
             self.send_error(500, reason=message)
+        return None
     return wrapper
 
 
