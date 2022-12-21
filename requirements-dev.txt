@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=dev --output-file=requirements-dev.txt
 #
-attrs==22.1.0
+attrs==22.2.0
     # via pytest
 cachetools==5.2.0
     # via wipac-rest-tools (setup.py)
@@ -77,7 +77,7 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 types-cryptography==3.3.23.2
     # via pyjwt
-types-requests==2.28.11.5
+types-requests==2.28.11.6
     # via wipac-rest-tools (setup.py)
 types-urllib3==1.26.25.4
     # via types-requests
