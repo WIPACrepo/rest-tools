@@ -291,6 +291,7 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                 authorized_roles = sorted(authorized_roles)
                 logging.debug('roles authorized: %r', authorized_roles)
                 wtt.set_current_span_attribute('self.auth_data.roles', ','.join(authorized_roles))
+                self.auth_roles = authorized_roles
 
                 try:
                     authorized_groups = set()
