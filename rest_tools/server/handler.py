@@ -11,7 +11,7 @@ import secrets
 import time
 import urllib.parse
 from collections import defaultdict
-from functools import partial, wraps
+from functools import partial
 from typing import (
     Any,
     Callable,
@@ -36,6 +36,7 @@ from tornado.auth import OAuth2Mixin
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
 from . import arghandler
+from .decorators import catch_error
 from .stats import RouteStats
 
 T = TypeVar("T")
@@ -156,8 +157,6 @@ class RestHandler(tornado.web.RequestHandler):
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
-            if "role" in self.auth_data:
-                wtt.set_current_span_attribute('self.auth_data.role', self.auth_data['role'])
             return data['sub']
         # Auth Failed
         except Exception:
@@ -267,170 +266,6 @@ class RestHandler(tornado.web.RequestHandler):
             forbiddens,
             strict_type,
         )
-
-
-def authenticated(method):
-    """Decorate methods with this to require that the Authorization header is
-    filled with a valid token. Does *not* check the authorization of the token,
-    just that it exists.
-
-    On failure, raises a 403 error.
-
-    Raises:
-        :py:class:`tornado.web.HTTPError`
-    """
-    @wraps(method)
-    async def wrapper(self, *args, **kwargs):
-        if not self.current_user:
-            raise tornado.web.HTTPError(403, reason="authentication failed")
-        return await method(self, *args, **kwargs)
-    return wrapper
-
-
-def catch_error(method):
-    """Decorator to catch and handle errors on handlers.
-
-    All failures caught here
-    """
-    @wraps(method)
-    async def wrapper(self, *args, **kwargs):
-        try:
-            return await method(self, *args, **kwargs)
-        except tornado.web.HTTPError:
-            raise  # tornado can handle this
-        except tornado.httpclient.HTTPError:
-            raise  # tornado can handle this
-        except Exception:
-            logger.warning('Error in website handler', exc_info=True)
-            try:
-                self.statsd.incr(self.__class__.__name__+'.error')
-            except Exception:
-                pass
-            message = 'Error in '+self.__class__.__name__
-            self.send_error(500, reason=message)
-    return wrapper
-
-
-def role_authorization(**_auth):
-    """Handle RBAC authorization.
-
-    Like :py:func:`authenticated`, this requires the Authorization header
-    to be filled with a valid token.  Note that calling both decorators
-    is not necessary, as this decorator will perform authentication
-    checking as well.
-
-    Args:
-        roles (list): The roles to match
-
-    Raises:
-        :py:class:`tornado.web.HTTPError`
-    """
-    def make_wrapper(method):
-        @authenticated
-        @catch_error
-        @wraps(method)
-        async def wrapper(self, *args, **kwargs):
-            roles = _auth.get('roles', [])
-
-            authorized = False
-
-            auth_role = self.auth_data.get('role',None)
-            if roles and auth_role in roles:
-                authorized = True
-            else:
-                logger.info('roles: %r', roles)
-                logger.info('token_role: %r', auth_role)
-                logger.info('role mismatch')
-
-            if not authorized:
-                raise tornado.web.HTTPError(403, reason="authorization failed")
-
-            return await method(self, *args, **kwargs)
-        return wrapper
-    return make_wrapper
-
-
-def scope_role_auth(**_auth):
-    """Handle RBAC authorization using oauth2 scopes.
-
-    Like :py:func:`authenticated`, this requires the Authorization header
-    to be filled with a valid token.  Note that calling both decorators
-    is not necessary, as this decorator will perform authentication
-    checking as well.
-
-    Args:
-        roles (list): The roles to match
-        prefix (str): The scope prefix
-
-    Raises:
-        :py:class:`tornado.web.HTTPError`
-    """
-    def make_wrapper(method):
-        @authenticated
-        @catch_error
-        @wraps(method)
-        async def wrapper(self, *args, **kwargs):
-            roles = _auth.get('roles', [])
-            scope_prefix = _auth.get('prefix', None)
-
-            authorized = False
-
-            auth_roles = []
-            for scope in self.auth_data.get('scope', '').split():
-                if scope_prefix and scope.startswith(f'{scope_prefix}:'):
-                    auth_roles.append(scope.split(':', 1)[-1])
-            if roles and any(r in roles for r in auth_roles):
-                authorized = True
-            else:
-                logging.info('roles: %r', roles)
-                logging.info('token_roles: %r', auth_roles)
-                logging.info('role mismatch')
-
-            if not authorized:
-                raise tornado.web.HTTPError(403, reason="authorization failed")
-
-            return await method(self, *args, **kwargs)
-        return wrapper
-    return make_wrapper
-
-
-def keycloak_role_auth(**_auth):
-    """Handle RBAC authorization using keycloak realm roles.
-    Like :py:func:`authenticated`, this requires the Authorization header
-    to be filled with a valid token.  Note that calling both decorators
-    is not necessary, as this decorator will perform authentication
-    checking as well.
-
-    Args:
-        roles (list): The roles to match
-        prefix (str): The token prefix (default: realm_access.roles)
-    Raises:
-        :py:class:`tornado.web.HTTPError`
-    """
-    def make_wrapper(method):
-        @authenticated
-        @catch_error
-        @wraps(method)
-        async def wrapper(self, *args, **kwargs):
-            roles = _auth.get('roles', [])
-            prefix = _auth.get('prefix', 'realm_access.roles').split('.')
-
-            auth_roles = self.auth_data
-            while prefix:
-                auth_roles = auth_roles.get(prefix[0], {})
-                prefix = prefix[1:]
-
-            authorized = set(roles).intersection(auth_roles)
-
-            if not authorized:
-                logging.info('roles: %r', roles)
-                logging.info('token_roles: %r', auth_roles)
-                logging.info('role mismatch')
-                raise tornado.web.HTTPError(403, reason="authorization failed")
-
-            return await method(self, *args, **kwargs)
-        return wrapper
-    return make_wrapper
 
 
 class OpenIDLoginHandler(RestHandler, OAuth2Mixin):

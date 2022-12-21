@@ -1,14 +1,17 @@
 """Sub-package __init__."""
 
 
-from .handler import (
-    RestHandler,
-    RestHandlerSetup,
-    OpenIDLoginHandler,
+from .decorators import (
     authenticated,
     catch_error,
     role_authorization,
     scope_role_auth,
+    keycloak_role_auth,
+)
+from .handler import (
+    RestHandler,
+    RestHandlerSetup,
+    OpenIDLoginHandler,
 )
 from .server import RestServer
 
@@ -21,4 +24,5 @@ __all__ = [
     "catch_error",
     "role_authorization",
     "scope_role_auth",
+    "keycloak_role_auth",
 ]
