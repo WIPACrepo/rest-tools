@@ -2,6 +2,9 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.1 (2022-12-21)
+
+
 ## v1.4.0 (2022-12-21)
 ### Feature
 * Add new decorator for flexible token attribute mapping ([#91](https://github.com/WIPACrepo/rest-tools/issues/91)) ([`535401d`](https://github.com/WIPACrepo/rest-tools/commit/535401d63c182b6461f49c1c6b0108f89231493c))
