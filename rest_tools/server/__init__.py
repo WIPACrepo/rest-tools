@@ -7,6 +7,7 @@ from .decorators import (
     role_authorization,
     scope_role_auth,
     keycloak_role_auth,
+    token_attribute_role_mapping_auth,
 )
 from .handler import (
     RestHandler,
@@ -25,4 +26,5 @@ __all__ = [
     "role_authorization",
     "scope_role_auth",
     "keycloak_role_auth",
+    "token_attribute_role_mapping_auth",
 ]
