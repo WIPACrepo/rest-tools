@@ -99,7 +99,7 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 types-cryptography==3.3.23.2
     # via pyjwt
-types-requests==2.28.11.6
+types-requests==2.28.11.7
     # via wipac-rest-tools (setup.py)
 types-urllib3==1.26.25.4
     # via types-requests

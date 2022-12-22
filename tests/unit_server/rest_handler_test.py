@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import jwt.algorithms
 import pytest
-from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup
+from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup, KeycloakUsernameMixin
 from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
@@ -89,6 +89,29 @@ def test_rest_handler_get_argument():
 
     with pytest.raises(Exception):
         rh.get_argument('baz')
+
+
+def test_keycloak_username_mixin():
+    auth_data = {}
+
+    class Base:
+        def get_current_user(self):
+            self.auth_data = auth_data
+            return 'foo'
+
+    class A(KeycloakUsernameMixin, Base):
+        pass
+
+    test = A()
+
+    assert test.get_current_user() is None
+
+    auth_data['preferred_username'] = 'user'
+    assert test.get_current_user() == 'user'
+
+    del auth_data['preferred_username']
+    auth_data['upn'] = 'user'
+    assert test.get_current_user() == 'user'
 
 
 def test_openid_login_handler_initialize(requests_mock):
