@@ -12,6 +12,7 @@ from .decorators import (
 from .handler import (
     RestHandler,
     RestHandlerSetup,
+    KeycloakUsernameMixin,
     OpenIDLoginHandler,
 )
 from .server import RestServer
@@ -20,6 +21,7 @@ __all__ = [
     "RestServer",
     "RestHandlerSetup",
     "RestHandler",
+    "KeycloakUsernameMixin",
     "OpenIDLoginHandler",
     "authenticated",
     "catch_error",

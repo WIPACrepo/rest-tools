@@ -268,6 +268,23 @@ class RestHandler(tornado.web.RequestHandler):
         )
 
 
+class KeycloakUsernameMixin:
+    """
+    Get the username correctly from Keycloak tokens.
+
+    Note: will not work on service account tokens.
+    """
+    def get_current_user(self):
+        if not super().get_current_user():
+            return None
+        username = self.auth_data.get('preferred_username', None)
+        if not username:
+            username = self.auth_data.get('upn', None)
+            if not username:
+                logger.info('could not find auth username')
+        return username
+
+
 class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
     """
     Handle OpenID Connect logins.
