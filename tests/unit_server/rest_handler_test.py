@@ -93,16 +93,18 @@ def test_rest_handler_get_argument():
 
 def test_keycloak_username_mixin():
     auth_data = {}
+
     class Base:
         def get_current_user(self):
             self.auth_data = auth_data
             return 'foo'
+
     class A(KeycloakUsernameMixin, Base):
         pass
 
     test = A()
 
-    assert test.get_current_user() == None
+    assert test.get_current_user() is None
 
     auth_data['preferred_username'] = 'user'
     assert test.get_current_user() == 'user'
