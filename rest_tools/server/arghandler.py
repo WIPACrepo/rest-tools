@@ -75,7 +75,7 @@ class ArgumentHandler:
                 )
             elif isinstance(value, str) and (type_ == bool) and (value != ""):
                 value = strtobool(value)  # ~> ValueError
-            elif value is None and isinstance(type_, str):  # don't want None -> "None"
+            elif value is None and (type_ == str):  # don't want None -> "None"
                 raise ValueError("value cannot be cast to 'str' from 'None'")
             else:
                 value = type_(value)  # type: ignore  # ~> ValueError or TypeError

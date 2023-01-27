@@ -151,7 +151,7 @@ def test_04_cast_type() -> None:
         {"but this": "is a dict"},
     ]
 
-    def agreeable_type(typ: Any, val: Any) -> bool:
+    def _agreeable_type(typ: Any, val: Any) -> bool:
         if val is None:
             return False
         try:
@@ -164,7 +164,7 @@ def test_04_cast_type() -> None:
         print(val)
         # Passing Cases:
         # assert val == ArgumentHandler._cast_type(val, None)  # None is always allowed
-        for o_type in [type(o) for o in vals if agreeable_type(type(o), val)]:
+        for o_type in [type(o) for o in vals if _agreeable_type(type(o), val)]:
             print(o_type)
             out = ArgumentHandler._cast_type(val, o_type)
             assert isinstance(out, o_type)
@@ -179,7 +179,7 @@ def test_04_cast_type() -> None:
                 ArgumentHandler._cast_type(None, type(val), server_side_error=True)
 
         # type-mismatch  # pylint: disable=C0123
-        for o_type in [type(o) for o in vals if not agreeable_type(type(o), val)]:
+        for o_type in [type(o) for o in vals if not _agreeable_type(type(o), val)]:
             print(o_type)
             with pytest.raises(_InvalidArgumentError):
                 ArgumentHandler._cast_type(val, o_type)
