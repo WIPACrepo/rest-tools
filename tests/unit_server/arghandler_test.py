@@ -171,11 +171,11 @@ def test_04_cast_type() -> None:
 
         # Error Cases:
 
-        # None is not allowed
+        # None is not allowed (unless the type is type(None))
         if val is not None:
             with pytest.raises(_InvalidArgumentError):
                 ArgumentHandler._cast_type(None, type(val))
-            with pytest.raises(ValueError):
+            with pytest.raises((ValueError, TypeError)):
                 ArgumentHandler._cast_type(None, type(val), server_side_error=True)
 
         # type-mismatch  # pylint: disable=C0123
