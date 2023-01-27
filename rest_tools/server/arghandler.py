@@ -2,6 +2,7 @@
 
 
 import json
+import re
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import tornado.web
@@ -97,13 +98,26 @@ class ArgumentHandler:
 
         Raise _InvalidArgumentError if qualification fails.
         """
-        if choices is not None and value not in choices:
+
+        def _value_in(the_list: List[Any]) -> bool:
+            if not isinstance(value, str):
+                return value in the_list
+            # regex matching
+            for pat in the_list:
+                try:
+                    if re.fullmatch(pat, value):
+                        return True
+                except TypeError:  # ignore illegal patterns
+                    pass
+            return False
+
+        if choices is not None and not _value_in(choices):
             # choices=[] is weird, but is still valid
             raise _InvalidArgumentError(
                 f"(ValueError) {value} not in choices ({choices})"
             )
 
-        if forbiddens and value in forbiddens:
+        if forbiddens and _value_in(forbiddens):
             # [] === None: (an empty forbiddens list is the same as no forbiddens list)
             raise _InvalidArgumentError(
                 f"(ValueError) {value} is forbidden ({forbiddens})"
