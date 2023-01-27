@@ -69,11 +69,7 @@ class ArgumentHandler:
             raise ValueError("argument 'type_' cannot be 'None'")
 
         try:
-            if value is None:
-                raise ValueError(
-                    f"value cannot be cast to '{type_.__name__}' from 'None'"
-                )
-            elif strict_type and not isinstance(value, type_):  # type: ignore[arg-type]
+            if strict_type and not isinstance(value, type_):  # type: ignore[arg-type]
                 raise TypeError(
                     f"type mismatch: '{type_.__name__}' (value is '{type(value)}')"
                 )
