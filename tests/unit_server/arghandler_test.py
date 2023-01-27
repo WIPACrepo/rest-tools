@@ -98,6 +98,7 @@ def test_02_validate_choice() -> None:
     assert ArgumentHandler._validate_choice(1, [0, 1, 2], None) == 1
     assert ArgumentHandler._validate_choice("", [""], None) == ""
     ArgumentHandler._validate_choice("23", [23, "23"], None)
+    ArgumentHandler._validate_choice("23", [23, r"\d\d"], None)  # regex
 
     # forbiddens
     ArgumentHandler._validate_choice("23", [23, "23"], [])
@@ -111,15 +112,19 @@ def test_03_validate_choice__errors() -> None:
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("23", [23], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("string", ["STRING"], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("3", [0, 1, 2], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("abc", [["a", "b", "c", "d"]], None)
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("foo", [], [])  # no allowed choices
     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
@@ -128,14 +133,21 @@ def test_03_validate_choice__errors() -> None:
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("23", None, ["23"])
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice("baz", ["baz"], ["baz"])
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice([], None, [list(), dict()])
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    #
     with pytest.raises(_InvalidArgumentError) as e:
         ArgumentHandler._validate_choice({}, None, [list(), dict()])
+    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
+    #
+    with pytest.raises(_InvalidArgumentError) as e:
+        ArgumentHandler._validate_choice("   ", None, [123, r"\s*"])  # regex
     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
 
 
