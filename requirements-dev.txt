@@ -6,19 +6,19 @@
 #
 attrs==22.2.0
     # via pytest
-cachetools==5.2.0
+cachetools==5.3.0
     # via wipac-rest-tools (setup.py)
 certifi==2022.12.7
     # via requests
 cffi==1.15.1
     # via cryptography
-charset-normalizer==2.1.1
+charset-normalizer==3.0.1
     # via requests
-cryptography==38.0.4
+cryptography==39.0.0
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
-exceptiongroup==1.0.4
+exceptiongroup==1.1.0
     # via pytest
 flake8==6.0.0
     # via wipac-rest-tools (setup.py)
@@ -26,7 +26,7 @@ httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
 idna==3.4
     # via requests
-iniconfig==1.1.1
+iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
@@ -34,7 +34,7 @@ mypy==0.991
     # via wipac-rest-tools (setup.py)
 mypy-extensions==0.4.3
     # via mypy
-packaging==22.0
+packaging==23.0
     # via pytest
 pluggy==1.0.0
     # via pytest
@@ -46,7 +46,7 @@ pyflakes==3.0.1
     # via flake8
 pyjwt[crypto]==2.5.0
     # via wipac-rest-tools (setup.py)
-pytest==7.2.0
+pytest==7.2.1
     # via
     #   pytest-asyncio
     #   pytest-mock
@@ -57,7 +57,7 @@ pytest-mock==3.10.0
     # via wipac-rest-tools (setup.py)
 qrcode==7.3.1
     # via wipac-rest-tools (setup.py)
-requests==2.28.1
+requests==2.28.2
     # via
     #   requests-futures
     #   requests-mock
@@ -77,7 +77,7 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 types-cryptography==3.3.23.2
     # via pyjwt
-types-requests==2.28.11.7
+types-requests==2.28.11.8
     # via wipac-rest-tools (setup.py)
 types-urllib3==1.26.25.4
     # via types-requests
@@ -85,7 +85,7 @@ typing-extensions==4.4.0
     # via
     #   mypy
     #   wipac-dev-tools
-urllib3==1.26.13
+urllib3==1.26.14
     # via requests
 wheel==0.38.4
     # via wipac-rest-tools (setup.py)
