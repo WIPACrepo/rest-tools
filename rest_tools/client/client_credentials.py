@@ -31,15 +31,16 @@ class ClientCredentialsAuth(RestClient):
         self.auth = OpenIDAuth(token_url)
         self.client_id = client_id
         self.client_secret = client_secret
-        super().__init__(address=address, token=self._make_token, logger=logging.getLogger('ClientCredentialsAuth'),
+        super().__init__(address=address, token=self.make_access_token, logger=logging.getLogger('ClientCredentialsAuth'),
                          **kwargs)
 
-    def _make_token(self) -> str:
+    def make_access_token(self) -> str:
         # try making a new token
         args = {
             'grant_type': 'client_credentials',
             'client_id': self.client_id,
             'client_secret': self.client_secret,
+            'scope': 'offline_access',
         }
 
         try:
