@@ -216,8 +216,8 @@ class RestHandler(tornado.web.RequestHandler):
         Keyword Arguments:
             default -- a default value to use if the argument is not present
             type -- typecast (or call a one-argument callable) with the argument's value (raise `400` for ValueError and/or TypeError)
-            choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
-            forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
+            choices -- a list of valid argument values; regex is allowed for strings (raise `400`, if arg's value is not in list)
+            forbiddens -- a list of disallowed argument values; regex is allowed for strings (raise `400`, if arg's value is in list)
             strict_type -- if True and `type` is passed, the arg's value is type-checked instead of type-casted
 
         Returns:
@@ -248,8 +248,8 @@ class RestHandler(tornado.web.RequestHandler):
             default -- a default value to use if the argument is not present
             strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
             type -- typecast (or call a one-argument callable) with the argument's value (raise `400` for ValueError and/or TypeError)
-            choices -- a list of valid argument values (raise `400`, if arg's value is not in list)
-            forbiddens -- a list of disallowed argument values (raise `400`, if arg's value is in list)
+            choices -- a list of valid argument values; regex is allowed for strings (raise `400`, if arg's value is not in list)
+            forbiddens -- a list of disallowed argument values; regex is allowed for strings(raise `400`, if arg's value is in list)
             strict_type -- if True and `type` is passed, the arg's value is type-checked instead of type-casted
 
         Returns:
@@ -269,8 +269,7 @@ class RestHandler(tornado.web.RequestHandler):
 
 
 class KeycloakUsernameMixin:
-    """
-    Get the username correctly from Keycloak tokens.
+    """Get the username correctly from Keycloak tokens.
 
     Note: will not work on service account tokens.
     """
@@ -286,8 +285,7 @@ class KeycloakUsernameMixin:
 
 
 class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
-    """
-    Handle OpenID Connect logins.
+    """Handle OpenID Connect logins.
 
     Requires the `login_url` application setting to be a full url.
     """

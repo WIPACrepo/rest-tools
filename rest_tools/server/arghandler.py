@@ -2,6 +2,7 @@
 
 
 import json
+import re
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import tornado.web
@@ -69,16 +70,14 @@ class ArgumentHandler:
             raise ValueError("argument 'type_' cannot be 'None'")
 
         try:
-            if value is None:
-                raise ValueError(
-                    f"value cannot be cast to '{type_.__name__}' from 'None'"
-                )
-            elif strict_type and not isinstance(value, type_):  # type: ignore[arg-type]
+            if strict_type and not isinstance(value, type_):  # type: ignore[arg-type]
                 raise TypeError(
                     f"type mismatch: '{type_.__name__}' (value is '{type(value)}')"
                 )
             elif isinstance(value, str) and (type_ == bool) and (value != ""):
                 value = strtobool(value)  # ~> ValueError
+            elif value is None and (type_ == str):  # don't want None -> "None"
+                raise ValueError("value cannot be cast to 'str' from 'None'")
             else:
                 value = type_(value)  # type: ignore  # ~> ValueError or TypeError
         except (ValueError, TypeError) as e:
@@ -97,13 +96,26 @@ class ArgumentHandler:
 
         Raise _InvalidArgumentError if qualification fails.
         """
-        if choices is not None and value not in choices:
+
+        def _value_in(the_list: List[Any]) -> bool:
+            if not isinstance(value, str):
+                return value in the_list
+            # regex matching
+            for pat in the_list:
+                try:
+                    if re.fullmatch(pat, value):
+                        return True
+                except TypeError:  # ignore illegal patterns
+                    pass
+            return False
+
+        if choices is not None and not _value_in(choices):
             # choices=[] is weird, but is still valid
             raise _InvalidArgumentError(
                 f"(ValueError) {value} not in choices ({choices})"
             )
 
-        if forbiddens and value in forbiddens:
+        if forbiddens and _value_in(forbiddens):
             # [] === None: (an empty forbiddens list is the same as no forbiddens list)
             raise _InvalidArgumentError(
                 f"(ValueError) {value} is forbidden ({forbiddens})"
