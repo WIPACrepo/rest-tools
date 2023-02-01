@@ -46,6 +46,8 @@ pyflakes==3.0.1
     # via flake8
 pyjwt[crypto]==2.5.0
     # via wipac-rest-tools (setup.py)
+pypng==0.20220715.0
+    # via qrcode
 pytest==7.2.1
     # via
     #   pytest-asyncio
@@ -55,7 +57,7 @@ pytest-asyncio==0.20.3
     # via wipac-rest-tools (setup.py)
 pytest-mock==3.10.0
     # via wipac-rest-tools (setup.py)
-qrcode==7.3.1
+qrcode==7.4
     # via wipac-rest-tools (setup.py)
 requests==2.28.2
     # via
@@ -84,6 +86,7 @@ types-urllib3==1.26.25.4
 typing-extensions==4.4.0
     # via
     #   mypy
+    #   qrcode
     #   wipac-dev-tools
 urllib3==1.26.14
     # via requests
