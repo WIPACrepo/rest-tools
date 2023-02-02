@@ -104,6 +104,7 @@ def test_openid_web_handler_mixin():
     assert rh.get_current_user() is None
 
     token = a.create_token('subject', payload={'foo': 'bar'})
+
     def get_token(name):
         if name == 'access_token':
             return token
@@ -111,6 +112,7 @@ def test_openid_web_handler_mixin():
             return ''
         else:
             return {}
+
     rh.get_secure_cookie = MagicMock(side_effect=get_token)
 
     assert rh.get_current_user() == 'subject'
