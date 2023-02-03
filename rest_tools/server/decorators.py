@@ -1,5 +1,6 @@
 
 from functools import wraps
+from inspect import isawaitable
 import logging
 import re
 
@@ -24,7 +25,11 @@ def authenticated(method):
     async def wrapper(self, *args, **kwargs):
         if not self.current_user:
             raise tornado.web.HTTPError(403, reason="authentication failed")
-        return await method(self, *args, **kwargs)
+        ret = method(self, *args, **kwargs)
+        if isawaitable(ret):
+            return await ret
+        else:
+            return ret
     return wrapper
 
 
@@ -36,7 +41,11 @@ def catch_error(method):
     @wraps(method)
     async def wrapper(self, *args, **kwargs):
         try:
-            return await method(self, *args, **kwargs)
+            ret = method(self, *args, **kwargs)
+            if isawaitable(ret):
+                return await ret
+            else:
+                return ret
         except tornado.web.HTTPError:
             raise  # tornado can handle this
         except tornado.httpclient.HTTPError:
@@ -83,7 +92,11 @@ def role_authorization(**_auth):
                 logger.info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
-            return await method(self, *args, **kwargs)
+            ret = method(self, *args, **kwargs)
+            if isawaitable(ret):
+                return await ret
+            else:
+                return ret
         return wrapper
     return make_wrapper
 
@@ -128,7 +141,11 @@ def scope_role_auth(**_auth):
 
             wtt.set_current_span_attribute('self.auth_data.roles', ','.join(sorted(authorized)))
 
-            return await method(self, *args, **kwargs)
+            ret = method(self, *args, **kwargs)
+            if isawaitable(ret):
+                return await ret
+            else:
+                return ret
         return wrapper
     return make_wrapper
 
@@ -169,7 +186,11 @@ def keycloak_role_auth(**_auth):
 
             wtt.set_current_span_attribute('self.auth_data.roles', ','.join(sorted(authorized)))
 
-            return await method(self, *args, **kwargs)
+            ret = method(self, *args, **kwargs)
+            if isawaitable(ret):
+                return await ret
+            else:
+                return ret
         return wrapper
     return make_wrapper
 
@@ -309,7 +330,11 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                     wtt.set_current_span_attribute('self.auth_data.groups', ','.join(authorized_groups))
                     self.auth_groups = authorized_groups
 
-                return await method(self, *args, **kwargs)
+                ret = method(self, *args, **kwargs)
+                if isawaitable(ret):
+                    return await ret
+                else:
+                    return ret
             return wrapper
         return make_wrapper
     return make_decorator
