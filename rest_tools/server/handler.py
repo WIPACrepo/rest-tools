@@ -268,6 +268,25 @@ class RestHandler(tornado.web.RequestHandler):
         )
 
 
+class OpenIDWebHandlerMixin:
+    """Load current user from `OpenIDLoginHandler` cookies."""
+    def get_current_user(self):
+        """Get the current user, and set auth-related attributes."""
+        try:
+            access_token = self.get_secure_cookie('access_token')
+            refresh_token = self.get_secure_cookie('refresh_token')
+            data = self.auth.validate(access_token)
+            self.auth_data = data
+            self.auth_key = access_token
+            self.auth_refresh_token = refresh_token
+            return data['sub']
+        # Auth Failed
+        except Exception:
+            logger.info('failed auth', exc_info=True)
+
+        return None
+
+
 class KeycloakUsernameMixin:
     """Get the username correctly from Keycloak tokens.
 
