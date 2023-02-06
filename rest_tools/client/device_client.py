@@ -1,5 +1,4 @@
 # fmt:off
-from functools import partial
 import io
 from itertools import zip_longest
 import logging
@@ -196,6 +195,9 @@ def SavedDeviceGrantAuth(
     if not refresh_token:
         refresh_token = _perform_device_grant(logger, endpoint, auth.token_url, client_id, client_secret, scopes)
 
+    def update_func(access, refresh):
+        _save_token_to_file(filename, refresh)
+
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token,
-                            update_func=partial(_save_token_to_file, filename))
+                            update_func=update_func)
