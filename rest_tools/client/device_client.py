@@ -1,7 +1,9 @@
 # fmt:off
+from functools import partial
 import io
 from itertools import zip_longest
 import logging
+from pathlib import Path
 import time
 from typing import Dict, List, Optional
 
@@ -52,27 +54,13 @@ And enter the code:
         print('+', '-' * box_width, '+', sep='')
 
 
-def DeviceGrantAuth(
-    address: str, token_url: str, client_id: str,
+def _perform_device_grant(
+    logger: logging.Logger,
+    endpoint: str,
+    client_id: str,
     client_secret: Optional[str] = None,
     scopes: Optional[List[str]] = None,
-) -> OpenIDRestClient:
-    """A REST client that can handle OpenID and the OAuth2 Device Client flow.
-
-    Args:
-        address (str): base address of REST API
-        token_url (str): base address of token service
-        client_id (str): client id
-        client_secret (str): client secret (optional - required for confidential clients)
-        scopes (list): token scope list (optional)
-    """
-    logger = logging.getLogger('DeviceGrantAuth')
-
-    auth = OpenIDAuth(token_url)
-    if 'device_authorization_endpoint' not in auth.provider_info:
-        raise RuntimeError('Device grant not supported by server')
-    endpoint = auth.provider_info['device_authorization_endpoint']
-
+) -> str:
     args = {
         'client_id': client_id,
         'scope': 'offline_access ' + (' '.join(scopes) if scopes else ''),
@@ -131,7 +119,81 @@ def DeviceGrantAuth(
             raise RuntimeError('Device authorization failed') from exc
         break
 
-    refresh_token = req['refresh_token']
+    return req['refresh_token']
+
+
+def DeviceGrantAuth(
+    address: str, token_url: str, client_id: str,
+    client_secret: Optional[str] = None,
+    scopes: Optional[List[str]] = None,
+) -> OpenIDRestClient:
+    """A REST client that can handle OpenID and the OAuth2 Device Client flow.
+
+    Args:
+        address (str): base address of REST API
+        token_url (str): base address of token service
+        client_id (str): client id
+        client_secret (str): client secret (optional - required for confidential clients)
+        scopes (list): token scope list (optional)
+    """
+    logger = logging.getLogger('DeviceGrantAuth')
+
+    auth = OpenIDAuth(token_url)
+    if 'device_authorization_endpoint' not in auth.provider_info:
+        raise RuntimeError('Device grant not supported by server')
+    endpoint = auth.provider_info['device_authorization_endpoint']
+
+    refresh_token = _perform_device_grant(logger, endpoint, client_id, client_secret, scopes)
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token)
+
+def _load_token_from_file(filename: str) -> Optional[str]:
+    f = Path(filename)
+    if f.is_file():
+        try:
+            return f.read_text()
+        except Exception:
+            pass
+    return None
+
+
+def _save_token_to_file(filename: str, token: str) -> None:
+    f = Path(filename)
+    f.write_text(token)
+
+
+def SavedDeviceGrantAuth(
+    address: str, token_url: str,
+    filename: str,
+    client_id: str,
+    client_secret: Optional[str] = None,
+    scopes: Optional[List[str]] = None,
+) -> OpenIDRestClient:
+    """
+    A REST client that can handle OpenID and the OAuth2 Device Client flow,
+    and saves a refresh token to a file for quick access.
+
+    Args:
+        address (str): base address of REST API
+        token_url (str): base address of token service
+        filename (str): name of file to save/load refresh token
+        client_id (str): client id
+        client_secret (str): client secret (optional - required for confidential clients)
+        scopes (list): token scope list (optional)
+    """
+    logger = logging.getLogger('SavedDeviceGrantAuth')
+
+    auth = OpenIDAuth(token_url)
+    if 'device_authorization_endpoint' not in auth.provider_info:
+        raise RuntimeError('Device grant not supported by server')
+    endpoint = auth.provider_info['device_authorization_endpoint']
+
+    refresh_token = _load_token_from_file(filename)
+
+    if not refresh_token:
+        refresh_token = _perform_device_grant(logger, endpoint, client_id, client_secret, scopes)
+
+    return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
+                            client_secret=client_secret, refresh_token=refresh_token,
+                            update_func=partial(_save_token_to_file, filename))    
