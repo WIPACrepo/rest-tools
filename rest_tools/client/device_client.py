@@ -56,7 +56,8 @@ And enter the code:
 
 def _perform_device_grant(
     logger: logging.Logger,
-    endpoint: str,
+    device_url: str,
+    token_url: str,
     client_id: str,
     client_secret: Optional[str] = None,
     scopes: Optional[List[str]] = None,
@@ -69,7 +70,7 @@ def _perform_device_grant(
         args['client_secret'] = client_secret
 
     try:
-        r = requests.post(endpoint, data=args)
+        r = requests.post(device_url, data=args)
         r.raise_for_status()
         req = r.json()
     except requests.exceptions.HTTPError as exc:
@@ -99,7 +100,7 @@ def _perform_device_grant(
     while True:
         time.sleep(sleep_time)
         try:
-            r = requests.post(auth.token_url, data=args)
+            r = requests.post(token_url, data=args)
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -143,10 +144,11 @@ def DeviceGrantAuth(
         raise RuntimeError('Device grant not supported by server')
     endpoint = auth.provider_info['device_authorization_endpoint']
 
-    refresh_token = _perform_device_grant(logger, endpoint, client_id, client_secret, scopes)
+    refresh_token = _perform_device_grant(logger, endpoint, token_url, client_id, client_secret, scopes)
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token)
+
 
 def _load_token_from_file(filename: str) -> Optional[str]:
     f = Path(filename)
@@ -192,8 +194,8 @@ def SavedDeviceGrantAuth(
     refresh_token = _load_token_from_file(filename)
 
     if not refresh_token:
-        refresh_token = _perform_device_grant(logger, endpoint, client_id, client_secret, scopes)
+        refresh_token = _perform_device_grant(logger, endpoint, token_url, client_id, client_secret, scopes)
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token,
-                            update_func=partial(_save_token_to_file, filename))    
+                            update_func=partial(_save_token_to_file, filename))
