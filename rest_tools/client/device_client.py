@@ -149,19 +149,14 @@ def DeviceGrantAuth(
                             client_secret=client_secret, refresh_token=refresh_token)
 
 
-def _load_token_from_file(filename: str) -> Optional[str]:
-    f = Path(filename)
-    if f.is_file():
-        try:
-            return f.read_text()
-        except Exception:
-            pass
+def _load_token_from_file(filepath: Path) -> Optional[str]:
+    if filepath.exists():
+        return filepath.read_text()
     return None
 
 
-def _save_token_to_file(filename: str, token: str) -> None:
-    f = Path(filename)
-    f.write_text(token)
+def _save_token_to_file(filepath: Path, token: str) -> None:
+    filepath.write_text(token)
 
 
 def SavedDeviceGrantAuth(
@@ -190,6 +185,7 @@ def SavedDeviceGrantAuth(
         raise RuntimeError('Device grant not supported by server')
     endpoint = auth.provider_info['device_authorization_endpoint']
 
+    filename = Path(filename)
     refresh_token = _load_token_from_file(filename)
 
     if not refresh_token:
