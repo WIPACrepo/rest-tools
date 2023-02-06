@@ -185,14 +185,14 @@ def SavedDeviceGrantAuth(
         raise RuntimeError('Device grant not supported by server')
     endpoint = auth.provider_info['device_authorization_endpoint']
 
-    filename = Path(filename)
-    refresh_token = _load_token_from_file(filename)
+    filepath = Path(filename)
+    refresh_token = _load_token_from_file(filepath)
 
     if not refresh_token:
         refresh_token = _perform_device_grant(logger, endpoint, auth.token_url, client_id, client_secret, scopes)
 
     def update_func(access, refresh):
-        _save_token_to_file(filename, refresh)
+        _save_token_to_file(filepath, refresh)
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token,
