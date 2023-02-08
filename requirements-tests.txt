@@ -28,7 +28,7 @@ coverage[toml]==7.1.0
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==39.0.0
+cryptography==39.0.1
     # via pyjwt
 exceptiongroup==1.1.0
     # via pytest
