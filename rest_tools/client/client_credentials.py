@@ -35,6 +35,9 @@ class ClientCredentialsAuth(RestClient):
                          **kwargs)
 
     def make_access_token(self) -> str:
+        if not self.auth.token_url:
+            self.auth._refresh_keys()
+
         # try making a new token
         args = {
             'grant_type': 'client_credentials',

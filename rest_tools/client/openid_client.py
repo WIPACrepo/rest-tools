@@ -53,6 +53,9 @@ class OpenIDRestClient(RestClient):
         self._openid_token()
 
     def _openid_token(self) -> str:
+        if not self.auth.token_url:
+            self.auth._refresh_keys()
+
         # try the refresh token
         args = {
             'grant_type': 'refresh_token',
