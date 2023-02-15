@@ -20,7 +20,7 @@ class _AuthValidate:
 
         # required claims
         claims = ['exp', 'iat', 'iss']
-        claims.extend(kwargs.pop('require', []))
+        claims.extend(kwargs.pop('required', []))
         options['require'] = claims
 
         # configure the audience to validate
