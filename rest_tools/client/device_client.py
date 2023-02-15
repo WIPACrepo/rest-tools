@@ -180,15 +180,16 @@ def SavedDeviceGrantAuth(
     """
     logger = logging.getLogger('SavedDeviceGrantAuth')
 
-    auth = OpenIDAuth(token_url)
-    if 'device_authorization_endpoint' not in auth.provider_info:
-        raise RuntimeError('Device grant not supported by server')
-    endpoint = auth.provider_info['device_authorization_endpoint']
-
     filepath = Path(filename)
     refresh_token = _load_token_from_file(filepath)
 
     if not refresh_token:
+        auth = OpenIDAuth(token_url)
+        if not auth.provider_info:
+            raise RuntimeError('Token service does not support .well-known discovery')
+        if 'device_authorization_endpoint' not in auth.provider_info:
+            raise RuntimeError('Device grant not supported by server')
+        endpoint = auth.provider_info['device_authorization_endpoint']
         refresh_token = _perform_device_grant(logger, endpoint, auth.token_url, client_id, client_secret, scopes)
 
     def update_func(access, refresh):
