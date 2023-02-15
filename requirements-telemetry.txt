@@ -16,7 +16,7 @@ charset-normalizer==3.0.1
     # via requests
 coloredlogs==15.0.1
     # via wipac-telemetry
-cryptography==39.0.0
+cryptography==39.0.1
     # via pyjwt
 deprecated==1.2.13
     # via opentelemetry-api
@@ -84,7 +84,7 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 types-cryptography==3.3.23.2
     # via pyjwt
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via
     #   opentelemetry-sdk
     #   qrcode
