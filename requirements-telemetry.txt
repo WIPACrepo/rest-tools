@@ -62,7 +62,7 @@ protobuf==3.20.3
     #   wipac-telemetry
 pycparser==2.21
     # via cffi
-pyjwt[crypto]==2.5.0
+pyjwt[crypto]==2.6.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode

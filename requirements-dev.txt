@@ -44,7 +44,7 @@ pycparser==2.21
     # via cffi
 pyflakes==3.0.1
     # via flake8
-pyjwt[crypto]==2.5.0
+pyjwt[crypto]==2.6.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
