@@ -30,7 +30,7 @@ iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
-mypy==1.0.0
+mypy==1.0.1
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
@@ -92,5 +92,5 @@ urllib3==1.26.14
     # via requests
 wheel==0.38.4
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.10
+wipac-dev-tools==1.6.12
     # via wipac-rest-tools (setup.py)
