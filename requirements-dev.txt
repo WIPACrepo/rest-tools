@@ -92,5 +92,5 @@ urllib3==1.26.14
     # via requests
 wheel==0.38.4
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.11
+wipac-dev-tools==1.6.12
     # via wipac-rest-tools (setup.py)
