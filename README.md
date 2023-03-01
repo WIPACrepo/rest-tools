@@ -26,18 +26,21 @@ ret = await api.request('POST', '/fruits', {'name': 'banana'})
 
 There are several variations of the client for OAuth2/OpenID support:
 
-* `OpenIDRestClient` : A child of `RestClient` that supports OAuth2 token refresh
-  using the OpenID Connect Discovery protocol for an authentication server.
+* [`OpenIDRestClient`](rest_tools/client/openid_client.py#L19) : A child of
+  `RestClient` that supports OAuth2 token refresh using the OpenID Connect
+  Discovery protocol for an authentication server.
 
-* `ClientCredentialsAuth` : Uses `OpenIDRestClient` in combination with OAuth2
-  client credentials (client ID and secret) for service-based auth. Use this
-  for long-lived services that need to perform REST API calls.
+* [`ClientCredentialsAuth`](rest_tools/client/client_credentials.py#L11) : Uses
+  `OpenIDRestClient` in combination with OAuth2 client credentials (client ID
+  and secret) for service-based auth. Use this for long-lived services that
+  need to perform REST API calls.
 
-* `DeviceGrantAuth` / `SavedDeviceGrantAuth` : Uses `OpenIDRestClient` to perform
-  a "device" login for a user. Use this for user-based terminal applications that
-  need to perform REST API calls.  The `SavedDeviceGrantAuth` can save the refresh
-  token to disk, allowing repeated application sessions without having to log in
-  again.
+* [`DeviceGrantAuth`](rest_tools/client/device_client.py#L125) /
+  [`SavedDeviceGrantAuth`](rest_tools/client/device_client.py#L162) : Uses
+  `OpenIDRestClient` to perform a "device" login for a user. Use this for
+  user-based terminal applications that need to perform REST API calls.
+  The `SavedDeviceGrantAuth` can save the refresh token to disk, allowing
+  repeated application sessions without having to log in again.
 
 ## Server
 
