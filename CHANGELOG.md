@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.13 (2023-03-01)
+### Other
+* Add basic docs on oauth clients ([#111](https://github.com/WIPACrepo/rest-tools/issues/111)) ([`c49024b`](https://github.com/WIPACrepo/rest-tools/commit/c49024b91fd2835039ff4cc9beb9fe10725388e4))
+
 ## v1.4.12 (2023-02-17)
 
 
