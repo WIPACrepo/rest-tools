@@ -17,30 +17,45 @@ happens elsewhere - they do not start the loop themselves.
 A REST API client exists under `rest_tools.client`.  Use as:
 
 ```python
-    from rest_tools.client import RestClient
+from rest_tools.client import RestClient
 
-    api = RestClient('http://my.site.here/api', token='XXXX')
-    ret = await api.request('GET', '/fruits/apple')
-    ret = await api.request('POST', '/fruits', {'name': 'banana'})
+api = RestClient('http://my.site.here/api', token='XXXX')
+ret = await api.request('GET', '/fruits/apple')
+ret = await api.request('POST', '/fruits', {'name': 'banana'})
 ```
+
+There are several variations of the client for OAuth2/OpenID support:
+
+* `OpenIDRestClient` : A child of `RestClient` that supports OAuth2 token refresh
+  using the OpenID Connect Discovery protocol for an authentication server.
+
+* `ClientCredentialsAuth` : Uses `OpenIDRestClient` in combination with OAuth2
+  client credentials (client ID and secret) for service-based auth. Use this
+  for long-lived services that need to perform REST API calls.
+
+* `DeviceGrantAuth` / `SavedDeviceGrantAuth` : Uses `OpenIDRestClient` to perform
+  a "device" login for a user. Use this for user-based terminal applications that
+  need to perform REST API calls.  The `SavedDeviceGrantAuth` can save the refresh
+  token to disk, allowing repeated application sessions without having to log in
+  again.
 
 ## Server
 
 A REST API server exists under `rest_tools.server`. Use as:
 
 ```python
-    import asyncio
-    from rest_tools.server import RestServer, RestHandler
+import asyncio
+from rest_tools.server import RestServer, RestHandler
 
-    class Fruits(RestHandler):
-        def post(self):
-            # handle a new fruit
-            self.write({})
+class Fruits(RestHandler):
+    def post(self):
+        # handle a new fruit
+        self.write({})
 
-    server = RestServer()
-    server.add_route('/fruits', Fruits)
-    server.startup(address='my.site.here', port=8080)
-    asyncio.get_event_loop().run_forever()
+server = RestServer()
+server.add_route('/fruits', Fruits)
+server.startup(address='my.site.here', port=8080)
+asyncio.get_event_loop().run_forever()
 ```
 
 The server uses [Tornado](https://tornado.readthedocs.io) to handle HTTP
