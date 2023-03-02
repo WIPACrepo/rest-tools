@@ -120,10 +120,7 @@ def test_openid_cookie_handler_mixin():
     class A(OpenIDCookieHandlerMixin, RestHandler):
         pass
 
-    try:
-        rh = A()
-    except Exception:
-        pass
+    rh = A()
     rh.initialize(auth=a)
     rh.get_secure_cookie = MagicMock(return_value=b'')
 
