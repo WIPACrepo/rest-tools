@@ -22,7 +22,7 @@ __all__ = [
     "RestServer",
     "RestHandlerSetup",
     "RestHandler",
-    "OpenIDWebHandlerMixin",
+    "OpenIDCookieHandlerMixin",
     "KeycloakUsernameMixin",
     "OpenIDLoginHandler",
     "authenticated",
