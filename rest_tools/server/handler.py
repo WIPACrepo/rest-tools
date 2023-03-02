@@ -290,9 +290,6 @@ class OpenIDCookieHandlerMixin:
         """Get the current user, and set auth-related attributes."""
         try:
             access_token = self.get_secure_cookie('access_token')
-            logging.debug('access_token: %r', access_token)
-            if isinstance(access_token, str):
-                access_token = access_token.encode('utf8')
             data = self.auth.validate(access_token)
             self.auth_data = data
             self.auth_key = access_token
@@ -301,7 +298,7 @@ class OpenIDCookieHandlerMixin:
             return data['sub']
         # Auth Failed
         except Exception:
-            logger.info('failed auth', exc_info=True)
+            logger.debug('failed auth', exc_info=True)
 
         return None
 
@@ -309,10 +306,10 @@ class OpenIDCookieHandlerMixin:
         self,
         access_token,
         access_token_exp,
-        refresh_token = None,
-        refresh_token_exp = None,
-        user_info = None,
-        user_info_exp = None,
+        refresh_token=None,
+        refresh_token_exp=None,
+        user_info=None,
+        user_info_exp=None,
     ):
         """
         Store jwt tokens and user info from OpenID-compliant auth source.
@@ -470,7 +467,7 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin, OpenIDCookieHandlerMixin):
                 refresh_token=user['refresh_token'],
                 refresh_token_exp=refresh_expire,
                 user_info=user['id_token'],
-                user_info_exp=refresh_token_exp if user['refresh_token'] else access_expire,
+                user_info_exp=refresh_expire if user['refresh_token'] else access_expire,
             )
 
             if data.get('redirect', None):
