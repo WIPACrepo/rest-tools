@@ -464,10 +464,10 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
             self.store_tokens(
                 access_token=user['access_token'],
                 access_token_exp=access_expire,
-                refresh_token=user.get('refresh_token', None),
+                refresh_token=user.get('refresh_token'),
                 refresh_token_exp=refresh_expire,
-                user_info=user.get('id_token', None),
-                user_info_exp=refresh_expire if user['refresh_token'] else access_expire,
+                user_info=user.get('id_token'),
+                user_info_exp=refresh_expire if user.get('refresh_token') else access_expire,
             )
 
             if data.get('redirect', None):
