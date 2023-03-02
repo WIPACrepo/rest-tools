@@ -340,7 +340,7 @@ class OpenIDCookieHandlerMixin:
         self.clear_cookie('user_info')
 
 
-class OpenIDLoginHandler(RestHandler, OAuth2Mixin, OpenIDCookieHandlerMixin):
+class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
     """Handle OpenID Connect logins.
 
     Should be combined with an appropriate mixin to store the token(s).
