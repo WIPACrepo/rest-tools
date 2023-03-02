@@ -12,8 +12,8 @@ from .decorators import (
 from .handler import (
     RestHandler,
     RestHandlerSetup,
-    OpenIDWebHandlerMixin,
     KeycloakUsernameMixin,
+    OpenIDCookieHandlerMixin,
     OpenIDLoginHandler,
 )
 from .server import RestServer
@@ -22,8 +22,8 @@ __all__ = [
     "RestServer",
     "RestHandlerSetup",
     "RestHandler",
-    "OpenIDWebHandlerMixin",
     "KeycloakUsernameMixin",
+    "OpenIDCookieHandlerMixin",
     "OpenIDLoginHandler",
     "authenticated",
     "catch_error",

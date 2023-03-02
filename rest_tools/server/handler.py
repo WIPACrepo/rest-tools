@@ -268,28 +268,6 @@ class RestHandler(tornado.web.RequestHandler):
         )
 
 
-class OpenIDWebHandlerMixin:
-    """Load current user from `OpenIDLoginHandler` cookies."""
-    def get_current_user(self):
-        """Get the current user, and set auth-related attributes."""
-        try:
-            access_token = self.get_secure_cookie('access_token')
-            logging.debug('access_token: %r', access_token)
-            refresh_token = self.get_secure_cookie('refresh_token')
-            if isinstance(access_token, str):
-                access_token = access_token.encode('utf8')
-            data = self.auth.validate(access_token)
-            self.auth_data = data
-            self.auth_key = access_token
-            self.auth_refresh_token = refresh_token
-            return data['sub']
-        # Auth Failed
-        except Exception:
-            logger.info('failed auth', exc_info=True)
-
-        return None
-
-
 class KeycloakUsernameMixin:
     """Get the username correctly from Keycloak tokens.
 
@@ -306,8 +284,67 @@ class KeycloakUsernameMixin:
         return username
 
 
-class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
+class OpenIDCookieHandlerMixin:
+    """Store/load current user's `OpenIDLoginHandler` tokens in cookies."""
+    def get_current_user(self):
+        """Get the current user, and set auth-related attributes."""
+        try:
+            access_token = self.get_secure_cookie('access_token')
+            data = self.auth.validate(access_token)
+            self.auth_data = data
+            self.auth_key = access_token
+            refresh_token = self.get_secure_cookie('refresh_token')
+            self.auth_refresh_token = refresh_token
+            return data['sub']
+        # Auth Failed
+        except Exception:
+            logger.debug('failed auth', exc_info=True)
+
+        return None
+
+    def store_tokens(
+        self,
+        access_token,
+        access_token_exp,
+        refresh_token=None,
+        refresh_token_exp=None,
+        user_info=None,
+        user_info_exp=None,
+    ):
+        """
+        Store jwt tokens and user info from OpenID-compliant auth source.
+
+        Args:
+            access_token (str): jwt access token
+            access_token_exp (int): access token expiration in seconds
+            refresh_token (str): jwt refresh token
+            refresh_token_exp (int): refresh token expiration in seconds
+            user_info (dict): user info (from id token or user info lookup)
+            user_info_exp (int): user info expiration in seconds
+        """
+        self.set_secure_cookie('access_token', access_token,
+                               expires_days=float(access_token_exp)/3600/24)
+        if refresh_token and refresh_token_exp:
+            self.set_secure_cookie('refresh_token', refresh_token,
+                                   expires_days=float(refresh_token_exp)/3600/24)
+        if user_info and user_info_exp:
+            self.set_secure_cookie('user_info', tornado.escape.json_encode(user_info),
+                                   expires_days=float(user_info_exp)/3600/24)
+
+    def clear_tokens(self):
+        """
+        Clear token data, usually on logout.
+        """
+        self.clear_cookie('access_token')
+        self.clear_cookie('refresh_token')
+        self.clear_cookie('user_info')
+
+
+class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
     """Handle OpenID Connect logins.
+
+    Should be combined with an appropriate mixin to store the token(s).
+    `OpenIDCookieHandlerMixin` is used by default, but can be overridden.
 
     Requires the `login_url` application setting to be a full url.
     """
@@ -423,14 +460,16 @@ class OpenIDLoginHandler(RestHandler, OAuth2Mixin):
             if not refresh_expire:
                 refresh_expire = 86400
 
-            # Save the user with e.g. set_secure_cookie
-            self.set_secure_cookie('access_token', user['access_token'],
-                                   expires_days=float(access_expire)/3600/24)
-            if 'refresh_token' in user:
-                self.set_secure_cookie('refresh_token', user['refresh_token'],
-                                       expires_days=float(refresh_expire)/3600/24)
-            self.set_secure_cookie('identity', tornado.escape.json_encode(user['id_token']),
-                                   expires_days=float(refresh_expire)/3600/24)
+            # Save the user data
+            self.store_tokens(
+                access_token=user['access_token'],
+                access_token_exp=access_expire,
+                refresh_token=user.get('refresh_token'),
+                refresh_token_exp=refresh_expire,
+                user_info=user.get('id_token'),
+                user_info_exp=refresh_expire if user.get('refresh_token') else access_expire,
+            )
+
             if data.get('redirect', None):
                 url = data['redirect']
                 if 'state' in data:
