@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.15 (2023-03-08)
+### Other
+* Add example clients ([#113](https://github.com/WIPACrepo/rest-tools/issues/113)) ([`4d0f368`](https://github.com/WIPACrepo/rest-tools/commit/4d0f368e0c72f3a30da49c65fae42cb7556dbcda))
+
 ## v1.4.14 (2023-03-02)
 ### Other
 * Openid web handler token storage api ([#112](https://github.com/WIPACrepo/rest-tools/issues/112)) ([`5b74ba1`](https://github.com/WIPACrepo/rest-tools/commit/5b74ba1ea81d4dd132bf1a43af7b282267ab3f0e))
