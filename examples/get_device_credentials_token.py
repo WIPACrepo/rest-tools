@@ -4,8 +4,9 @@ from rest_tools.client import SavedDeviceGrantAuth
 
 
 def get_token(address, client_id):
-    cc = SavedDeviceGrantAuth('', token_url=address, filename='device-refresh-token', client_id=client_id)
-    return cc._openid_token()
+    rest_client = SavedDeviceGrantAuth('', token_url=address, filename='device-refresh-token', client_id=client_id)
+    # could use `rest_client` as a `RestClient`, but we're only interested in the token
+    return rest_client._openid_token()
 
 
 def main():
@@ -16,7 +17,6 @@ def main():
     args = parser.parse_args()
     kwargs = vars(args)
     print('access token:', get_token(**kwargs))
-
 
 if __name__ == '__main__':
     main()

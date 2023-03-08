@@ -4,8 +4,9 @@ from rest_tools.client import ClientCredentialsAuth
 
 
 def get_token(address, client_id, client_secret):
-    cc = ClientCredentialsAuth('', token_url=address, client_id=client_id, client_secret=client_secret)
-    return cc.make_access_token()
+    rest_client = ClientCredentialsAuth('', token_url=address, client_id=client_id, client_secret=client_secret)
+    # could use `rest_client` as a `RestClient`, but we're only interested in the token
+    return rest_client.make_access_token()
 
 
 def main():
