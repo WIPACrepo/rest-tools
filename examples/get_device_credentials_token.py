@@ -18,5 +18,6 @@ def main():
     kwargs = vars(args)
     print('access token:', get_token(**kwargs))
 
+
 if __name__ == '__main__':
     main()
