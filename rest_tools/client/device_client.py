@@ -165,6 +165,8 @@ def SavedDeviceGrantAuth(
     client_id: str,
     client_secret: Optional[str] = None,
     scopes: Optional[List[str]] = None,
+    timeout: float = 60.0,
+    retries: int = 10,
 ) -> OpenIDRestClient:
     """
     A REST client that can handle OpenID and the OAuth2 Device Client flow,
@@ -197,4 +199,4 @@ def SavedDeviceGrantAuth(
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token,
-                            update_func=update_func)
+                            update_func=update_func, timeout=timeout, retries=retries)

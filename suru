@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+export BROWSER=${BROWSER:="firefox"}  # use 'firefox' if BROWSER isn't set
+
+export CI_TEST_ENV=${CI_TEST_ENV:="TRUE"}  # disable keycloak_role_auth in testing
+
+function clean {
+    rm -fr .coverage
+    rm -fr .mypy_cache
+    rm -fr .pytest_cache
+    rm -fr .ruff_cache
+    rm -fr build
+    rm -fr dist
+    rm -fr htmlcov
+    find resources -name __pycache__ -exec rm -fr {} +
+    find resources -name __init__.pyc -exec rm -fr {} +
+    find rest_tools -name __pycache__ -exec rm -fr {} +
+    find rest_tools -name __init__.pyc -exec rm -fr {} +
+    find tests -name __pycache__ -exec rm -fr {} +
+    find tests -name __init__.pyc -exec rm -fr {} +
+    rm -fr wipac_rest_tools.egg-info
+}
+
+function coverage {
+    pytest --cov=rest_tools --cov-report=html --no-cov-on-fail ${2:-'tests'}  # use 'tests' if a module wasn't provided
+    ${BROWSER} --new-tab htmlcov/index.html
+}
+
+function dist {
+    rebuild
+    python3 setup.py sdist bdist_wheel
+}
+
+function lint {
+    ruff check resources
+    mypy --strict --namespace-packages resources
+    ruff check rest_tools
+    mypy --strict --namespace-packages rest_tools
+    ruff check tests
+    mypy --strict --namespace-packages tests
+}
+
+function lint_cicd {
+    flake8 --exclude env --ignore=E203,E226,E228,E231,E501,W503,W504 .
+
+    FLAGS="--namespace-packages --exclude build --exclude env"
+    IT_FLAGS="--install-types --non-interactive"
+    (mypy $IT_FLAGS $FLAGS . 2>/dev/null) || (echo "no type-packages to install" && mypy $FLAGS .)
+}
+
+function outdated {
+    python3 -m resources.check_requirements
+}
+
+function rebuild {
+    clean
+    lint
+    test
+}
+
+function test {
+    # See: https://docs.pytest.org/en/7.1.x/how-to/usage.html#specifying-which-tests-to-run
+    # $0   $1   $2                  $3
+    # suru test tests/test_files.py test_10_files
+    if [[ ! -z "$3" ]]; then
+        export PYTEST_ADDOPTS="${PYTEST_ADDOPTS} -k $3"
+    fi
+
+    pytest -ra ${2:-'tests'}  # use 'tests' if a module wasn't provided
+}
+
+case "$1" in
+    clean)     clean         ;;
+    coverage)  coverage "$@" ;;  # pass all command line args to coverage function
+    dist)      dist          ;;
+    lint)      lint          ;;
+    lint-cicd) lint_cicd     ;;
+    outdated)  outdated      ;;
+    rebuild)   rebuild       ;;
+    test)      test "$@"     ;;  # pass all command line args to test function
+    *)
+        echo "Usage: $0 {clean|coverage|dist|lint|lint-cicd|outdated|rebuild|test}"
+        exit 1
+esac
+
+exit 0
