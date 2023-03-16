@@ -18,7 +18,7 @@ cryptography==39.0.2
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
-exceptiongroup==1.1.0
+exceptiongroup==1.1.1
     # via pytest
 flake8==6.0.0
     # via wipac-rest-tools (setup.py)
@@ -69,6 +69,8 @@ requests-futures==1.0.0
     # via wipac-rest-tools (setup.py)
 requests-mock==1.10.0
     # via wipac-rest-tools (setup.py)
+ruff==0.0.256
+    # via wipac-rest-tools (setup.py)
 six==1.16.0
     # via requests-mock
 tomli==2.0.1
@@ -88,9 +90,9 @@ typing-extensions==4.5.0
     #   mypy
     #   qrcode
     #   wipac-dev-tools
-urllib3==1.26.14
+urllib3==1.26.15
     # via requests
-wheel==0.38.4
+wheel==0.40.0
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.12
+wipac-dev-tools==1.6.13
     # via wipac-rest-tools (setup.py)
