@@ -106,4 +106,7 @@ venv.bak/
 # ruff
 .ruff_cache/
 
+# Patrick development ergonomics
+/suru
+
 src/
