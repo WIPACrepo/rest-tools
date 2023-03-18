@@ -103,4 +103,10 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# ruff
+.ruff_cache/
+
+# Patrick development ergonomics
+/suru
+
 src/

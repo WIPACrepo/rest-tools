@@ -4,7 +4,7 @@ from itertools import zip_longest
 import logging
 from pathlib import Path
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import qrcode  # type: ignore[import]
 import requests
@@ -126,6 +126,7 @@ def DeviceGrantAuth(
     address: str, token_url: str, client_id: str,
     client_secret: Optional[str] = None,
     scopes: Optional[List[str]] = None,
+    **kwargs: Any,
 ) -> OpenIDRestClient:
     """A REST client that can handle OpenID and the OAuth2 Device Client flow.
 
@@ -135,6 +136,8 @@ def DeviceGrantAuth(
         client_id (str): client id
         client_secret (str): client secret (optional - required for confidential clients)
         scopes (list): token scope list (optional)
+        timeout (int): request timeout (optional)
+        retries (int): number of retries to attempt (optional)
     """
     logger = logging.getLogger('DeviceGrantAuth')
 
@@ -146,7 +149,7 @@ def DeviceGrantAuth(
     refresh_token = _perform_device_grant(logger, endpoint, auth.token_url, client_id, client_secret, scopes)
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
-                            client_secret=client_secret, refresh_token=refresh_token)
+                            client_secret=client_secret, refresh_token=refresh_token, **kwargs)
 
 
 def _load_token_from_file(filepath: Path) -> Optional[str]:
@@ -165,6 +168,7 @@ def SavedDeviceGrantAuth(
     client_id: str,
     client_secret: Optional[str] = None,
     scopes: Optional[List[str]] = None,
+    **kwargs: Any,
 ) -> OpenIDRestClient:
     """
     A REST client that can handle OpenID and the OAuth2 Device Client flow,
@@ -177,6 +181,8 @@ def SavedDeviceGrantAuth(
         client_id (str): client id
         client_secret (str): client secret (optional - required for confidential clients)
         scopes (list): token scope list (optional)
+        timeout (int): request timeout (optional)
+        retries (int): number of retries to attempt (optional)
     """
     logger = logging.getLogger('SavedDeviceGrantAuth')
 
@@ -197,4 +203,4 @@ def SavedDeviceGrantAuth(
 
     return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
                             client_secret=client_secret, refresh_token=refresh_token,
-                            update_func=update_func)
+                            update_func=update_func, **kwargs)
