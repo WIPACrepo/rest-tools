@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.16 (2023-03-18)
+### Other
+* Modify SavedDeviceGrantAuth to take timeout and retries ([#116](https://github.com/WIPACrepo/rest-tools/issues/116)) ([`fc59a2a`](https://github.com/WIPACrepo/rest-tools/commit/fc59a2a24c68b6f1089d4923d0e6f981607e72a1))
+
 ## v1.4.15 (2023-03-08)
 ### Other
 * Add example clients ([#113](https://github.com/WIPACrepo/rest-tools/issues/113)) ([`4d0f368`](https://github.com/WIPACrepo/rest-tools/commit/4d0f368e0c72f3a30da49c65fae42cb7556dbcda))
