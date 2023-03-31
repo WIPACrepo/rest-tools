@@ -28,7 +28,7 @@ coverage[toml]==7.2.2
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==39.0.2
+cryptography==40.0.1
     # via pyjwt
 exceptiongroup==1.1.1
     # via pytest
@@ -69,7 +69,7 @@ pytest==7.2.2
     #   pytest-cov
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.20.3
+pytest-asyncio==0.21.0
     # via wipac-rest-tools (setup.py)
 pytest-cov==4.0.0
     # via wipac-rest-tools (setup.py)
@@ -87,7 +87,7 @@ requests-futures==1.0.0
     # via wipac-rest-tools (setup.py)
 requests-mock==1.10.0
     # via wipac-rest-tools (setup.py)
-ruff==0.0.256
+ruff==0.0.260
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.0.post1
     # via click-completion
@@ -103,9 +103,9 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 types-cryptography==3.3.23.2
     # via pyjwt
-types-requests==2.28.11.15
+types-requests==2.28.11.17
     # via wipac-rest-tools (setup.py)
-types-urllib3==1.26.25.8
+types-urllib3==1.26.25.10
     # via types-requests
 typing-extensions==4.5.0
     # via
