@@ -213,7 +213,7 @@ def test_101_load_save(tmp_path) -> None:
     assert token == _load_token_from_file(filepath)
 
 
-def test_110_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> None:
+def test_110_saved_good_token(well_known_mock, requests_mock, tmp_path) -> None:
     device_result = {
         'device_code': 'XXXXXXXXXXXXXXXXXXXXXXXX',
         'user_code': 'XXXX-XXXX',
@@ -223,12 +223,8 @@ def test_110_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> No
     }
 
     def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
-        assert req.body is not None
-        body = urllib.parse.parse_qs(str(req.body))
-        logging.debug('device request args: %r', body)
-        assert body['client_id'][0] == 'client-id'
-        return json_encode(device_result).encode("utf-8")
-    requests_mock.post('http://test/device', content=response)
+        raise NotImplementedError()
+    mock_device = requests_mock.post('http://test/device', content=response)
 
     token_result = {
         'access_token': 'XXXXXXXXXXXXX',
@@ -245,10 +241,57 @@ def test_110_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> No
             assert body['grant_type'][0] == 'urn:ietf:params:oauth:grant-type:device_code'
             assert body['device_code'][0] == device_result['device_code']
         return json_encode(token_result).encode("utf-8")
-    requests_mock.post('http://test/token', content=response2)
+    mock_refresh = requests_mock.post('http://test/token', content=response2)
 
     filepath = tmp_path / 'foo'
     _save_token_to_file(filepath, 'badtoken')
     SavedDeviceGrantAuth('http://test-api', 'http://test', filename=str(filepath), client_id='client-id')
 
     assert filepath.read_text() == token_result['refresh_token']
+    assert mock_device.called == 0
+    assert mock_refresh.called == 1
+
+
+def test_111_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> None:
+    device_result = {
+        'device_code': 'XXXXXXXXXXXXXXXXXXXXXXXX',
+        'user_code': 'XXXX-XXXX',
+        'verification_uri': 'http://test/device_verification',
+        'expires_in': 600,
+        'interval': 0.1,
+    }
+
+    def response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        body = urllib.parse.parse_qs(str(req.body))
+        logging.debug('device request args: %r', body)
+        assert body['client_id'][0] == 'client-id'
+        return json_encode(device_result).encode("utf-8")
+    mock_device = requests_mock.post('http://test/device', content=response)
+
+    token_result = {
+        'access_token': 'XXXXXXXXXXXXX',
+        'refresh_token': 'YYYYYYYYYYYYY',
+        'token_type': 'bearer',
+    }
+
+    def response2(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        body = urllib.parse.parse_qs(str(req.body))
+        logging.debug('token request args: %r', body)
+        assert body['client_id'][0] == 'client-id'
+        if body['grant_type'][0] == 'refresh_token':
+            assert body['refresh_token'][0] != 'badtoken'
+        else:
+            assert body['grant_type'][0] == 'urn:ietf:params:oauth:grant-type:device_code'
+            assert body['device_code'][0] == device_result['device_code']
+        return json_encode(token_result).encode("utf-8")
+    mock_refresh = requests_mock.post('http://test/token', content=response2)
+
+    filepath = tmp_path / 'foo'
+    _save_token_to_file(filepath, 'badtoken')
+    SavedDeviceGrantAuth('http://test-api', 'http://test', filename=str(filepath), client_id='client-id')
+
+    assert filepath.read_text() == token_result['refresh_token']
+    assert mock_device.called == 1
+    assert mock_refresh.called == 2
