@@ -185,8 +185,8 @@ def SavedDeviceGrantAuth(
         retries (int): number of retries to attempt (optional)
     """
     logger = logging.getLogger('SavedDeviceGrantAuth')
-
     filepath = Path(filename)
+
     def update_func(access, refresh):
         _save_token_to_file(filepath, refresh)
 

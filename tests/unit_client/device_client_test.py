@@ -248,8 +248,8 @@ def test_110_saved_good_token(well_known_mock, requests_mock, tmp_path) -> None:
     SavedDeviceGrantAuth('http://test-api', 'http://test', filename=str(filepath), client_id='client-id')
 
     assert filepath.read_text() == token_result['refresh_token']
-    assert mock_device.called == 0
-    assert mock_refresh.called == 1
+    assert mock_device.call_count == 0
+    assert mock_refresh.call_count == 1
 
 
 def test_111_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> None:
@@ -293,5 +293,5 @@ def test_111_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> No
     SavedDeviceGrantAuth('http://test-api', 'http://test', filename=str(filepath), client_id='client-id')
 
     assert filepath.read_text() == token_result['refresh_token']
-    assert mock_device.called == 1
-    assert mock_refresh.called == 2
+    assert mock_device.call_count == 1
+    assert mock_refresh.call_count == 2
