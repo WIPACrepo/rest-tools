@@ -294,4 +294,4 @@ def test_111_saved_expired_token(well_known_mock, requests_mock, tmp_path) -> No
 
     assert filepath.read_text() == token_result['refresh_token']
     assert mock_device.call_count == 1
-    assert mock_refresh.call_count == 2
+    assert mock_refresh.call_count == 3
