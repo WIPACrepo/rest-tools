@@ -14,7 +14,7 @@ cffi==1.15.1
     # via cryptography
 charset-normalizer==3.1.0
     # via requests
-cryptography==39.0.2
+cryptography==40.0.1
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
@@ -53,7 +53,7 @@ pytest==7.2.2
     #   pytest-asyncio
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.20.3
+pytest-asyncio==0.21.0
     # via wipac-rest-tools (setup.py)
 pytest-mock==3.10.0
     # via wipac-rest-tools (setup.py)
@@ -69,7 +69,7 @@ requests-futures==1.0.0
     # via wipac-rest-tools (setup.py)
 requests-mock==1.10.0
     # via wipac-rest-tools (setup.py)
-ruff==0.0.256
+ruff==0.0.260
     # via wipac-rest-tools (setup.py)
 six==1.16.0
     # via requests-mock
@@ -81,9 +81,9 @@ tornado==6.2
     # via wipac-rest-tools (setup.py)
 types-cryptography==3.3.23.2
     # via pyjwt
-types-requests==2.28.11.15
+types-requests==2.28.11.17
     # via wipac-rest-tools (setup.py)
-types-urllib3==1.26.25.8
+types-urllib3==1.26.25.10
     # via types-requests
 typing-extensions==4.5.0
     # via
