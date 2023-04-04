@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.17 (2023-04-04)
+### Other
+* Try refreshing saved token before skipping device code ([#117](https://github.com/WIPACrepo/rest-tools/issues/117)) ([`1815de9`](https://github.com/WIPACrepo/rest-tools/commit/1815de9d816356d5c6acab4242115e4d51bc2ea3))
+
 ## v1.4.16 (2023-03-18)
 ### Other
 * Modify SavedDeviceGrantAuth to take timeout and retries ([#116](https://github.com/WIPACrepo/rest-tools/issues/116)) ([`fc59a2a`](https://github.com/WIPACrepo/rest-tools/commit/fc59a2a24c68b6f1089d4923d0e6f981607e72a1))
