@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.18 (2023-04-05)
+### Other
+* Fix WIPAC GHA Package Versions ([#118](https://github.com/WIPACrepo/rest-tools/issues/118)) ([`9fc5f8c`](https://github.com/WIPACrepo/rest-tools/commit/9fc5f8c8fd687ad50d4b9950d12796d286fffb5b))
+
 ## v1.4.17 (2023-04-04)
 ### Other
 * Try refreshing saved token before skipping device code ([#117](https://github.com/WIPACrepo/rest-tools/issues/117)) ([`1815de9`](https://github.com/WIPACrepo/rest-tools/commit/1815de9d816356d5c6acab4242115e4d51bc2ea3))
