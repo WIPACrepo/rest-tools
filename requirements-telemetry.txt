@@ -94,11 +94,11 @@ typing-extensions==4.5.0
     #   wipac-telemetry
 urllib3==1.26.15
     # via requests
-wipac-dev-tools==1.6.13
+wipac-dev-tools==1.6.15
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
-wipac-telemetry==0.2.5
+wipac-telemetry==0.2.6
     # via wipac-rest-tools (setup.py)
 wrapt==1.15.0
     # via deprecated

@@ -69,7 +69,7 @@ requests-futures==1.0.0
     # via wipac-rest-tools (setup.py)
 requests-mock==1.10.0
     # via wipac-rest-tools (setup.py)
-ruff==0.0.260
+ruff==0.0.261
     # via wipac-rest-tools (setup.py)
 six==1.16.0
     # via requests-mock
@@ -94,5 +94,5 @@ urllib3==1.26.15
     # via requests
 wheel==0.40.0
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.13
+wipac-dev-tools==1.6.15
     # via wipac-rest-tools (setup.py)
