@@ -59,7 +59,7 @@ pytest-mock==3.10.0
     # via wipac-rest-tools (setup.py)
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
-requests==2.28.2
+requests==2.31.0
     # via
     #   requests-futures
     #   requests-mock
