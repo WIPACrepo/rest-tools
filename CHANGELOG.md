@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.19 (2023-05-24)
+### Other
+* Bump py-versions CI release v2.1 ([`c25c828`](https://github.com/WIPACrepo/rest-tools/commit/c25c828ecc3569a4654147768ab4d27b6a249da4))
+
 ## v1.4.18 (2023-04-05)
 ### Other
 * Fix WIPAC GHA Package Versions ([#118](https://github.com/WIPACrepo/rest-tools/issues/118)) ([`9fc5f8c`](https://github.com/WIPACrepo/rest-tools/commit/9fc5f8c8fd687ad50d4b9950d12796d286fffb5b))
