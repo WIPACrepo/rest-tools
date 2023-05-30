@@ -4,17 +4,15 @@
 #
 #    pip-compile --extra=dev --output-file=requirements-dev.txt
 #
-attrs==22.2.0
-    # via pytest
-cachetools==5.3.0
+cachetools==5.3.1
     # via wipac-rest-tools (setup.py)
-certifi==2022.12.7
+certifi==2023.5.7
     # via requests
 cffi==1.15.1
     # via cryptography
 charset-normalizer==3.1.0
     # via requests
-cryptography==40.0.1
+cryptography==40.0.2
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
@@ -30,11 +28,11 @@ iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
-mypy==1.1.1
+mypy==1.3.0
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
-packaging==23.0
+packaging==23.1
     # via pytest
 pluggy==1.0.0
     # via pytest
@@ -44,11 +42,11 @@ pycparser==2.21
     # via cffi
 pyflakes==3.0.1
     # via flake8
-pyjwt[crypto]==2.5.0
+pyjwt[crypto]==2.7.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==7.2.2
+pytest==7.3.1
     # via
     #   pytest-asyncio
     #   pytest-mock
@@ -59,7 +57,7 @@ pytest-mock==3.10.0
     # via wipac-rest-tools (setup.py)
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
-requests==2.28.2
+requests==2.31.0
     # via
     #   requests-futures
     #   requests-mock
@@ -69,7 +67,7 @@ requests-futures==1.0.0
     # via wipac-rest-tools (setup.py)
 requests-mock==1.10.0
     # via wipac-rest-tools (setup.py)
-ruff==0.0.261
+ruff==0.0.270
     # via wipac-rest-tools (setup.py)
 six==1.16.0
     # via requests-mock
@@ -77,22 +75,20 @@ tomli==2.0.1
     # via
     #   mypy
     #   pytest
-tornado==6.2
+tornado==6.3.2
     # via wipac-rest-tools (setup.py)
-types-cryptography==3.3.23.2
-    # via pyjwt
-types-requests==2.28.11.17
+types-requests==2.31.0.1
     # via wipac-rest-tools (setup.py)
-types-urllib3==1.26.25.10
+types-urllib3==1.26.25.13
     # via types-requests
-typing-extensions==4.5.0
+typing-extensions==4.6.2
     # via
     #   mypy
     #   qrcode
     #   wipac-dev-tools
-urllib3==1.26.15
+urllib3==2.0.2
     # via requests
 wheel==0.40.0
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.15
+wipac-dev-tools==1.6.16
     # via wipac-rest-tools (setup.py)
