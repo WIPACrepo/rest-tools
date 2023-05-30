@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.20 (2023-05-30)
+### Other
+
+* Pyjwt 2.7.0 should work now, so change version lock ([#127](https://github.com/WIPACrepo/rest-tools/issues/127)) ([`0e710f4`](https://github.com/WIPACrepo/rest-tools/commit/0e710f49f849ad149f36d75bce612b34f99bdfee))
+
 ## v1.4.19 (2023-05-24)
 ### Other
 * Bump py-versions CI release v2.1 ([`c25c828`](https://github.com/WIPACrepo/rest-tools/commit/c25c828ecc3569a4654147768ab4d27b6a249da4))
