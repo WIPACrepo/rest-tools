@@ -10,15 +10,15 @@ certifi==2023.5.7
     # via requests
 cffi==1.15.1
     # via cryptography
-charset-normalizer==3.1.0
+charset-normalizer==3.2.0
     # via requests
-cryptography==40.0.2
+cryptography==41.0.2
     # via pyjwt
 idna==3.4
     # via requests
 pycparser==2.21
     # via cffi
-pyjwt[crypto]==2.7.0
+pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
@@ -29,15 +29,15 @@ requests==2.31.0
     #   requests-futures
     #   wipac-dev-tools
     #   wipac-rest-tools (setup.py)
-requests-futures==1.0.0
+requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 tornado==6.3.2
     # via wipac-rest-tools (setup.py)
-typing-extensions==4.6.2
+typing-extensions==4.7.1
     # via
     #   qrcode
     #   wipac-dev-tools
-urllib3==2.0.2
+urllib3==2.0.4
     # via requests
 wipac-dev-tools==1.6.16
     # via wipac-rest-tools (setup.py)
