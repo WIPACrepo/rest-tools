@@ -4,6 +4,7 @@ from inspect import isawaitable
 import logging
 import re
 
+import requests.exceptions
 import tornado.web
 
 from .. import telemetry as wtt
@@ -50,6 +51,19 @@ def catch_error(method):
             raise  # tornado can handle this
         except tornado.httpclient.HTTPError:
             raise  # tornado can handle this
+        except requests.exceptions.HTTPError as e:
+            logger.warning('Error in website handler', exc_info=True)
+            try:
+                self.statsd.incr(self.__class__.__name__+'.error')
+            except Exception:
+                pass  # ignore statsd errors
+            if e.response.status_code == 403:
+                code = 403
+                message = 'Error authenticating user'
+            else:
+                code = 500
+                message = 'Error contacting backend in '+self.__class__.__name__
+            self.send_error(code, reason=message)
         except Exception:
             logger.warning('Error in website handler', exc_info=True)
             try:
