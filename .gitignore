@@ -110,3 +110,7 @@ venv.bak/
 /suru
 
 src/
+
+
+# wipac-dev-py-setup-action
+!dependencies*.log
