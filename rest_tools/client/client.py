@@ -36,6 +36,9 @@ class RestClient:
         token (str): (optional) access token, or a function generating an access token
         timeout (int): (optional) request timeout (default: 60s)
         retries (int): (optional) number of retries to attempt (default: 10)
+        backoff_factor (float): (optional) backoff factor to apply between attempts after the second try --
+                                sleep for `{backoff factor} * (2 ** ({number of previous retries}))` seconds
+                                see: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
         username (str): (optional) auth-basic username
         password (str): (optional) auth-basic password
         logger (logging.Logger): (optional) supply a logger to use
@@ -47,12 +50,14 @@ class RestClient:
         token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
         timeout: float = 60.0,
         retries: int = 10,
+        backoff_factor: float = 0.0,
         logger: Optional[logging.Logger] = None,
         **kwargs: Any
     ) -> None:
         self.address = address
         self.timeout = timeout
         self.retries = retries
+        self.backoff_factor=backoff_factor
         self.kwargs = kwargs
         self.logger = logger if logger else logging.getLogger('RestClient')
 
@@ -72,9 +77,15 @@ class RestClient:
         """Open the http session."""
         self.logger.debug('establish REST http session')
         if sync:
-            self.session = Session(self.retries)
+            self.session = Session(
+                self.retries,
+                backoff_factor=self.backoff_factor,
+            )
         else:
-            self.session = AsyncSession(self.retries)
+            self.session = AsyncSession(
+                self.retries,
+                backoff_factor=self.backoff_factor,
+            )
         self.session.headers = {  # type: ignore[assignment]
             'Content-Type': 'application/json',
         }
