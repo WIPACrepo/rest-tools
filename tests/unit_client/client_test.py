@@ -25,14 +25,14 @@ from rest_tools.utils.json_util import (  # isort:skip # noqa # pylint: disable=
 logger = logging.getLogger("rest_client")
 
 
-def test_01_init() -> None:
+def test_001_init() -> None:
     """Test `__init__()` & `close()`."""
     rpc = RestClient("http://test", "passkey")
     rpc.close()
 
 
 @pytest.mark.asyncio
-async def test_10_request(requests_mock: Mock) -> None:
+async def test_010_request(requests_mock: Mock) -> None:
     """Test `async request()`."""
     result = {"result": "the result"}
     rpc = RestClient("http://test", "passkey", timeout=0.1)
@@ -66,7 +66,7 @@ async def test_10_request(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_11_request(requests_mock: Mock) -> None:
+async def test_011_request(requests_mock: Mock) -> None:
     """Test request in `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.get("/test", content=b"")
@@ -77,7 +77,7 @@ async def test_11_request(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_20_timeout(requests_mock: Mock) -> None:
+async def test_020_timeout(requests_mock: Mock) -> None:
     """Test timeout in `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
     requests_mock.post("/test", exc=Timeout)
@@ -87,7 +87,7 @@ async def test_20_timeout(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_21_ssl_error(requests_mock: Mock) -> None:
+async def test_021_ssl_error(requests_mock: Mock) -> None:
     """Test ssl error in `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
     requests_mock.post("/test", exc=SSLError)
@@ -97,7 +97,7 @@ async def test_21_ssl_error(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_22_request(requests_mock: Mock) -> None:
+async def test_022_request(requests_mock: Mock) -> None:
     """Test `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.get("/test", content=b'{"foo"}')
@@ -107,7 +107,7 @@ async def test_22_request(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_30_request(requests_mock: Mock) -> None:
+async def test_030_request(requests_mock: Mock) -> None:
     """Test `async request()` with headers."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.get("/test", content=b"")
@@ -118,7 +118,7 @@ async def test_30_request(requests_mock: Mock) -> None:
     assert ret is None
 
 
-def test_90_request_seq(requests_mock: Mock) -> None:
+def test_100_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
     result = {"result": "the result"}
     rpc = RestClient("http://test", "passkey", timeout=0.1)
@@ -136,7 +136,7 @@ def test_90_request_seq(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_91_request_seq(requests_mock: Mock) -> None:
+async def test_101_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
     result = {"result": "the result"}
     rpc = RestClient("http://test", "passkey", timeout=0.1)
@@ -154,7 +154,7 @@ async def test_91_request_seq(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_92_request_seq(requests_mock: Mock) -> None:
+async def test_102_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
 
@@ -195,7 +195,7 @@ def _json_stream(iterable: Iterable[Any]) -> Iterator[Any]:
 
 
 @httprettified  # type: ignore[misc]
-def test_100_request_stream() -> None:
+def test_200_request_stream() -> None:
     """Test `request_stream()`.
 
     Based on https://github.com/gabrielfalcao/HTTPretty/blob/master/tests/functional/test_requests.py#L290
@@ -251,7 +251,7 @@ def test_100_request_stream() -> None:
 
 
 @httprettified  # type: ignore[misc]
-def test_101_request_stream() -> None:
+def test_201_request_stream() -> None:
     """Test `request_stream()` when there's no response."""
     mock_url = "http://test"
     rpc = RestClient(mock_url, "passkey", timeout=1)
@@ -303,7 +303,7 @@ def test_101_request_stream() -> None:
 
 
 @httprettified  # type: ignore[misc]
-def test_102_request_stream() -> None:
+def test_202_request_stream() -> None:
     """Test `request_stream()` where there's only one response."""
     mock_url = "http://test"
     rpc = RestClient(mock_url, "passkey", timeout=1)
