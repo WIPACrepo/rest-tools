@@ -79,7 +79,7 @@ async def test_011_request(requests_mock: Mock) -> None:
 @pytest.mark.asyncio
 async def test_020_timeout(requests_mock: Mock) -> None:
     """Test timeout in `async request()`."""
-    rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.post("/test", exc=Timeout)
 
     with pytest.raises(Timeout):
@@ -89,7 +89,7 @@ async def test_020_timeout(requests_mock: Mock) -> None:
 @pytest.mark.asyncio
 async def test_021_ssl_error(requests_mock: Mock) -> None:
     """Test ssl error in `async request()`."""
-    rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
+    rpc = RestClient("http://test", "passkey", timeout=0.1)
     requests_mock.post("/test", exc=SSLError)
 
     with pytest.raises(SSLError):
