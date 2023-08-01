@@ -153,7 +153,7 @@ async def test_91_request_seq(requests_mock: Mock) -> None:
     assert ret == result
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_92_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
