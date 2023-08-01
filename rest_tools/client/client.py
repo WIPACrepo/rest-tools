@@ -6,7 +6,7 @@ The REST protocol is built on http(s), with the body containing
 a json-encoded dictionary as necessary.
 """
 
-# fmt:off
+# fmt:quotes-ok
 
 import asyncio
 import logging
@@ -57,7 +57,7 @@ class RestClient:
         self.address = address
         self.timeout = timeout
         self.retries = retries
-        self.backoff_factor=backoff_factor
+        self.backoff_factor = backoff_factor
         self.kwargs = kwargs
         self.logger = logger if logger else logging.getLogger('RestClient')
 
@@ -116,7 +116,7 @@ class RestClient:
                 data = jwt.decode(
                     self.access_token,  # type: ignore[arg-type]
                     algorithms=['RS256', 'RS512'],
-                    options={"verify_signature": False}
+                    options={"verify_signature": False},
                 )
                 # account for an X second delay over the wire, so expire sooner
                 if data['exp'] < time.time() + self._token_expire_delay_offset:
@@ -186,7 +186,7 @@ class RestClient:
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='method'),
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT
+        kind=wtt.SpanKind.CLIENT,
     )
     async def request(
         self,
@@ -223,7 +223,7 @@ class RestClient:
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='method'),
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT
+        kind=wtt.SpanKind.CLIENT,
     )
     def request_seq(
         self,
@@ -258,7 +258,7 @@ class RestClient:
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='method'),
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT
+        kind=wtt.SpanKind.CLIENT,
     )
     def request_stream(
         self,
