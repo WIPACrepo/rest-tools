@@ -10,13 +10,13 @@ from typing import Iterable
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry  # type: ignore[import]
+from requests.packages.urllib3.util.retry import Retry
 from requests_futures.sessions import FuturesSession  # type: ignore[import]
 
 
 def AsyncSession(
-    retries: int = 10,
-    backoff_factor: float = 0.3,
+    retries: int,
+    backoff_factor: float,
     allowed_methods: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
 ) -> FuturesSession:
@@ -49,8 +49,8 @@ def AsyncSession(
 
 
 def Session(
-    retries: int = 10,
-    backoff_factor: float = 0.3,
+    retries: int,
+    backoff_factor: float,
     allowed_methods: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
 ) -> requests.Session:
