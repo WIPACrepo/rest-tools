@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.21 (2023-08-01)
+
+### Other
+
+* CI Updates ([#132](https://github.com/WIPACrepo/rest-tools/issues/132)) ([`4908545`](https://github.com/WIPACrepo/rest-tools/commit/49085451b875024cc64016a52166f57d83ffbf9b))
+* Handle requests errors more gracefully ([#130](https://github.com/WIPACrepo/rest-tools/issues/130)) ([`caac493`](https://github.com/WIPACrepo/rest-tools/commit/caac4939643bb0f2a7c763d7f9e9f9243e3ae408))
+
 ## v1.4.20 (2023-05-30)
 ### Other
 
