@@ -50,7 +50,7 @@ class RestClient:
         token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
         timeout: float = 60.0,
         retries: int = 10,
-        backoff_factor: float = 0.0,
+        backoff_factor: float = 0.3,
         logger: Optional[logging.Logger] = None,
         **kwargs: Any
     ) -> None:
