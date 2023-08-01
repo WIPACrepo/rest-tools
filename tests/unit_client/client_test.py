@@ -1,5 +1,6 @@
 """Test script for RestClient."""
 
+# fmt:quotes-ok
 
 import json
 import logging
@@ -30,7 +31,7 @@ def test_01_init() -> None:
     rpc.close()
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_10_request(requests_mock: Mock) -> None:
     """Test `async request()`."""
     result = {"result": "the result"}
@@ -64,7 +65,7 @@ async def test_10_request(requests_mock: Mock) -> None:
     assert ret == result2
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_11_request(requests_mock: Mock) -> None:
     """Test request in `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
@@ -75,7 +76,7 @@ async def test_11_request(requests_mock: Mock) -> None:
     assert ret is None
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_20_timeout(requests_mock: Mock) -> None:
     """Test timeout in `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
@@ -85,7 +86,7 @@ async def test_20_timeout(requests_mock: Mock) -> None:
         _ = await rpc.request("POST", "test", {})
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_21_ssl_error(requests_mock: Mock) -> None:
     """Test ssl error in `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1, backoff=False)
@@ -95,7 +96,7 @@ async def test_21_ssl_error(requests_mock: Mock) -> None:
         _ = await rpc.request("POST", "test", {})
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_22_request(requests_mock: Mock) -> None:
     """Test `async request()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
@@ -105,7 +106,7 @@ async def test_22_request(requests_mock: Mock) -> None:
         _ = await rpc.request("GET", "test", {})
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_30_request(requests_mock: Mock) -> None:
     """Test `async request()` with headers."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
@@ -134,7 +135,7 @@ def test_90_request_seq(requests_mock: Mock) -> None:
     assert ret == result
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_91_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
     result = {"result": "the result"}
@@ -152,7 +153,7 @@ async def test_91_request_seq(requests_mock: Mock) -> None:
     assert ret == result
 
 
-@pytest.mark.asyncio  # type: ignore[misc]  # type: ignore[misc]
+@pytest.mark.asyncio  # type: ignore[misc]
 async def test_92_request_seq(requests_mock: Mock) -> None:
     """Test `request_seq()`."""
     rpc = RestClient("http://test", "passkey", timeout=0.1)
