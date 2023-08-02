@@ -154,7 +154,7 @@ class RestClient:
         self.logger.info(f"using retries={self.retries}")
         if self.retries:
             log_retries_schema = ' '.join(
-                [f'<0.0>s {self.timeout}s']
+                [f'<0.0s> {self.timeout}s']
                 + [
                     f'<{(self.backoff_factor * 2**i)}s> {self.timeout}s'
                     for i in range(1, self.retries)
