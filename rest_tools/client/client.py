@@ -135,6 +135,9 @@ class RestClient:
         if self.retries > MAX_RETRIES:
             raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
         self.logger.info(f"using retries={self.retries}")
+        self.logger.info(
+            f"retry scheme: {self.timeout} {' -> '.join(f'{(self.backoff_factor * 2 **i)} -> {self.timeout}' for i in range(self.retries+1))}"
+        )
 
         # token handling
         self._token_expire_delay_offset = 5
