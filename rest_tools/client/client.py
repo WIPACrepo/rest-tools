@@ -122,11 +122,11 @@ class RestClient:
         self.kwargs = kwargs
         self.logger = logger if logger else logging.getLogger('RestClient')
 
-        self.timeout = timeout
+        self.timeout = float(timeout)
         if self.timeout < 0.0:
             raise ValueError(f"timeout must be positive: {self.timeout}")
 
-        self.backoff_factor = backoff_factor
+        self.backoff_factor = float(backoff_factor)
         if self.backoff_factor < 0.0:
             raise ValueError(f"backoff_factor must be positive: {self.backoff_factor}")
 
