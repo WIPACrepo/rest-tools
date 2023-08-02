@@ -62,6 +62,11 @@ class CalcRetryFromWaittimeMax:
 
     def calculate_retries(self, timeout: float, backoff_factor: float) -> int:
         """Calculate the number of retries (max returned -> MAX_RETRIES+1)."""
+        if self.waittime_max < timeout:
+            raise ValueError(
+                f"waittime_max ({self.waittime_max}) cannot be less than timeout ({timeout})"
+            )
+
         # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
         # not easily solvable (for k) in a closed form
         for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
@@ -71,9 +76,9 @@ class CalcRetryFromWaittimeMax:
                 - (2 * backoff_factor)
                 + timeout
             ):
-                break
-            else:
                 retries = k  # gets overwritten each iteration
+            else:
+                break
         return retries
 
 
