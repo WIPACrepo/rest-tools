@@ -1,6 +1,11 @@
 """Sub-package __init__."""
 
-from .client import CalcRetryFromBackoffMax, CalcRetryFromWaittimeMax, RestClient
+from .client import (
+    MAX_RETRIES,
+    CalcRetryFromBackoffMax,
+    CalcRetryFromWaittimeMax,
+    RestClient,
+)
 from .client_credentials import ClientCredentialsAuth
 from .device_client import DeviceGrantAuth, SavedDeviceGrantAuth
 from .openid_client import OpenIDRestClient
@@ -16,4 +21,5 @@ __all__ = [
     "Session",
     "CalcRetryFromBackoffMax",
     "CalcRetryFromWaittimeMax",
+    "MAX_RETRIES",
 ]

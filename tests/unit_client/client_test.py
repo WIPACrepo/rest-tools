@@ -4,6 +4,7 @@
 
 import json
 import logging
+import re
 import signal
 from contextlib import contextmanager
 from typing import Any, Iterable, Iterator
@@ -14,6 +15,7 @@ from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
 from rest_tools.client import (
+    MAX_RETRIES,
     CalcRetryFromBackoffMax,
     CalcRetryFromWaittimeMax,
     RestClient,
@@ -121,6 +123,7 @@ async def test_040_request_autocalc_retries() -> None:
     """Test auto-calculated retries options in `RestClient`."""
     for timeout, backoff_factor, arg, out in [
         (0.5, 0.75, 1, 1),
+        (0.5, 0.75, MAX_RETRIES, MAX_RETRIES),
         #
         (0.5, 0.75, CalcRetryFromBackoffMax(0.1), 0),  # -1.90689 -> 0
         (0.5, 0.75, CalcRetryFromBackoffMax(0.5), 0),  # 0.41503
@@ -142,6 +145,29 @@ async def test_040_request_autocalc_retries() -> None:
             backoff_factor=backoff_factor,
         )
         assert rc.retries == out
+
+
+@pytest.mark.asyncio
+async def test_041_request_autocalc_retries_error() -> None:
+    """Test auto-calculated retries options in `RestClient`."""
+    for timeout, backoff_factor, arg in [
+        (0.5, 0.75, MAX_RETRIES + 1),
+        #
+        (0.5, 0.1, CalcRetryFromBackoffMax(99.99)),
+        #
+        (0.5, 0.1, CalcRetryFromWaittimeMax(1000)),
+    ]:
+        print(f"{timeout=}, {backoff_factor=}, {arg=}")
+        with pytest.raises(
+            ValueError, match=re.escape(f"Cannot set # of retries above {MAX_RETRIES}")
+        ):
+            RestClient(
+                "http://test",
+                "passkey",
+                timeout=timeout,
+                retries=arg,  # type: ignore[arg-type]
+                backoff_factor=backoff_factor,
+            )
 
 
 def test_100_request_seq(requests_mock: Mock) -> None:
