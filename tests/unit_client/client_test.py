@@ -135,6 +135,7 @@ async def test_040_request_autocalc_retries() -> None:
             backoff_factor=backoff_factor,
         )
         assert rc.retries == out
+    assert 0
 
 
 def test_100_request_seq(requests_mock: Mock) -> None:
