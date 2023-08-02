@@ -124,11 +124,12 @@ async def test_040_request_autocalc_retries() -> None:
         (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 2),  # 2.88042
         (0.5, 0.75, CalcRetryFromWaittimeMax(100), 6),  # 6.02953
     ]:
+        print(f"{timeout=}, {backoff_factor=}, {arg=}, {out=}")
         rc = RestClient(
             "http://test",
             "passkey",
             timeout=timeout,
-            retries=arg,
+            retries=arg,  # type: ignore[arg-type]
             backoff_factor=backoff_factor,
         )
         assert rc.retries == out
