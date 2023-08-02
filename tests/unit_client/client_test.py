@@ -119,13 +119,19 @@ async def test_030_request(requests_mock: Mock) -> None:
 @pytest.mark.asyncio
 async def test_040_request_autocalc_retries() -> None:
     """Test auto-calculated retries options in `RestClient`."""
-    rc = RestClient(
-        "http://test",
-        "passkey",
-        timeout=0.1,
-        retries=10,
-        backoff_factor=1.0,
-    )
+    for timeout, backoff_factor, arg, out in [
+        (0.5, 0.75, 1, 1),
+        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 2),  # 2.88042
+        (0.5, 0.75, CalcRetryFromWaittimeMax(100), 6),  # 6.02953
+    ]:
+        rc = RestClient(
+            "http://test",
+            "passkey",
+            timeout=timeout,
+            retries=arg,
+            backoff_factor=backoff_factor,
+        )
+        assert rc.retries == out
 
 
 def test_100_request_seq(requests_mock: Mock) -> None:
