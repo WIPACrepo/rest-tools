@@ -127,7 +127,6 @@ async def test_040_request_autocalc_retries() -> None:
         (0.5, 0.75, CalcRetryFromBackoffMax(0.75), 1),  # 1.0
         (0.5, 0.75, CalcRetryFromBackoffMax(0.9), 1),  # 1.26303
         (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 4),  # 4.43296
-        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 4),  # 4.43296
         #
         (0.5, 0.75, CalcRetryFromWaittimeMax(100), 7),  # 7.01484
         (15, 0.5, CalcRetryFromWaittimeMax(5 * 60), 8),  # 8.20825
