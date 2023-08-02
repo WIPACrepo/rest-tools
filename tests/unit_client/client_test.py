@@ -5,7 +5,6 @@
 import json
 import logging
 import signal
-import sys
 from contextlib import contextmanager
 from typing import Any, Iterable, Iterator
 from unittest.mock import Mock
@@ -14,13 +13,12 @@ import pytest
 from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
-
-sys.path.append(".")
-from rest_tools.client import RestClient  # isort:skip # noqa # pylint: disable=C0413
-from rest_tools.utils.json_util import (  # isort:skip # noqa # pylint: disable=C0413
-    json_decode,
-    json_encode,
+from rest_tools.client import (
+    CalcRetryFromBackoffMax,
+    CalcRetryFromWaittimeMax,
+    RestClient,
 )
+from rest_tools.utils.json_util import json_decode, json_encode
 
 logger = logging.getLogger("rest_client")
 
