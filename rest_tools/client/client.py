@@ -104,6 +104,8 @@ class RestClient:
         **kwargs: Any,
     ) -> None:
         self.address = address
+        self.kwargs = kwargs
+        self.logger = logger if logger else logging.getLogger('RestClient')
 
         self.timeout = timeout
         if self.timeout < 0.0:
@@ -127,9 +129,7 @@ class RestClient:
         # + validate
         if self.retries > MAX_RETRIES:
             raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
-
-        self.kwargs = kwargs
-        self.logger = logger if logger else logging.getLogger('RestClient')
+        self.logger.info(f"using retries={self.retries}")
 
         # token handling
         self._token_expire_delay_offset = 5
