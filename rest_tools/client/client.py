@@ -88,10 +88,10 @@ class CalcRetryFromWaittimeMax:
         return retries
 
 
-def _log_retries_value(
+def _log_retries_values(
     retries: int, timeout: float, backoff_factor: float, logger: logging.Logger
 ) -> None:
-    logger.info(f"using retries={retries}")
+    logger.info(f"using {retries=} {timeout=} {backoff_factor=}")
     if retries:
         retries_schema = ' '.join(
             [f'<0.0s> {timeout}s']
@@ -166,7 +166,7 @@ class RestClient:
         # + validate
         if self.retries > MAX_RETRIES:
             raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
-        _log_retries_value(self.retries, self.timeout, self.backoff_factor, self.logger)
+        _log_retries_values(self.retries, self.timeout, self.backoff_factor, self.logger)
 
         # token handling
         self._token_expire_delay_offset = 5
