@@ -130,7 +130,7 @@ async def test_040_request_backoff(requests_mock: Mock) -> None:
     )
     requests_mock.post(
         "/test",
-        content=(
+        (
             [{'text': 'foo', 'status_code': 500}] * 3
             + [{'text': 'bar', 'status_code': 200}]
         ),
