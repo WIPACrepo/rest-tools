@@ -121,8 +121,10 @@ async def test_040_request_autocalc_retries() -> None:
     """Test auto-calculated retries options in `RestClient`."""
     for timeout, backoff_factor, arg, out in [
         (0.5, 0.75, 1, 1),
-        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 2),  # 2.88042
+        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 3),  # 3.43296
         (0.5, 0.75, CalcRetryFromWaittimeMax(100), 6),  # 6.02953
+        (15, 0.5, CalcRetryFromWaittimeMax(5 * 60), 7),  # 7.44557
+        (5, 2, CalcRetryFromWaittimeMax(5 * 60), 6),  # 6.06959
     ]:
         print(f"{timeout=}, {backoff_factor=}, {arg=}, {out=}")
         rc = RestClient(
