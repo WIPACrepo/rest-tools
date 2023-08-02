@@ -10,7 +10,6 @@ a json-encoded dictionary as necessary.
 
 import asyncio
 import dataclasses as dc
-import itertools
 import logging
 import math
 import os
@@ -23,6 +22,8 @@ import requests
 from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
+
+MAX_RETRIES = 32
 
 
 def _to_str(s: Union[str, bytes]) -> str:
@@ -80,8 +81,14 @@ class RestClient:
         **kwargs: Any,
     ) -> None:
         self.address = address
+
         self.timeout = timeout
+        if self.timeout < 0.0:
+            raise ValueError(f"timeout must be positive: {self.timeout}")
+
         self.backoff_factor = backoff_factor
+        if self.backoff_factor < 0.0:
+            raise ValueError(f"backoff_factor must be positive: {self.backoff_factor}")
 
         if isinstance(retries, CalcRetryFromBackoffMax):
             #                        backoff_last  =  backoff_factor * 2^retries
@@ -91,7 +98,7 @@ class RestClient:
         elif isinstance(retries, CalcRetryFromWaittimeMax):
             # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
             # not easily solvable (for k) in a closed form
-            for k in itertools.count(start=1):
+            for k in range(1, MAX_RETRIES + 1):
                 if retries.waittime_max > (
                     (self.timeout * k)
                     + (self.backoff_factor * 2 ** (k + 1))
@@ -100,12 +107,17 @@ class RestClient:
                 ):
                     self.retries = k - 1  # get prev since it was <= waittime_max
                     break
+            else:
+                self.retries = MAX_RETRIES + 1  # -> ValueError below
         elif isinstance(retries, int) and retries >= 0:
             self.retries = retries
         else:
             raise ValueError(
                 f"Cannot set and/or auto-calculate # of retries: {retries}"
             )
+        # validate
+        if self.retries > MAX_RETRIES:
+            raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
 
         self.kwargs = kwargs
         self.logger = logger if logger else logging.getLogger('RestClient')
