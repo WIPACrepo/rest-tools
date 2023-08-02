@@ -86,16 +86,26 @@ class RestClient:
     """A REST client with token handling.
 
     Args:
-        address (str): base address of REST API
-        token (str): (optional) access token, or a function generating an access token
-        timeout (int): (optional) request timeout (default: 60s)
-        retries (int): (optional) number of retries to attempt (default: 10)
-        backoff_factor (float): (optional) backoff factor to apply between attempts after the second try --
-                                sleep for `{backoff factor} * (2 ** ({number of previous retries}))` seconds
-                                see: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
-        username (str): (optional) auth-basic username
-        password (str): (optional) auth-basic password
-        logger (logging.Logger): (optional) supply a logger to use
+        address (str):
+            base address of REST API
+        token (str):
+            (optional) access token, or a function generating an access token
+        timeout (int):
+            (optional) request timeout (default: 60s)
+        retries (int | CalcRetryFromBackoffMax | CalcRetryFromWaittimeMax):
+            (optional) number of retries to attempt (default: 10)
+            alternatively, pass in a `CalcRetryFromBackoffMax` or
+            `CalcRetryFromWaittimeMax` instance to have this auto-calculated
+        backoff_factor (float):
+            (optional) backoff factor to apply between attempts after the second try --
+            sleep for `{backoff factor} * (2 ** ({number of previous retries}))` seconds
+            see: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
+        username (str):
+            (optional) auth-basic username
+        password (str):
+            (optional) auth-basic password
+        logger (logging.Logger):
+            (optional) supply a logger to use
     """
 
     def __init__(
