@@ -98,17 +98,16 @@ class RestClient:
         elif isinstance(retries, CalcRetryFromWaittimeMax):
             # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
             # not easily solvable (for k) in a closed form
-            for k in range(1, MAX_RETRIES + 1):
+            for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
                 if retries.waittime_max > (
                     (self.timeout * k)
                     + (self.backoff_factor * 2 ** (k + 1))
                     - (2 * self.backoff_factor)
                     + self.timeout
                 ):
-                    self.retries = k - 1  # get prev since it was <= waittime_max
                     break
-            else:
-                self.retries = MAX_RETRIES + 1  # -> ValueError below
+                else:
+                    self.retries = k  # gets overwritten each iteration
         elif isinstance(retries, int) and retries >= 0:
             self.retries = retries
         else:
