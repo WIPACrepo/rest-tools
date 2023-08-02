@@ -50,7 +50,7 @@ class CalcRetryFromBackoffMax:
         # lg( backoff_last / backoff_factor ) + 1 =  retries - 1
         return max(
             0,
-            int(math.log2(self.backoff_max / backoff_factor)) + 1,
+            int(math.log2(self.backoff_max / backoff_factor) + 1),
         )
 
 
