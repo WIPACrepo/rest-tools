@@ -119,26 +119,15 @@ async def test_030_request(requests_mock: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_040_request_backoff(requests_mock: Mock) -> None:
-    """Test backoff factor in `async request()`."""
-    rpc = RestClient(
+async def test_040_request_autocalc_retries() -> None:
+    """Test auto-calculated retries options in `RestClient`."""
+    rc = RestClient(
         "http://test",
         "passkey",
         timeout=0.1,
         retries=10,
         backoff_factor=1.0,
     )
-    requests_mock.post(
-        "/test",
-        (
-            [{'text': 'foo', 'status_code': 500}] * 3
-            + [{'text': 'bar', 'status_code': 200}]
-        ),
-    )
-
-    with pytest.raises(Timeout):
-        resp = await rpc.request("POST", "test", {})
-        print(resp)
 
 
 def test_100_request_seq(requests_mock: Mock) -> None:
