@@ -23,7 +23,7 @@ from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
-MAX_RETRIES = 32
+MAX_RETRIES = 15
 
 
 def _to_str(s: Union[str, bytes]) -> str:
@@ -166,7 +166,9 @@ class RestClient:
         # + validate
         if self.retries > MAX_RETRIES:
             raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
-        _log_retries_values(self.retries, self.timeout, self.backoff_factor, self.logger)
+        _log_retries_values(
+            self.retries, self.timeout, self.backoff_factor, self.logger
+        )
 
         # token handling
         self._token_expire_delay_offset = 5

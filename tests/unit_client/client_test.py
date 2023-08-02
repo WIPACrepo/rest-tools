@@ -153,9 +153,9 @@ async def test_041_request_autocalc_retries_error() -> None:
     for timeout, backoff_factor, arg in [
         (0.5, 0.75, MAX_RETRIES + 1),
         #
-        (0.5, 0.0001, CalcRetryFromBackoffMax(1000)),
+        (0.5, 0.001, CalcRetryFromBackoffMax(1000)),
         #
-        (0.5, 0.0001, CalcRetryFromWaittimeMax(1000)),
+        (0.5, 0.001, CalcRetryFromWaittimeMax(1000)),
     ]:
         print(f"{timeout=}, {backoff_factor=}, {arg=}")
         with pytest.raises(
