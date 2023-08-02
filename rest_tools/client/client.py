@@ -44,18 +44,21 @@ class CalcRetryFromBackoffMax:
 
     def calculate_retries(self, backoff_factor: float) -> int:
         """Calculate the number of retries."""
-        #                        backoff_last  =  backoff_factor * 2^retries
-        #       backoff_last / backoff_factor  =  2^retries
-        # lg( backoff_last / backoff_factor )  =  retries
-        return int(math.log2(self.backoff_max / backoff_factor))
+        #                        backoff_last     =  backoff_factor * 2^(retries-1)
+        #       backoff_last / backoff_factor     =  2^(retries-1)
+        # lg( backoff_last / backoff_factor )     =  retries - 1
+        # lg( backoff_last / backoff_factor ) + 1 =  retries - 1
+        return max(
+            0,
+            int(math.log2(self.backoff_max / backoff_factor)) + 1,
+        )
 
 
 @dc.dataclass
 class CalcRetryFromWaittimeMax:
     """An indicator to auto-calculate the # of retries from total waittime.
 
-    `waittime_max` includes each attempt's timeout and each backoff time:
-    `sum{n=1,retries}(T + 2^n * B) + T`
+    `waittime_max` includes each attempt's timeout and each backoff time
     """
 
     waittime_max: float
@@ -67,12 +70,15 @@ class CalcRetryFromWaittimeMax:
                 f"waittime_max ({self.waittime_max}) cannot be less than timeout ({timeout})"
             )
 
-        # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
+        # the first backoff is always 0 sec, factor applies after 2nd attempt
+        #    T + 0 + sum{n=1,retries-1}(T + 2^n * B)     + T
+        # =  T + 0 + ( T*k + B*2^((retries-1)+1) - 2*B ) + T
         # not easily solvable (for k) in a closed form
         for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
             if self.waittime_max > (
-                (timeout * k)
-                + (backoff_factor * 2 ** (k + 1))
+                timeout
+                + (timeout * k)
+                + (backoff_factor * 2 ** (k))
                 - (2 * backoff_factor)
                 + timeout
             ):
@@ -99,6 +105,7 @@ class RestClient:
         backoff_factor (float):
             (optional) backoff factor to apply between attempts after the second try --
             sleep for `{backoff factor} * (2 ** ({number of previous retries}))` seconds
+            "For example, if the backoff_factor is 0.1, then Retry.sleep() will sleep for [0.0s, 0.2s, 0.4s, 0.8s, ...] between retries."
             see: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
         username (str):
             (optional) auth-basic username
@@ -145,9 +152,18 @@ class RestClient:
         if self.retries > MAX_RETRIES:
             raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
         self.logger.info(f"using retries={self.retries}")
-        self.logger.info(
-            f"retry scheme (TIMEOUT [<BACKOFF> TIMEOUT ...]): {self.timeout}s {' '.join(f'<{(self.backoff_factor * 2**i)}s> {self.timeout}s' for i in range(1,self.retries+1))}"
-        )
+        if self.retries:
+            log_retries_schema = ' '.join(
+                [f'<0.0>s {self.timeout}s']
+                + [
+                    f'<{(self.backoff_factor * 2**i)}s> {self.timeout}s'
+                    for i in range(1, self.retries)
+                ]
+            )
+            self.logger.info(
+                f"retry scheme (TIMEOUT [<BACKOFF> TIMEOUT ...]): "
+                f"{self.timeout}s {log_retries_schema}"
+            )
 
         # token handling
         self._token_expire_delay_offset = 5

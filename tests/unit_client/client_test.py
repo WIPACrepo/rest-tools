@@ -121,10 +121,18 @@ async def test_040_request_autocalc_retries() -> None:
     """Test auto-calculated retries options in `RestClient`."""
     for timeout, backoff_factor, arg, out in [
         (0.5, 0.75, 1, 1),
-        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 3),  # 3.43296
-        (0.5, 0.75, CalcRetryFromWaittimeMax(100), 6),  # 6.02953
-        (15, 0.5, CalcRetryFromWaittimeMax(5 * 60), 7),  # 7.44557
-        (5, 2, CalcRetryFromWaittimeMax(5 * 60), 6),  # 6.06959
+        #
+        (0.5, 0.75, CalcRetryFromBackoffMax(0.1), 0),  # -1.90689 -> 0
+        (0.5, 0.75, CalcRetryFromBackoffMax(0.5), 0),  # 0.41503
+        (0.5, 0.75, CalcRetryFromBackoffMax(0.75), 1),  # 1.0
+        (0.5, 0.75, CalcRetryFromBackoffMax(0.9), 1),  # 1.26303
+        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 4),  # 4.43296
+        (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 4),  # 4.43296
+        #
+        (0.5, 0.75, CalcRetryFromWaittimeMax(100), 7),  # 7.01484
+        (15, 0.5, CalcRetryFromWaittimeMax(5 * 60), 8),  # 8.20825
+        (1, 0.1, CalcRetryFromWaittimeMax(5 * 60), 11),  # 11.4854
+        (5, 2, CalcRetryFromWaittimeMax(5 * 60), 7),  # 7.01635
     ]:
         print(f"{timeout=}, {backoff_factor=}, {arg=}, {out=}")
         rc = RestClient(
@@ -135,7 +143,6 @@ async def test_040_request_autocalc_retries() -> None:
             backoff_factor=backoff_factor,
         )
         assert rc.retries == out
-    assert 0
 
 
 def test_100_request_seq(requests_mock: Mock) -> None:
