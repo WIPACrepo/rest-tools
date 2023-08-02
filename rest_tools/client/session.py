@@ -17,6 +17,7 @@ from urllib3.util.retry import Retry
 def AsyncSession(
     retries: int,
     backoff_factor: float,
+    backoff_max: float,
     allowed_methods: Collection[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Collection[int] = (408, 429, 500, 502, 503, 504),
 ) -> FuturesSession:
@@ -41,6 +42,7 @@ def AsyncSession(
         allowed_methods=allowed_methods,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
+        backoff_max=backoff_max,
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
@@ -51,6 +53,7 @@ def AsyncSession(
 def Session(
     retries: int,
     backoff_factor: float,
+    backoff_max: float,
     allowed_methods: Collection[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Collection[int] = (408, 429, 500, 502, 503, 504),
 ) -> requests.Session:
@@ -75,6 +78,7 @@ def Session(
         allowed_methods=allowed_methods,
         status_forcelist=status_forcelist,
         backoff_factor=backoff_factor,
+        backoff_max=backoff_max,
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
