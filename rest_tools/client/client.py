@@ -9,7 +9,10 @@ a json-encoded dictionary as necessary.
 # fmt:quotes-ok
 
 import asyncio
+import dataclasses as dc
+import itertools
 import logging
+import math
 import os
 import time
 from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
@@ -26,6 +29,28 @@ def _to_str(s: Union[str, bytes]) -> str:
     if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
+
+
+@dc.dataclass
+class CalcRetryFromBackoffMax:
+    """An indicator to auto-calculate the # of retries using a backoff_max.
+
+    `backoff_max` is the maximum allowed backoff time for the final
+    retry
+    """
+
+    backoff_max: float
+
+
+@dc.dataclass
+class CalcRetryFromWaittimeMax:
+    """An indicator to auto-calculate the # of retries from total waittime.
+
+    `waittime_max` includes each attempt's timeout and each backoff time:
+    `sum{n=1,retries}(T + 2^n * B) + T`
+    """
+
+    waittime_max: float
 
 
 class RestClient:
@@ -49,15 +74,39 @@ class RestClient:
         address: str,
         token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
         timeout: float = 60.0,
-        retries: int = 10,
+        retries: Union[int, CalcRetryFromBackoffMax, CalcRetryFromWaittimeMax] = 10,
         backoff_factor: float = 0.3,
         logger: Optional[logging.Logger] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         self.address = address
         self.timeout = timeout
-        self.retries = retries
         self.backoff_factor = backoff_factor
+
+        if isinstance(retries, CalcRetryFromBackoffMax):
+            #                        backoff_last  =  backoff_factor * 2^retries
+            #       backoff_last / backoff_factor  =  2^retries
+            # lg( backoff_last / backoff_factor )  =  retries
+            self.retries = int(math.log2(retries.backoff_max / self.backoff_factor))
+        elif isinstance(retries, CalcRetryFromWaittimeMax):
+            # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
+            # not easily solvable (for k) in a closed form
+            for k in itertools.count(start=1):
+                if retries.waittime_max > (
+                    (self.timeout * k)
+                    + (self.backoff_factor * 2 ** (k + 1))
+                    - (2 * self.backoff_factor)
+                    + self.timeout
+                ):
+                    self.retries = k - 1  # get prev since it was <= waittime_max
+                    break
+        elif isinstance(retries, int) and retries >= 0:
+            self.retries = retries
+        else:
+            raise ValueError(
+                f"Cannot set and/or auto-calculate # of retries: {retries}"
+            )
+
         self.kwargs = kwargs
         self.logger = logger if logger else logging.getLogger('RestClient')
 
