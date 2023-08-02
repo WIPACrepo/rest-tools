@@ -153,7 +153,7 @@ async def test_041_request_autocalc_retries_error() -> None:
     for timeout, backoff_factor, arg in [
         (0.5, 0.75, MAX_RETRIES + 1),
         #
-        (0.5, 0.1, CalcRetryFromBackoffMax(99.99)),
+        (0.5, 0.01, CalcRetryFromBackoffMax(1000)),
         #
         (0.5, 0.1, CalcRetryFromWaittimeMax(1000)),
     ]:
