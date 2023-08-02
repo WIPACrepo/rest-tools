@@ -42,6 +42,13 @@ class CalcRetryFromBackoffMax:
 
     backoff_max: float
 
+    def calculate_retries(self, backoff_factor: float) -> int:
+        """Calculate the number of retries."""
+        #                        backoff_last  =  backoff_factor * 2^retries
+        #       backoff_last / backoff_factor  =  2^retries
+        # lg( backoff_last / backoff_factor )  =  retries
+        return int(math.log2(self.backoff_max / backoff_factor))
+
 
 @dc.dataclass
 class CalcRetryFromWaittimeMax:
@@ -52,6 +59,22 @@ class CalcRetryFromWaittimeMax:
     """
 
     waittime_max: float
+
+    def calculate_retries(self, timeout: float, backoff_factor: float) -> int:
+        """Calculate the number of retries (max returned -> MAX_RETRIES+1)."""
+        # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
+        # not easily solvable (for k) in a closed form
+        for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
+            if self.waittime_max > (
+                (timeout * k)
+                + (backoff_factor * 2 ** (k + 1))
+                - (2 * backoff_factor)
+                + timeout
+            ):
+                break
+            else:
+                retries = k  # gets overwritten each iteration
+        return retries
 
 
 class RestClient:
@@ -90,31 +113,18 @@ class RestClient:
         if self.backoff_factor < 0.0:
             raise ValueError(f"backoff_factor must be positive: {self.backoff_factor}")
 
+        # get numerical retries value
         if isinstance(retries, CalcRetryFromBackoffMax):
-            #                        backoff_last  =  backoff_factor * 2^retries
-            #       backoff_last / backoff_factor  =  2^retries
-            # lg( backoff_last / backoff_factor )  =  retries
-            self.retries = int(math.log2(retries.backoff_max / self.backoff_factor))
+            self.retries = retries.calculate_retries(self.backoff_factor)
         elif isinstance(retries, CalcRetryFromWaittimeMax):
-            # sum{n=1,k}(T + 2^n * B) + T  =  ( T*k + B*2^(k+1) - 2*B ) + T
-            # not easily solvable (for k) in a closed form
-            for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
-                if retries.waittime_max > (
-                    (self.timeout * k)
-                    + (self.backoff_factor * 2 ** (k + 1))
-                    - (2 * self.backoff_factor)
-                    + self.timeout
-                ):
-                    break
-                else:
-                    self.retries = k  # gets overwritten each iteration
+            self.retries = retries.calculate_retries(self.timeout, self.backoff_factor)
         elif isinstance(retries, int) and retries >= 0:
             self.retries = retries
         else:
             raise ValueError(
                 f"Cannot set and/or auto-calculate # of retries: {retries}"
             )
-        # validate
+        # + validate
         if self.retries > MAX_RETRIES:
             raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
 
