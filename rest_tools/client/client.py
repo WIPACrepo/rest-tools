@@ -6,10 +6,12 @@ The REST protocol is built on http(s), with the body containing
 a json-encoded dictionary as necessary.
 """
 
-# fmt:off
+# fmt:quotes-ok
 
 import asyncio
+import dataclasses as dc
 import logging
+import math
 import os
 import time
 from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
@@ -21,6 +23,8 @@ from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
+MAX_RETRIES = 15
+
 
 def _to_str(s: Union[str, bytes]) -> str:
     if isinstance(s, bytes):
@@ -28,17 +32,102 @@ def _to_str(s: Union[str, bytes]) -> str:
     return s
 
 
+@dc.dataclass
+class CalcRetryFromBackoffMax:
+    """An indicator to auto-calculate the # of retries using a backoff_max.
+
+    `backoff_max` is the maximum allowed backoff time for the final
+    retry
+    """
+
+    backoff_max: float
+
+    def calculate_retries(self, backoff_factor: float) -> int:
+        """Calculate the number of retries."""
+        #                        backoff_last     =  backoff_factor * 2^(retries-1)
+        #       backoff_last / backoff_factor     =  2^(retries-1)
+        # lg( backoff_last / backoff_factor )     =  retries - 1
+        # lg( backoff_last / backoff_factor ) + 1 =  retries - 1
+        return max(
+            0,
+            int(math.log2(self.backoff_max / backoff_factor) + 1),
+        )
+
+
+@dc.dataclass
+class CalcRetryFromWaittimeMax:
+    """An indicator to auto-calculate the # of retries from total waittime.
+
+    `waittime_max` includes each attempt's timeout and each backoff time
+    """
+
+    waittime_max: float
+
+    def calculate_retries(self, timeout: float, backoff_factor: float) -> int:
+        """Calculate the number of retries (max returned -> MAX_RETRIES+1)."""
+        if self.waittime_max < timeout:
+            raise ValueError(
+                f"waittime_max ({self.waittime_max}) cannot be less than timeout ({timeout})"
+            )
+
+        # the first backoff is always 0 sec, factor applies after 2nd attempt
+        #    T + 0 + sum{n=1,retries-1}(T + 2^n * B)     + T
+        # =  T + 0 + ( T*k + B*2^((retries-1)+1) - 2*B ) + T
+        # not easily solvable (for k) in a closed form
+        for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
+            if self.waittime_max > (
+                timeout
+                + (timeout * k)
+                + (backoff_factor * 2 ** (k))
+                - (2 * backoff_factor)
+                + timeout
+            ):
+                retries = k  # gets overwritten each iteration
+            else:
+                break
+        return retries
+
+
+def _log_retries_values(
+    retries: int, timeout: float, backoff_factor: float, logger: logging.Logger
+) -> None:
+    logger.info(f"using {retries=} {timeout=} {backoff_factor=}")
+    if retries:
+        retries_schema = ' '.join(
+            [f'<0.0s> {timeout}s']
+            + [f'<{(backoff_factor * 2**i)}s> {timeout}s' for i in range(1, retries)]
+        )
+        logger.info(
+            f"retry scheme (TIMEOUT [<BACKOFF> TIMEOUT ...]): "
+            f"{timeout}s {retries_schema}"
+        )
+
+
 class RestClient:
     """A REST client with token handling.
 
     Args:
-        address (str): base address of REST API
-        token (str): (optional) access token, or a function generating an access token
-        timeout (int): (optional) request timeout (default: 60s)
-        retries (int): (optional) number of retries to attempt (default: 10)
-        username (str): (optional) auth-basic username
-        password (str): (optional) auth-basic password
-        logger (logging.Logger): (optional) supply a logger to use
+        address (str):
+            base address of REST API
+        token (str):
+            (optional) access token, or a function generating an access token
+        timeout (int):
+            (optional) request timeout (default: 60s)
+        retries (int | CalcRetryFromBackoffMax | CalcRetryFromWaittimeMax):
+            (optional) number of retries to attempt (default: 10)
+            alternatively, pass in a `CalcRetryFromBackoffMax` or
+            `CalcRetryFromWaittimeMax` instance to have this auto-calculated
+        backoff_factor (float):
+            (optional) backoff factor to apply between attempts after the second try --
+            sleep for `{backoff factor} * (2 ** ({number of previous retries}))` seconds
+            "For example, if the backoff_factor is 0.1, then Retry.sleep() will sleep for [0.0s, 0.2s, 0.4s, 0.8s, ...] between retries."
+            see: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
+        username (str):
+            (optional) auth-basic username
+        password (str):
+            (optional) auth-basic password
+        logger (logging.Logger):
+            (optional) supply a logger to use
     """
 
     def __init__(
@@ -46,15 +135,40 @@ class RestClient:
         address: str,
         token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
         timeout: float = 60.0,
-        retries: int = 10,
+        retries: Union[int, CalcRetryFromBackoffMax, CalcRetryFromWaittimeMax] = 10,
+        backoff_factor: float = 0.3,
         logger: Optional[logging.Logger] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         self.address = address
-        self.timeout = timeout
-        self.retries = retries
         self.kwargs = kwargs
         self.logger = logger if logger else logging.getLogger('RestClient')
+
+        self.timeout = float(timeout)
+        if self.timeout < 0.0:
+            raise ValueError(f"timeout must be positive: {self.timeout}")
+
+        self.backoff_factor = float(backoff_factor)
+        if self.backoff_factor < 0.0:
+            raise ValueError(f"backoff_factor must be positive: {self.backoff_factor}")
+
+        # get numerical retries value
+        if isinstance(retries, CalcRetryFromBackoffMax):
+            self.retries = retries.calculate_retries(self.backoff_factor)
+        elif isinstance(retries, CalcRetryFromWaittimeMax):
+            self.retries = retries.calculate_retries(self.timeout, self.backoff_factor)
+        elif isinstance(retries, int) and retries >= 0:
+            self.retries = retries
+        else:
+            raise ValueError(
+                f"Cannot set and/or auto-calculate # of retries: {retries}"
+            )
+        # + validate
+        if self.retries > MAX_RETRIES:
+            raise ValueError(f"Cannot set # of retries above {MAX_RETRIES}")
+        _log_retries_values(
+            self.retries, self.timeout, self.backoff_factor, self.logger
+        )
 
         # token handling
         self._token_expire_delay_offset = 5
@@ -72,9 +186,15 @@ class RestClient:
         """Open the http session."""
         self.logger.debug('establish REST http session')
         if sync:
-            self.session = Session(self.retries)
+            self.session = Session(
+                self.retries,
+                backoff_factor=self.backoff_factor,
+            )
         else:
-            self.session = AsyncSession(self.retries)
+            self.session = AsyncSession(
+                self.retries,
+                backoff_factor=self.backoff_factor,
+            )
         self.session.headers = {  # type: ignore[assignment]
             'Content-Type': 'application/json',
         }
@@ -105,7 +225,7 @@ class RestClient:
                 data = jwt.decode(
                     self.access_token,  # type: ignore[arg-type]
                     algorithms=['RS256', 'RS512'],
-                    options={"verify_signature": False}
+                    options={"verify_signature": False},
                 )
                 # account for an X second delay over the wire, so expire sooner
                 if data['exp'] < time.time() + self._token_expire_delay_offset:
@@ -175,7 +295,7 @@ class RestClient:
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='method'),
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT
+        kind=wtt.SpanKind.CLIENT,
     )
     async def request(
         self,
@@ -212,7 +332,7 @@ class RestClient:
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='method'),
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT
+        kind=wtt.SpanKind.CLIENT,
     )
     def request_seq(
         self,
@@ -247,7 +367,7 @@ class RestClient:
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='method'),
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT
+        kind=wtt.SpanKind.CLIENT,
     )
     def request_stream(
         self,

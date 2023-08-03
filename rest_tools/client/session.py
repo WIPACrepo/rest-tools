@@ -6,27 +6,27 @@
 # fmt:off
 # pylint: skip-file
 
-from typing import Iterable
+from typing import Collection
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry  # type: ignore[import]
 from requests_futures.sessions import FuturesSession  # type: ignore[import]
+from urllib3.util.retry import Retry
 
 
 def AsyncSession(
-    retries: int = 10,
-    backoff_factor: float = 0.3,
-    allowed_methods: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
-    status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
+    retries: int,
+    backoff_factor: float,
+    allowed_methods: Collection[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    status_forcelist: Collection[int] = (408, 429, 500, 502, 503, 504),
 ) -> FuturesSession:
     """Return a Session object with full retry capabilities.
 
     Args:
         retries (int): number of retries
         backoff_factor (float): speed factor for retries (in seconds)
-        allowed_methods (iterable): http methods to retry on
-        status_forcelist (iterable): http status codes to retry on
+        allowed_methods (collection): http methods to retry on
+        status_forcelist (collection): http status codes to retry on
 
     Returns:
         :py:class:`requests.Session`: session object
@@ -49,18 +49,18 @@ def AsyncSession(
 
 
 def Session(
-    retries: int = 10,
-    backoff_factor: float = 0.3,
-    allowed_methods: Iterable[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
-    status_forcelist: Iterable[int] = (408, 429, 500, 502, 503, 504),
+    retries: int,
+    backoff_factor: float,
+    allowed_methods: Collection[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    status_forcelist: Collection[int] = (408, 429, 500, 502, 503, 504),
 ) -> requests.Session:
     """Return a Session object with full retry capabilities.
 
     Args:
         retries (int): number of retries
         backoff_factor (float): speed factor for retries (in seconds)
-        allowed_methods (iterable): http methods to retry on
-        status_forcelist (iterable): http status codes to retry on
+        allowed_methods (collection): http methods to retry on
+        status_forcelist (collection): http status codes to retry on
 
     Returns:
         :py:class:`requests.Session`: session object
