@@ -91,13 +91,13 @@ class CalcRetryFromWaittimeMax:
 def _log_retries_values(
     retries: int, timeout: float, backoff_factor: float, logger: logging.Logger
 ) -> None:
-    logger.info(f"using {retries=} {timeout=} {backoff_factor=}")
+    logger.debug(f"using {retries=} {timeout=} {backoff_factor=}")
     if retries:
         retries_schema = ' '.join(
             [f'<0.0s> {timeout}s']
             + [f'<{(backoff_factor * 2**i)}s> {timeout}s' for i in range(1, retries)]
         )
-        logger.info(
+        logger.debug(
             f"retry scheme (TIMEOUT [<BACKOFF> TIMEOUT ...]): "
             f"{timeout}s {retries_schema}"
         )
