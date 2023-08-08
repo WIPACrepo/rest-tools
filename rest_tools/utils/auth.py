@@ -142,7 +142,7 @@ class OpenIDAuth(_AuthValidate):
             for jwk in r.json()['keys']:
                 logging.debug(f'jwk: {jwk}')
                 kid = jwk['kid']
-                logging.info(f'loaded JWT key {kid}')
+                logging.debug(f'loaded JWT key {kid}')
                 self.public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
         except Exception:
             logging.warning('failed to refresh OpenID keys', exc_info=True)
