@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.1 (2023-08-08)
+
+### Other
+
+* Reduce logging noise ([#134](https://github.com/WIPACrepo/rest-tools/issues/134)) ([`f844ca0`](https://github.com/WIPACrepo/rest-tools/commit/f844ca0fec9d5e1873d5d3f95215508f26c98e14))
+
 ## v1.5.0 (2023-08-03)
 
 
