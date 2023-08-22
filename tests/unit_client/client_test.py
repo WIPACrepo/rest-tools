@@ -156,11 +156,11 @@ async def test_041_request_autocalc_retries_error() -> None:
         #
         (
             0.5,
-            0.0001,
+            01e-07,
             CalcRetryFromBackoffMax(urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX),
         ),
         #
-        (0.5, 0.001, CalcRetryFromWaittimeMax(1000)),
+        (0.5, 0.3, CalcRetryFromWaittimeMax(60 * 60)),
     ]:
         print(f"{timeout=}, {backoff_factor=}, {arg=}")
         with pytest.raises(
