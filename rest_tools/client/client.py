@@ -24,7 +24,7 @@ from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
-MAX_RETRIES = 50
+MAX_RETRIES = 30
 
 
 def _to_str(s: Union[str, bytes]) -> str:
