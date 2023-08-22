@@ -14,7 +14,7 @@ cffi==1.15.1
     # via cryptography
 charset-normalizer==3.2.0
     # via requests
-click==8.1.6
+click==8.1.7
     # via
     #   click-completion
     #   pycycle
@@ -24,7 +24,7 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.2.7
+coverage[toml]==7.3.0
     # via
     #   pytest-cov
     #   wipac-rest-tools (setup.py)
@@ -44,7 +44,7 @@ googleapis-common-protos==1.56.2
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.56.2
+grpcio==1.57.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -62,7 +62,7 @@ markupsafe==2.1.3
     # via jinja2
 mccabe==0.7.0
     # via flake8
-mypy==1.4.1
+mypy==1.5.1
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
@@ -142,9 +142,9 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.11.0
     # via wipac-rest-tools (setup.py)
-ruff==0.0.282
+ruff==0.0.285
     # via wipac-rest-tools (setup.py)
-shellingham==1.5.0.post1
+shellingham==1.5.3
     # via click-completion
 six==1.16.0
     # via
@@ -153,7 +153,7 @@ six==1.16.0
     #   thrift
 thrift==0.16.0
     # via opentelemetry-exporter-jaeger-thrift
-tornado==6.3.2
+tornado==6.3.3
     # via wipac-rest-tools (setup.py)
 types-requests==2.31.0.2
     # via wipac-rest-tools (setup.py)
@@ -168,7 +168,7 @@ typing-extensions==4.7.1
     #   wipac-telemetry
 urllib3==2.0.4
     # via requests
-wheel==0.41.1
+wheel==0.41.2
     # via wipac-rest-tools (setup.py)
 wipac-dev-tools==1.6.16
     # via

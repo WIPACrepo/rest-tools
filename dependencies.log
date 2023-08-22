@@ -31,7 +31,7 @@ requests==2.31.0
     #   wipac-rest-tools (setup.py)
 requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
-tornado==6.3.2
+tornado==6.3.3
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.7.1
     # via
