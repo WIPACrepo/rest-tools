@@ -79,18 +79,23 @@ class CalcRetryFromWaittimeMax:
             )
 
         # the first backoff is always 0 sec, factor applies after 2nd attempt
-        #    T + 0 + sum{n=1,retries-1}(T + 2^n * B)     + T
-        # =  T + 0 + ( T*k + B*2^((retries-1)+1) - 2*B ) + T
-        # not easily solvable (for k) in a closed form
-        for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
+        #    T  +  0  +  sum{n=1,retries-1}(T + min[MAX, 2^n * B] )  +  T
+        # sum has no closed form due to `min` function
+        for candidate in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
             if self.waittime_max > (
                 timeout
-                + (timeout * k)
-                + (backoff_factor * 2 ** (k))
-                - (2 * backoff_factor)
+                + 0
+                + sum(
+                    timeout
+                    + min(
+                        urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX,
+                        2**n * backoff_factor,
+                    )
+                    for n in range(1, candidate)  # 1 to retries-1 (inclusive)
+                )
                 + timeout
             ):
-                retries = k  # gets overwritten each iteration
+                retries = candidate  # gets overwritten each iteration
             else:
                 break
         return retries
@@ -102,8 +107,14 @@ def _log_retries_values(
     logger.debug(f"using {retries=} {timeout=} {backoff_factor=}")
     if retries:
         retries_schema = ' '.join(
+            # first backoff is 0
             [f'<0.0s> {timeout}s']
-            + [f'<{(backoff_factor * 2**i)}s> {timeout}s' for i in range(1, retries)]
+            +
+            # calculate increasing backoff values
+            [
+                f'<{min(urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX,backoff_factor * 2**i)}s> {timeout}s'
+                for i in range(1, retries)
+            ]
         )
         logger.debug(
             f"retry scheme (TIMEOUT [<BACKOFF> TIMEOUT ...]): "
