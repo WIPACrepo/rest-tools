@@ -76,7 +76,7 @@ jobs:
           pip install .[tests]
       - name: Run Tests
         run: |
-          python -m pytest tests --tb=short --log-level=INFO -vvv
+          python -m pytest tests --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
   py-tests-telemetry:
@@ -97,7 +97,7 @@ jobs:
           pip install .[telemetry,tests]
       - name: Run Tests
         run: |
-          python -m pytest tests --tb=short --log-level=INFO
+          python -m pytest tests --tb=short --log-level=DEBUG
           pycycle --here --verbose
       - name: Run Integration Test
         run: |
