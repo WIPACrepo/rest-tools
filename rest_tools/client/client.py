@@ -24,7 +24,7 @@ from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
-MAX_RETRIES = 15
+MAX_RETRIES = 50
 
 
 def _to_str(s: Union[str, bytes]) -> str:
@@ -81,8 +81,8 @@ class CalcRetryFromWaittimeMax:
         # the first backoff is always 0 sec, factor applies after 2nd attempt
         #    T  +  0  +  sum{n=1,retries-1}(T + min[MAX, 2^n * B] )  +  T
         # sum has no closed form due to `min` function
-        for candidate in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
-            if self.waittime_max > (
+        for candidate in range(0, MAX_RETRIES + 2):  # last val is MAX_RETRIES+1
+            total = (
                 timeout
                 + 0
                 + sum(
@@ -94,7 +94,10 @@ class CalcRetryFromWaittimeMax:
                     for n in range(1, candidate)  # 1 to retries-1 (inclusive)
                 )
                 + timeout
-            ):
+            )
+            # print(candidate)
+            # print(total)
+            if self.waittime_max > total:
                 retries = candidate  # gets overwritten each iteration
             else:
                 break
