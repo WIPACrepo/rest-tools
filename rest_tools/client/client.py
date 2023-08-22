@@ -18,12 +18,13 @@ from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
+import urllib3
 
 from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
 from .session import AsyncSession, Session
 
-MAX_RETRIES = 15
+MAX_RETRIES = 30
 
 
 def _to_str(s: Union[str, bytes]) -> str:
@@ -41,6 +42,13 @@ class CalcRetryFromBackoffMax:
     """
 
     backoff_max: float
+
+    def __post_init__(self) -> None:
+        if self.backoff_max > urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX:
+            raise ValueError(
+                f"CalcRetryFromBackoffMax.backoff_max ({self.backoff_max})"
+                f" cannot be greater than: {urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX=}"
+            )
 
     def calculate_retries(self, backoff_factor: float) -> int:
         """Calculate the number of retries."""
@@ -71,18 +79,26 @@ class CalcRetryFromWaittimeMax:
             )
 
         # the first backoff is always 0 sec, factor applies after 2nd attempt
-        #    T + 0 + sum{n=1,retries-1}(T + 2^n * B)     + T
-        # =  T + 0 + ( T*k + B*2^((retries-1)+1) - 2*B ) + T
-        # not easily solvable (for k) in a closed form
-        for k in range(0, MAX_RETRIES + 2):  # last val -> MAX_RETRIES+1
-            if self.waittime_max > (
+        #    T  +  0  +  sum{n=1,retries-1}(T + min[MAX, 2^n * B] )  +  T
+        # sum has no closed form due to `min` function
+        for candidate in range(0, MAX_RETRIES + 2):  # last val is MAX_RETRIES+1
+            total = (
                 timeout
-                + (timeout * k)
-                + (backoff_factor * 2 ** (k))
-                - (2 * backoff_factor)
+                + 0
+                + sum(
+                    timeout
+                    + min(
+                        urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX,
+                        2**n * backoff_factor,
+                    )
+                    for n in range(1, candidate)  # 1 to retries-1 (inclusive)
+                )
                 + timeout
-            ):
-                retries = k  # gets overwritten each iteration
+            )
+            # print(candidate)
+            # print(total)
+            if self.waittime_max > total:
+                retries = candidate  # gets overwritten each iteration
             else:
                 break
         return retries
@@ -94,8 +110,14 @@ def _log_retries_values(
     logger.debug(f"using {retries=} {timeout=} {backoff_factor=}")
     if retries:
         retries_schema = ' '.join(
+            # first backoff is 0
             [f'<0.0s> {timeout}s']
-            + [f'<{(backoff_factor * 2**i)}s> {timeout}s' for i in range(1, retries)]
+            +
+            # calculate increasing backoff values
+            [
+                f'<{min(urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX,backoff_factor * 2**i)}s> {timeout}s'
+                for i in range(1, retries)
+            ]
         )
         logger.debug(
             f"retry scheme (TIMEOUT [<BACKOFF> TIMEOUT ...]): "
