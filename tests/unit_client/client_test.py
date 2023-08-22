@@ -11,6 +11,7 @@ from typing import Any, Iterable, Iterator
 from unittest.mock import Mock
 
 import pytest
+import urllib3
 from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
@@ -153,7 +154,11 @@ async def test_041_request_autocalc_retries_error() -> None:
     for timeout, backoff_factor, arg in [
         (0.5, 0.75, MAX_RETRIES + 1),
         #
-        (0.5, 0.001, CalcRetryFromBackoffMax(1000)),
+        (
+            0.5,
+            0.0001,
+            CalcRetryFromBackoffMax(urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX),
+        ),
         #
         (0.5, 0.001, CalcRetryFromWaittimeMax(1000)),
     ]:
@@ -168,6 +173,24 @@ async def test_041_request_autocalc_retries_error() -> None:
                 retries=arg,  # type: ignore[arg-type]
                 backoff_factor=backoff_factor,
             )
+
+
+@pytest.mark.asyncio
+async def test_042_request_autocalc_retries_error() -> None:
+    """Test auto-calculated retries options in `RestClient`."""
+    with pytest.raises(
+        ValueError,
+        match=r"CalcRetryFromBackoffMax\.backoff_max \(\d+\) cannot be greater than: urllib3\.util\.retry\.Retry\.DEFAULT_BACKOFF_MAX=\d+",
+    ):
+        RestClient(
+            "http://test",
+            "passkey",
+            timeout=0.5,
+            retries=CalcRetryFromBackoffMax(
+                urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX + 1
+            ),
+            backoff_factor=0.001,
+        )
 
 
 def test_100_request_seq(requests_mock: Mock) -> None:
