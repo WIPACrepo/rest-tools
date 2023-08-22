@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
+import urllib3
 
 from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
@@ -41,6 +42,13 @@ class CalcRetryFromBackoffMax:
     """
 
     backoff_max: float
+
+    def __post_init__(self) -> None:
+        if self.backoff_max > urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX:
+            raise ValueError(
+                f"CalcRetryFromBackoffMax.backoff_max ({self.backoff_max})"
+                f" cannot be greater than: {urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX=}"
+            )
 
     def calculate_retries(self, backoff_factor: float) -> int:
         """Calculate the number of retries."""
