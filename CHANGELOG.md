@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.2 (2023-08-22)
+
+### Other
+
+* Exponential Backoff Followup ([#136](https://github.com/WIPACrepo/rest-tools/issues/136)) ([`eae7160`](https://github.com/WIPACrepo/rest-tools/commit/eae7160f05f9bf5cdd9e9bffa1136baa0261ea3c))
+
 ## v1.5.1 (2023-08-08)
 
 ### Other
