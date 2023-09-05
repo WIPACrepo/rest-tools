@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.3 (2023-09-05)
+
+### Other
+
+* Require `urllib3>=2.0.4` ([#137](https://github.com/WIPACrepo/rest-tools/issues/137)) ([`bf0e5fc`](https://github.com/WIPACrepo/rest-tools/commit/bf0e5fcd1942c052ab1228e8f41ec863c8d8605d))
+
 ## v1.5.2 (2023-08-22)
 
 ### Other
