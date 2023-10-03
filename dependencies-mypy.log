@@ -177,7 +177,7 @@ wipac-dev-tools==1.7.0
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
-wipac-telemetry==0.2.7
+wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.15.0
     # via deprecated
