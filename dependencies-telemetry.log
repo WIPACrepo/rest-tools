@@ -12,13 +12,13 @@ cachetools==5.3.1
     # via wipac-rest-tools (setup.py)
 certifi==2023.7.22
     # via requests
-cffi==1.15.1
+cffi==1.16.0
     # via cryptography
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via requests
 coloredlogs==15.0.1
     # via wipac-telemetry
-cryptography==41.0.3
+cryptography==41.0.4
     # via pyjwt
 deprecated==1.2.14
     # via
@@ -28,7 +28,7 @@ googleapis-common-protos==1.56.2
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.57.0
+grpcio==1.59.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 humanfriendly==10.0
     # via coloredlogs
@@ -92,17 +92,17 @@ thrift==0.16.0
     # via opentelemetry-exporter-jaeger-thrift
 tornado==6.3.3
     # via wipac-rest-tools (setup.py)
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   opentelemetry-sdk
     #   qrcode
     #   wipac-dev-tools
     #   wipac-telemetry
-urllib3==2.0.4
+urllib3==2.0.6
     # via
     #   requests
     #   wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.16
+wipac-dev-tools==1.7.0
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
@@ -110,5 +110,5 @@ wipac-telemetry==0.2.7
     # via wipac-rest-tools (setup.py)
 wrapt==1.15.0
     # via deprecated
-zipp==3.16.2
+zipp==3.17.0
     # via importlib-metadata

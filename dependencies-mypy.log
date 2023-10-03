@@ -12,9 +12,9 @@ cachetools==5.3.1
     # via wipac-rest-tools (setup.py)
 certifi==2023.7.22
     # via requests
-cffi==1.15.1
+cffi==1.16.0
     # via cryptography
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
     # via requests
 click==8.1.7
     # via
@@ -26,13 +26,13 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.3.0
+coverage[toml]==7.3.2
     # via
     #   pytest-cov
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
@@ -46,7 +46,7 @@ googleapis-common-protos==1.56.2
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.57.0
+grpcio==1.59.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -97,7 +97,7 @@ opentelemetry-sdk==1.20.0
     #   wipac-telemetry
 opentelemetry-semantic-conventions==0.41b0
     # via opentelemetry-sdk
-packaging==23.1
+packaging==23.2
     # via pytest
 pluggy==1.3.0
     # via pytest
@@ -118,7 +118,7 @@ pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==7.4.1
+pytest==7.4.2
     # via
     #   pycycle
     #   pytest-asyncio
@@ -144,7 +144,7 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.11.0
     # via wipac-rest-tools (setup.py)
-ruff==0.0.287
+ruff==0.0.292
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.3
     # via click-completion
@@ -157,24 +157,23 @@ thrift==0.16.0
     # via opentelemetry-exporter-jaeger-thrift
 tornado==6.3.3
     # via wipac-rest-tools (setup.py)
-types-requests==2.31.0.2
+types-requests==2.31.0.7
     # via wipac-rest-tools (setup.py)
-types-urllib3==1.26.25.14
-    # via types-requests
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   mypy
     #   opentelemetry-sdk
     #   qrcode
     #   wipac-dev-tools
     #   wipac-telemetry
-urllib3==2.0.4
+urllib3==2.0.6
     # via
     #   requests
+    #   types-requests
     #   wipac-rest-tools (setup.py)
 wheel==0.41.2
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.6.16
+wipac-dev-tools==1.7.0
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
@@ -182,5 +181,5 @@ wipac-telemetry==0.2.7
     # via wipac-rest-tools (setup.py)
 wrapt==1.15.0
     # via deprecated
-zipp==3.16.2
+zipp==3.17.0
     # via importlib-metadata
