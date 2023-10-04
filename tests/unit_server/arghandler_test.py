@@ -235,12 +235,12 @@ def setup_argument_handler(
             application=Mock(),
             request=httputil.HTTPServerRequest(
                 uri="foo.aq/all",
-                # body=json.dumps(args),
+                body=urllib.parse.urlencode(args).encode("latin1"),
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             ),
         )
-        # rest_handler.request._parse_body()
-        rest_handler.request.body_arguments = args
-        # print(rest_handler.request.body)
+        rest_handler.request._parse_body()  # normally called when request REST method starts
+        print(rest_handler.request.body)
         print(rest_handler.request.body_arguments)
         return ArgumentHandler(rest_handler.request.body_arguments)
     else:
