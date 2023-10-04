@@ -213,8 +213,26 @@ from tornado import httputil
 #                     val, o_type, strict_type=True, server_side_error=True
 #                 )
 
+QUERY_ARGUMENTS = "query-arguments"
+JSON_BODY = "json-body"
 
-def test_100_request_arguments__default() -> None:
+
+def get_http_server_request(
+    argument_source: str, args: dict[str, Any]
+) -> httputil.HTTPServerRequest:
+    if argument_source == QUERY_ARGUMENTS:
+        return httputil.HTTPServerRequest(uri="foo.aq/all")
+    elif argument_source == JSON_BODY:
+        pass
+    else:
+        raise ValueError(f"Invalid argument_source: {argument_source}")
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY],
+)
+def test_100__defaults(argument_source: str) -> None:
     """Test `request.arguments` arguments with default."""
     default: Any
 
@@ -222,7 +240,7 @@ def test_100_request_arguments__default() -> None:
         print(default)
         rest_handler = RestHandler(
             application=Mock(),
-            request=httputil.HTTPServerRequest(uri="foo.aq/all"),
+            request=get_http_server_request(argument_source, {}),
         )
         arghand = ArgumentHandler(rest_handler.request.arguments)
         arghand.add_argument("myarg", default=default)
@@ -234,7 +252,7 @@ def test_100_request_arguments__default() -> None:
         print(default)
         rest_handler = RestHandler(
             application=Mock(),
-            request=httputil.HTTPServerRequest(uri="foo.aq/all"),
+            request=get_http_server_request(argument_source, {}),
         )
         arghand = ArgumentHandler(rest_handler.request.arguments)
         arghand.add_argument("myarg", default=default, type=type(default))
