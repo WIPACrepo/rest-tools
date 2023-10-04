@@ -2,6 +2,7 @@
 
 # pylint: disable=W0212,W0621
 
+import urllib
 from typing import Any
 from unittest.mock import Mock, patch
 
@@ -66,7 +67,7 @@ from tornado import httputil
 #     assert ArgumentHandler._cast_type("abcd", triple_len) == 12
 
 
-# def test_01_cast_type__errors() -> None:
+# def test_01_cast_typ_errors() -> None:
 #     """Test `_cast_type()`."""
 #     with pytest.raises(_InvalidArgumentError) as e:
 #         ArgumentHandler._cast_type("", int)
@@ -213,12 +214,10 @@ from tornado import httputil
 #                 )
 
 
-def test_10_default() -> None:
-    """Test cases where just the default is returned.
-
-    NOTE: RequestHandler.get_argument() always returns the default if the arg is absent.
-    """
+def test_100_request_arguments__default() -> None:
+    """Test `request.arguments` arguments with default."""
     default: Any
+
     for default in [None, "string", 100, 50.5]:
         print(default)
         rest_handler = RestHandler(
@@ -243,39 +242,78 @@ def test_10_default() -> None:
         assert default == args.myarg
 
 
-# def test_20_get_argument_no_body(rest_handler: RestHandler) -> None:
-#     """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
+def test_110_request_arguments__no_default_no_typing(rest_handler: RestHandler) -> None:
+    """Test `request.arguments` arguments."""
+    args = {
+        "foo": ("-10", int),
+        "bar": ("True", bool),
+        "bat": ("2.5", float),
+        "baz": ("Toyota Corolla", str),
+        "boo": ("False", bool),
+    }
 
-#     No tests for body-parsing.
-#     """
-#     args = {
-#         "foo": ("-10", int),
-#         "bar": ("True", bool),
-#         "bat": ("2.5", float),
-#         "baz": ("Toyota Corolla", str),
-#         "boo": ("False", bool),
-#     }
+    # set up ArgumentHandler
+    rest_handler = RestHandler(
+        application=Mock(),
+        request=httputil.HTTPServerRequest(
+            uri=f"foo.aq/all?{urllib.parse.urlencode({arg:val for arg, (val, _) in args.items()})}"
+        ),
+    )
+    arghand = ArgumentHandler(rest_handler.request.arguments)
+    for arg, _ in args.items():
+        arghand.add_argument(arg)
+    outargs = arghand.parse_args()
 
-#     # TODO - f"foo.aq/all?myarg={default}"
+    # grab each
+    for arg, (val, _) in args.items():
+        print(arg)
+        print(val)
+        # print(typ)
+        assert val == getattr(outargs, arg)
 
-#     for arg, (val, type_) in args.items():
-#         # pylint: disable=E1102
-#         print(arg)
-#         print(val)
-#         print(type_)
-#         # w/o typing
-#         pjba.return_value = {}
-#         rhga.return_value = val
-#         assert val == rest_handler.get_argument(arg, default=None)
-#         # w/ typing
-#         pjba.return_value = {}
-#         rhga.return_value = val
-#         ret = rest_handler.get_argument(arg, default=None, type=type_)  # type: ignore  # dynamic types aren't real-world issues
-#         assert ret == type_(val) or (val == "False" and ret is False and type_ == bool)
 
-#     # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
-#     # NOTE - `strip` use-cases depend solely on RequestHandler.get_argument(), so no tests
-#     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
+def test_111_request_arguments__no_default_with_typing(
+    rest_handler: RestHandler,
+) -> None:
+    """Test `request.arguments` arguments."""
+    args = {
+        "foo": ("-10", int),
+        "bar": ("True", bool),
+        "bat": ("2.5", float),
+        "baz": ("Toyota Corolla", str),
+        "boo": ("False", bool),
+    }
+
+    # set up ArgumentHandler
+    rest_handler = RestHandler(
+        application=Mock(),
+        request=httputil.HTTPServerRequest(
+            uri=f"foo.aq/all?{urllib.parse.urlencode({arg:val for arg, (val, _) in args.items()})}"
+        ),
+    )
+    arghand = ArgumentHandler(rest_handler.request.arguments)
+    for arg, (_, typ) in args.items():
+        arghand.add_argument(arg, type=typ)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, (val, typ) in args.items():
+        print(arg)
+        print(val)
+        print(typ)
+        if typ == bool:
+            if val == "False":
+                assert getattr(outargs, arg) is False
+            elif val == "True":
+                assert getattr(outargs, arg) is True
+            else:
+                raise RuntimeError("Invalid value")
+        else:
+            assert getattr(outargs, arg) == typ(val)
+
+    # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
+    # NOTE - `strip` use-cases depend solely on RequestHandler.get_argument(), so no tests
+    # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
 # def test_21_get_argument_no_body__errors(rest_handler: RestHandler) -> None:
@@ -291,7 +329,7 @@ def test_10_default() -> None:
 #     error_msg = "HTTP 400: `Reqd`: (MissingArgumentError) required argument is missing"
 #     assert str(e.value) == error_msg
 
-#     # NOTE - `type_` and `choices` are tested in `_qualify_argument` tests
+#     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
 
 # def test_30_get_json_body_argument(rest_handler: RestHandler) -> None:
