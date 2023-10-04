@@ -2,6 +2,7 @@
 
 # pylint: disable=W0212,W0621
 
+import json
 import urllib
 from typing import Any
 from unittest.mock import Mock, patch
@@ -217,15 +218,26 @@ QUERY_ARGUMENTS = "query-arguments"
 JSON_BODY = "json-body"
 
 
-def get_http_server_request(
-    argument_source: str, args: dict[str, Any]
+def setup_argument_handler(
+    argument_source: str,
+    args: dict[str, Any],
 ) -> httputil.HTTPServerRequest:
     if argument_source == QUERY_ARGUMENTS:
-        return httputil.HTTPServerRequest(
-            uri=f"foo.aq/all?{urllib.parse.urlencode(args)}"
+        rest_handler = RestHandler(
+            application=Mock(),
+            request=httputil.HTTPServerRequest(
+                uri=f"foo.aq/all?{urllib.parse.urlencode(args)}",
+            ),
         )
+        return ArgumentHandler(rest_handler.request.arguments)
     elif argument_source == JSON_BODY:
-        pass
+        rest_handler = RestHandler(
+            application=Mock(),
+            request=httputil.HTTPServerRequest(
+                body=json.dumps(args),
+            ),
+        )
+        return ArgumentHandler(rest_handler.request.body_arguments)
     else:
         raise ValueError(f"Invalid argument_source: {argument_source}")
 
@@ -240,11 +252,7 @@ def test_100__defaults(argument_source: str) -> None:
 
     for default in [None, "string", 100, 50.5]:
         print(default)
-        rest_handler = RestHandler(
-            application=Mock(),
-            request=get_http_server_request(argument_source, {}),
-        )
-        arghand = ArgumentHandler(rest_handler.request.arguments)
+        arghand = setup_argument_handler(argument_source, {})
         arghand.add_argument("myarg", default=default)
         args = arghand.parse_args()
         assert default == args.myarg
@@ -252,11 +260,7 @@ def test_100__defaults(argument_source: str) -> None:
     # w/ typing
     for default in ["string", 100, 50.5]:
         print(default)
-        rest_handler = RestHandler(
-            application=Mock(),
-            request=get_http_server_request(argument_source, {}),
-        )
-        arghand = ArgumentHandler(rest_handler.request.arguments)
+        arghand = setup_argument_handler(argument_source, {})
         arghand.add_argument("myarg", default=default, type=type(default))
         args = arghand.parse_args()
         assert default == args.myarg
@@ -277,13 +281,10 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
     }
 
     # set up ArgumentHandler
-    rest_handler = RestHandler(
-        application=Mock(),
-        request=get_http_server_request(
-            argument_source, {arg: val for arg, (val, _) in args.items()}
-        ),
+    arghand = setup_argument_handler(
+        argument_source, {arg: val for arg, (val, _) in args.items()}
     )
-    arghand = ArgumentHandler(rest_handler.request.arguments)
+
     for arg, _ in args.items():
         print()
         print(arg)
@@ -314,13 +315,9 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
     }
 
     # set up ArgumentHandler
-    rest_handler = RestHandler(
-        application=Mock(),
-        request=get_http_server_request(
-            argument_source, {arg: val for arg, (val, _) in args.items()}
-        ),
+    arghand = setup_argument_handler(
+        argument_source, {arg: val for arg, (val, _) in args.items()}
     )
-    arghand = ArgumentHandler(rest_handler.request.arguments)
     for arg, (_, typ) in args.items():
         print()
         print(arg)
@@ -356,11 +353,7 @@ def test_120__missing_argument(argument_source: str) -> None:
     """Test `request.arguments` arguments error case."""
 
     # set up ArgumentHandler
-    rest_handler = RestHandler(
-        application=Mock(),
-        request=get_http_server_request(argument_source, {}),
-    )
-    arghand = ArgumentHandler(rest_handler.request.arguments)
+    arghand = setup_argument_handler(argument_source, {})
     arghand.add_argument("reqd")
 
     # Missing Required Argument
@@ -380,11 +373,7 @@ def test_121__missing_argument(argument_source: str) -> None:
     """Test `request.arguments` arguments error case."""
 
     # set up ArgumentHandler
-    rest_handler = RestHandler(
-        application=Mock(),
-        request=get_http_server_request(argument_source, {"foo": "val"}),
-    )
-    arghand = ArgumentHandler(rest_handler.request.arguments)
+    arghand = setup_argument_handler(argument_source, {"foo": "val"})
     arghand.add_argument("reqd")
     arghand.add_argument("foo")
 
