@@ -242,7 +242,7 @@ def test_100_request_arguments__default() -> None:
         assert default == args.myarg
 
 
-def test_110_request_arguments__no_default_no_typing(rest_handler: RestHandler) -> None:
+def test_110_request_arguments__no_default_no_typing() -> None:
     """Test `request.arguments` arguments."""
     args = {
         "foo": ("-10", int),
@@ -272,9 +272,7 @@ def test_110_request_arguments__no_default_no_typing(rest_handler: RestHandler) 
         assert val == getattr(outargs, arg)
 
 
-def test_111_request_arguments__no_default_with_typing(
-    rest_handler: RestHandler,
-) -> None:
+def test_111_request_arguments__no_default_with_typing() -> None:
     """Test `request.arguments` arguments."""
     args = {
         "foo": ("-10", int),
@@ -316,7 +314,7 @@ def test_111_request_arguments__no_default_with_typing(
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-# def test_21_get_argument_no_body__errors(rest_handler: RestHandler) -> None:
+# def test_21_get_argument_no_body__errors() -> None:
 #     """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
 
 #     No tests for body-parsing.
@@ -332,7 +330,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
 
-# def test_30_get_json_body_argument(rest_handler: RestHandler) -> None:
+# def test_30_get_json_body_argument() -> None:
 #     """Test `request.body` JSON arguments."""
 #     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
@@ -351,7 +349,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-# def test_31_get_json_body_argument__errors(rest_handler: RestHandler) -> None:
+# def test_31_get_json_body_argument__errors() -> None:
 #     """Test `request.body` JSON arguments."""
 #     body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
 
@@ -365,7 +363,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-# def test_32_get_json_body_argument_typechecking(rest_handler: RestHandler) -> None:
+# def test_32_get_json_body_argument_typechecking() -> None:
 #     """Test `get_json_body_argument()`.
 
 #     **Test JSON-body arg type-checking**
@@ -388,7 +386,7 @@ def test_111_request_arguments__no_default_with_typing(
 
 
 # def test_33_get_json_body_argument_typechecking__errors(
-#     rest_handler: RestHandler,
+#     ,
 # ) -> None:
 #     """Test `get_json_body_argument()`.
 
@@ -407,7 +405,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     pjba.assert_called()
 
 
-# def test_40_get_argument_args_and_body(rest_handler: RestHandler) -> None:
+# def test_40_get_argument_args_and_body() -> None:
 #     """Test `get_argument()`.
 
 #     From JSON-body (no Query-Args)
@@ -422,7 +420,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     assert ret == 14
 
 
-# def test_41_get_argument_args_and_body(rest_handler: RestHandler) -> None:
+# def test_41_get_argument_args_and_body() -> None:
 #     """Test `get_argument()`.
 
 #     From Query-Args (no JSON-body arguments)
@@ -437,7 +435,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     assert ret == 55
 
 
-# def test_42_get_argument_args_and_body(rest_handler: RestHandler) -> None:
+# def test_42_get_argument_args_and_body() -> None:
 #     """Test `get_argument()`.
 
 #     From Query-Args (with JSON & Query-Arg values) -- but only 1 match
@@ -452,7 +450,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     assert ret == 90
 
 
-# def test_43_get_argument_args_and_body(rest_handler: RestHandler) -> None:
+# def test_43_get_argument_args_and_body() -> None:
 #     """Test `get_argument()`.
 
 #     From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
@@ -467,7 +465,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     assert ret == 1
 
 
-# def test_44_get_argument_args_and_body(rest_handler: RestHandler) -> None:
+# def test_44_get_argument_args_and_body() -> None:
 #     """Test `get_argument()`.
 
 #     From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
@@ -495,7 +493,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     assert ret2 == ["a", "bc"]
 
 
-# def test_45_get_argument_args_and_body__errors(rest_handler: RestHandler) -> None:
+# def test_45_get_argument_args_and_body__errors() -> None:
 #     """Test `get_argument()`.
 
 #     **Error-Test JSON-body arg typing**
@@ -517,7 +515,7 @@ def test_111_request_arguments__no_default_with_typing(
 #     rhga.assert_not_called()
 
 
-# def test_46_get_argument_args_and_body__errors(rest_handler: RestHandler) -> None:
+# def test_46_get_argument_args_and_body__errors() -> None:
 #     """Test `get_argument()`.
 
 #     **Error-Test JSON-body arg choices**
