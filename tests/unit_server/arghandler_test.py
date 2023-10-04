@@ -221,7 +221,9 @@ def get_http_server_request(
     argument_source: str, args: dict[str, Any]
 ) -> httputil.HTTPServerRequest:
     if argument_source == QUERY_ARGUMENTS:
-        return httputil.HTTPServerRequest(uri="foo.aq/all")
+        return httputil.HTTPServerRequest(
+            uri=f"foo.aq/all?{urllib.parse.urlencode(args)}"
+        )
     elif argument_source == JSON_BODY:
         pass
     else:
@@ -260,7 +262,11 @@ def test_100__defaults(argument_source: str) -> None:
         assert default == args.myarg
 
 
-def test_110_request_arguments__no_default_no_typing() -> None:
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY],
+)
+def test_110__no_default_no_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
     args = {
         "foo": ("-10", int),
@@ -273,8 +279,8 @@ def test_110_request_arguments__no_default_no_typing() -> None:
     # set up ArgumentHandler
     rest_handler = RestHandler(
         application=Mock(),
-        request=httputil.HTTPServerRequest(
-            uri=f"foo.aq/all?{urllib.parse.urlencode({arg:val for arg, (val, _) in args.items()})}"
+        request=get_http_server_request(
+            argument_source, {arg: val for arg, (val, _) in args.items()}
         ),
     )
     arghand = ArgumentHandler(rest_handler.request.arguments)
@@ -293,7 +299,11 @@ def test_110_request_arguments__no_default_no_typing() -> None:
         assert val == getattr(outargs, arg)
 
 
-def test_111_request_arguments__no_default_with_typing() -> None:
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY],
+)
+def test_111__no_default_with_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
     args = {
         "foo": ("-10", int),
@@ -306,8 +316,8 @@ def test_111_request_arguments__no_default_with_typing() -> None:
     # set up ArgumentHandler
     rest_handler = RestHandler(
         application=Mock(),
-        request=httputil.HTTPServerRequest(
-            uri=f"foo.aq/all?{urllib.parse.urlencode({arg:val for arg, (val, _) in args.items()})}"
+        request=get_http_server_request(
+            argument_source, {arg: val for arg, (val, _) in args.items()}
         ),
     )
     arghand = ArgumentHandler(rest_handler.request.arguments)
@@ -338,13 +348,17 @@ def test_111_request_arguments__no_default_with_typing() -> None:
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-def test_120_request_arguments__missing_argument() -> None:
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY],
+)
+def test_120__missing_argument(argument_source: str) -> None:
     """Test `request.arguments` arguments error case."""
 
     # set up ArgumentHandler
     rest_handler = RestHandler(
         application=Mock(),
-        request=httputil.HTTPServerRequest(uri="foo.aq/all"),
+        request=get_http_server_request(argument_source, {}),
     )
     arghand = ArgumentHandler(rest_handler.request.arguments)
     arghand.add_argument("reqd")
@@ -358,15 +372,17 @@ def test_120_request_arguments__missing_argument() -> None:
     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
 
-def test_121_request_arguments__missing_argument() -> None:
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY],
+)
+def test_121__missing_argument(argument_source: str) -> None:
     """Test `request.arguments` arguments error case."""
 
     # set up ArgumentHandler
     rest_handler = RestHandler(
         application=Mock(),
-        request=httputil.HTTPServerRequest(
-            uri=f"foo.aq/all?{urllib.parse.urlencode({'foo':'val'})}"
-        ),
+        request=get_http_server_request(argument_source, {"foo": "val"}),
     )
     arghand = ArgumentHandler(rest_handler.request.arguments)
     arghand.add_argument("reqd")
