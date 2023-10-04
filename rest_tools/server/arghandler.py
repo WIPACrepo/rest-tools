@@ -64,6 +64,10 @@ class ArgumentHandler(argparse.ArgumentParser):
         args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
         self.args_listed = list(chain.from_iterable(args_tuples))
 
+    def add_argument(self, name: str, *args: Any, **kwargs: Any) -> None:  # type: ignore[override]
+        """explain."""
+        super().add_argument(f"--{name}", *args, **kwargs)
+
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
         """Get the args -- like argparse.parse_args but parses a dict."""
         return super().parse_args(args=self.args_listed)

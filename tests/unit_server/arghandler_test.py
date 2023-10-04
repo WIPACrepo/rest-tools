@@ -226,7 +226,7 @@ def test_10_default() -> None:
             request=httputil.HTTPServerRequest(uri="foo.aq/all"),
         )
         arghand = ArgumentHandler(rest_handler.request.arguments)
-        arghand.add_argument("--myarg", default=default)
+        arghand.add_argument("myarg", default=default)
         args = arghand.parse_args()
         assert default == args.myarg
 
@@ -238,7 +238,7 @@ def test_10_default() -> None:
             request=httputil.HTTPServerRequest(uri="foo.aq/all"),
         )
         arghand = ArgumentHandler(rest_handler.request.arguments)
-        arghand.add_argument("--myarg", default=default, type=type(default))
+        arghand.add_argument("myarg", default=default, type=type(default))
         args = arghand.parse_args()
         assert default == args.myarg
 
