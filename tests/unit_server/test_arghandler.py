@@ -261,12 +261,14 @@ def test_110_request_arguments__no_default_no_typing() -> None:
     )
     arghand = ArgumentHandler(rest_handler.request.arguments)
     for arg, _ in args.items():
+        print()
         print(arg)
         arghand.add_argument(arg)
     outargs = arghand.parse_args()
 
     # grab each
     for arg, (val, _) in args.items():
+        print()
         print(arg)
         print(val)
         # print(typ)
@@ -292,12 +294,14 @@ def test_111_request_arguments__no_default_with_typing() -> None:
     )
     arghand = ArgumentHandler(rest_handler.request.arguments)
     for arg, (_, typ) in args.items():
+        print()
         print(arg)
         arghand.add_argument(arg, type=typ)
     outargs = arghand.parse_args()
 
     # grab each
     for arg, (val, typ) in args.items():
+        print()
         print(arg)
         print(val)
         print(typ)
