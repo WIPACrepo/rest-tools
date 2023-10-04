@@ -61,18 +61,18 @@ class ArgumentHandler(argparse.ArgumentParser):
         self,
         name: str,
         *args: Any,
-        type: type | Callable[[Any], Any] | None = None,
         **kwargs: Any,
     ) -> None:
         """Add an argument -- like argparse.add_argument with additions.
 
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
         """
-        if type == bool:  # type is a bad argument name, but it's what argparse uses
-            type = strtobool
+        if kwargs.get("type") == bool:
+            kwargs["type"] = strtobool
 
-        if type:
-            kwargs["type"] = type
+        if "default" not in kwargs and kwargs.get("required"):
+            # no default? then it's not required
+            kwargs["required"] = False
 
         super().add_argument(f"--{name}", *args, **kwargs)
 
