@@ -215,7 +215,7 @@ from tornado import httputil
 #                 )
 
 QUERY_ARGUMENTS = "query-arguments"
-JSON_BODY = "json-body"
+BODY_ARGUMENTS = "body-arguments"
 
 
 def setup_argument_handler(
@@ -230,13 +230,18 @@ def setup_argument_handler(
             ),
         )
         return ArgumentHandler(rest_handler.request.arguments)
-    elif argument_source == JSON_BODY:
+    elif argument_source == BODY_ARGUMENTS:
         rest_handler = RestHandler(
             application=Mock(),
             request=httputil.HTTPServerRequest(
-                body=json.dumps(args),
+                uri="foo.aq/all",
+                # body=json.dumps(args),
             ),
         )
+        # rest_handler.request._parse_body()
+        rest_handler.request.body_arguments = args
+        # print(rest_handler.request.body)
+        print(rest_handler.request.body_arguments)
         return ArgumentHandler(rest_handler.request.body_arguments)
     else:
         raise ValueError(f"Invalid argument_source: {argument_source}")
@@ -244,7 +249,7 @@ def setup_argument_handler(
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, JSON_BODY],
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_100__defaults(argument_source: str) -> None:
     """Test `request.arguments` arguments with default."""
@@ -268,7 +273,7 @@ def test_100__defaults(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, JSON_BODY],
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_110__no_default_no_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
@@ -302,7 +307,7 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, JSON_BODY],
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_111__no_default_with_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
@@ -347,7 +352,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, JSON_BODY],
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_120__missing_argument(argument_source: str) -> None:
     """Test `request.arguments` arguments error case."""
@@ -367,7 +372,7 @@ def test_120__missing_argument(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, JSON_BODY],
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_121__missing_argument(argument_source: str) -> None:
     """Test `request.arguments` arguments error case."""
