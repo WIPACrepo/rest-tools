@@ -70,6 +70,10 @@ class ArgumentHandler(argparse.ArgumentParser):
         """
         if type == bool:  # type is a bad argument name, but it's what argparse uses
             type = strtobool
+
+        if type:
+            kwargs["type"] = type
+
         super().add_argument(f"--{name}", *args, **kwargs)
 
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
