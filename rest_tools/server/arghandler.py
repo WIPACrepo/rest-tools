@@ -8,6 +8,7 @@ from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import tornado.web
+from tornado.escape import to_unicode
 from wipac_dev_tools import strtobool
 
 from ..utils.json_util import json_decode
@@ -54,15 +55,7 @@ class ArgumentHandler(argparse.ArgumentParser):
 
     def __init__(self, source: dict[str, Any] | bytes) -> None:
         super().__init__(exit_on_error=False)
-
-        if isinstance(source, bytes):
-            args_dict: dict[str, Any] = json.loads(source)
-        else:
-            args_dict = source
-
-        # TODO - does putting in values verbatim work? or do we need to filter primitive_types
-        args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
-        self.args_listed = list(chain.from_iterable(args_tuples))
+        self.source = source
 
     def add_argument(self, name: str, *args: Any, **kwargs: Any) -> None:  # type: ignore[override]
         """explain."""
@@ -70,4 +63,16 @@ class ArgumentHandler(argparse.ArgumentParser):
 
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
         """Get the args -- like argparse.parse_args but parses a dict."""
-        return super().parse_args(args=self.args_listed)
+        if isinstance(self.source, bytes):
+            args_dict: dict[str, Any] = json.loads(self.source)
+        else:
+            args_dict = {
+                k: " ".join(to_unicode(v) for v in vlist)
+                for k, vlist in self.source.items()
+            }
+
+        # TODO - does putting in values verbatim work? or do we need to filter primitive_types
+        args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
+        arg_strings = list(chain.from_iterable(args_tuples))
+
+        return super().parse_args(args=arg_strings)
