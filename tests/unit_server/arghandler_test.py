@@ -334,7 +334,30 @@ def test_120_request_arguments__missing_argument() -> None:
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
-    error_msg = "HTTP 400: `reqd`: (MissingArgumentError) required argument is missing"
+    error_msg = "HTTP 400: the following arguments are required: reqd"
+    assert str(e.value) == error_msg
+
+    # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
+
+
+def test_121_request_arguments__missing_argument() -> None:
+    """Test `request.arguments` arguments error case."""
+
+    # set up ArgumentHandler
+    rest_handler = RestHandler(
+        application=Mock(),
+        request=httputil.HTTPServerRequest(
+            uri=f"foo.aq/all?{urllib.parse.urlencode({'foo':'val'})}"
+        ),
+    )
+    arghand = ArgumentHandler(rest_handler.request.arguments)
+    arghand.add_argument("reqd")
+    arghand.add_argument("foo")
+
+    # Missing Required Argument
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+    error_msg = "HTTP 400: the following arguments are required: reqd"
     assert str(e.value) == error_msg
 
     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests

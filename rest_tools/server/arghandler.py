@@ -2,7 +2,10 @@
 
 
 import argparse
+import contextlib
+import io
 import json
+import logging
 import re
 from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
@@ -14,6 +17,8 @@ from wipac_dev_tools import strtobool
 from ..utils.json_util import json_decode
 
 T = TypeVar("T")
+
+LOGGER = logging.getLogger(__name__)
 
 
 class _NoDefaultValue:  # pylint: disable=R0903
@@ -70,9 +75,14 @@ class ArgumentHandler(argparse.ArgumentParser):
         if kwargs.get("type") == bool:
             kwargs["type"] = strtobool
 
-        if "default" not in kwargs and kwargs.get("required"):
-            # no default? then it's not required
-            kwargs["required"] = False
+        if "default" not in kwargs:
+            if "required" not in kwargs:
+                # no default? then it's required
+                kwargs["required"] = True
+            elif not kwargs["required"]:
+                raise ValueError(
+                    f"Argument '{name}' marked as not required but no default was provided."
+                )
 
         super().add_argument(f"--{name}", *args, **kwargs)
 
@@ -90,4 +100,15 @@ class ArgumentHandler(argparse.ArgumentParser):
         args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
         arg_strings = list(chain.from_iterable(args_tuples))
 
-        return super().parse_args(args=arg_strings)
+        with contextlib.redirect_stderr(io.StringIO()) as f:
+            try:
+                return super().parse_args(args=arg_strings)
+            except SystemExit:
+                pattern = r"__main__\.py: error: (.+)"
+                match = re.search(pattern, f.getvalue())
+                if match:
+                    msg = match.group(1).replace(" --", " ")
+                else:
+                    LOGGER.error(f.getvalue())
+                    msg = "Unknown error"
+                raise tornado.web.HTTPError(400, reason=msg)
