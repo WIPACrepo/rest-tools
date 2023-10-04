@@ -57,8 +57,19 @@ class ArgumentHandler(argparse.ArgumentParser):
         super().__init__(exit_on_error=False)
         self.source = source
 
-    def add_argument(self, name: str, *args: Any, **kwargs: Any) -> None:  # type: ignore[override]
-        """explain."""
+    def add_argument(  # type: ignore[override]
+        self,
+        name: str,
+        *args: Any,
+        type: type | Callable[[Any], Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Add an argument -- like argparse.add_argument with additions.
+
+        See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
+        """
+        if type == bool:  # type is a bad argument name, but it's what argparse uses
+            type = strtobool
         super().add_argument(f"--{name}", *args, **kwargs)
 
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
