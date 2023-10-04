@@ -241,8 +241,7 @@ class OpenIDCookieHandlerMixin:
         user_info=None,
         user_info_exp=None,
     ):
-        """
-        Store jwt tokens and user info from OpenID-compliant auth source.
+        """Store jwt tokens and user info from OpenID-compliant auth source.
 
         Args:
             access_token (str): jwt access token
@@ -262,9 +261,7 @@ class OpenIDCookieHandlerMixin:
                                    expires_days=float(user_info_exp)/3600/24)
 
     def clear_tokens(self):
-        """
-        Clear token data, usually on logout.
-        """
+        """Clear token data, usually on logout."""
         self.clear_cookie('access_token')
         self.clear_cookie('refresh_token')
         self.clear_cookie('user_info')

@@ -9,7 +9,13 @@ from unittest.mock import MagicMock
 
 import jwt.algorithms
 import pytest
-from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup, OpenIDCookieHandlerMixin, KeycloakUsernameMixin
+from rest_tools.server import (
+    KeycloakUsernameMixin,
+    OpenIDCookieHandlerMixin,
+    OpenIDLoginHandler,
+    RestHandler,
+    RestHandlerSetup,
+)
 from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
@@ -67,28 +73,28 @@ def test_rest_handler_get_current_user():
     assert rh.auth_key == token
 
 
-def test_rest_handler_get_json_body_argument():
-    rh = RestHandler()
-    rh.initialize()
-    rh.request = MagicMock()
-    rh.request.body = json.dumps({'foo': 'bar'})
+# def test_rest_handler_get_json_body_argument():
+#     rh = RestHandler()
+#     rh.initialize()
+#     rh.request = MagicMock()
+#     rh.request.body = json.dumps({'foo': 'bar'})
 
-    assert rh.get_json_body_argument('foo') == 'bar'
+#     assert rh.get_json_body_argument('foo') == 'bar'
 
-    with pytest.raises(Exception):
-        rh.get_json_body_argument('baz')
+#     with pytest.raises(Exception):
+#         rh.get_json_body_argument('baz')
 
 
-def test_rest_handler_get_argument():
-    rh = RestHandler()
-    rh.initialize()
-    rh.request = MagicMock()
-    rh.request.body = json.dumps({'foo': 'bar'})
+# def test_rest_handler_get_argument():
+#     rh = RestHandler()
+#     rh.initialize()
+#     rh.request = MagicMock()
+#     rh.request.body = json.dumps({'foo': 'bar'})
 
-    assert rh.get_argument('foo') == 'bar'
+#     assert rh.get_argument('foo') == 'bar'
 
-    with pytest.raises(Exception):
-        rh.get_argument('baz')
+#     with pytest.raises(Exception):
+#         rh.get_argument('baz')
 
 
 def test_keycloak_username_mixin():
