@@ -320,20 +320,24 @@ def test_111_request_arguments__no_default_with_typing() -> None:
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
 
 
-# def test_21_get_argument_no_body__errors() -> None:
-#     """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
+def test_120_request_arguments__missing_argument() -> None:
+    """Test `request.arguments` arguments error case."""
 
-#     No tests for body-parsing.
-#     """
-#     # Missing Required Argument
-#     with pytest.raises(tornado.web.HTTPError) as e:
-#         pjba.return_value = {}
-#         rhga.side_effect = tornado.web.MissingArgumentError("Reqd")
-#         rest_handler.get_argument("Reqd")
-#     error_msg = "HTTP 400: `Reqd`: (MissingArgumentError) required argument is missing"
-#     assert str(e.value) == error_msg
+    # set up ArgumentHandler
+    rest_handler = RestHandler(
+        application=Mock(),
+        request=httputil.HTTPServerRequest(uri="foo.aq/all"),
+    )
+    arghand = ArgumentHandler(rest_handler.request.arguments)
+    arghand.add_argument("reqd")
 
-#     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
+    # Missing Required Argument
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+    error_msg = "HTTP 400: `reqd`: (MissingArgumentError) required argument is missing"
+    assert str(e.value) == error_msg
+
+    # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
 
 # def test_30_get_json_body_argument() -> None:
