@@ -7,6 +7,7 @@ import io
 import json
 import logging
 import re
+import time
 from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
@@ -52,6 +53,12 @@ def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
         return tornado.web.HTTPError(400, reason=f"`{arg_name}`: {error}")
 
 
+ARGUMENTS_REQUIRED_PATTERN = re.compile(
+    r".+: error: (the following arguments are required: .+)"
+)
+INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
+
+
 class ArgumentHandler(argparse.ArgumentParser):
     """Helper class for argument parsing, defaulting, and casting.
 
@@ -86,6 +93,30 @@ class ArgumentHandler(argparse.ArgumentParser):
 
         super().add_argument(f"--{name}", *args, **kwargs)
 
+    @staticmethod
+    def _translate_error(
+        exc: Union[Exception, SystemExit],
+        captured_stderr: str,
+    ) -> str:
+        """Translate argparse-style error to a message str for HTTPError."""
+
+        # MISSING ARG -- not covered by 'exit_on_error=False' (in __init__)
+        if isinstance(exc, SystemExit):
+            if match := ARGUMENTS_REQUIRED_PATTERN.search(captured_stderr):
+                return match.group(1).replace(" --", " ")
+
+        # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
+        elif isinstance(exc, argparse.ArgumentError):
+            if match := INVALID_VALUE_PATTERN.search(str(exc)):
+                return f"{match.group(1).replace('--', '')} type"
+
+        # fall-through -- log unknown exception
+        ts = time.time()  # log timestamp to aid debugging
+        LOGGER.exception(exc)
+        LOGGER.error(f"error timestamp: {ts}")
+        LOGGER.error(captured_stderr)
+        return f"Unknown error ({ts})"
+
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
         """Get the args -- like argparse.parse_args but parses a dict."""
         if isinstance(self.source, bytes):
@@ -100,15 +131,13 @@ class ArgumentHandler(argparse.ArgumentParser):
         args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
         arg_strings = list(chain.from_iterable(args_tuples))
 
+        # parse
         with contextlib.redirect_stderr(io.StringIO()) as f:
             try:
                 return super().parse_args(args=arg_strings)
-            except SystemExit:
-                pattern = r"__main__\.py: error: (.+)"
-                match = re.search(pattern, f.getvalue())
-                if match:
-                    msg = match.group(1).replace(" --", " ")
-                else:
-                    LOGGER.error(f.getvalue())
-                    msg = "Unknown error"
-                raise tornado.web.HTTPError(400, reason=msg)
+            except (Exception, SystemExit) as e:
+                exc = e
+                captured_stderr = f.getvalue()
+        # handle exception outside of context manager
+        msg = self._translate_error(exc, captured_stderr)
+        raise tornado.web.HTTPError(400, reason=msg)
