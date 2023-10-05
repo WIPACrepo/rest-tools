@@ -115,7 +115,7 @@ class ArgumentHandler(argparse.ArgumentParser):
         LOGGER.exception(exc)
         LOGGER.error(f"error timestamp: {ts}")
         LOGGER.error(captured_stderr)
-        return f"Unknown error ({ts})"
+        return f"Unknown argument-handling error ({ts})"
 
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
         """Get the args -- like argparse.parse_args but parses a dict."""
