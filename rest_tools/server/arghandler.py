@@ -99,6 +99,8 @@ class ArgumentHandler(argparse.ArgumentParser):
         captured_stderr: str,
     ) -> str:
         """Translate argparse-style error to a message str for HTTPError."""
+        print(exc)  # TODO
+        print(captured_stderr)  # TODO
 
         # MISSING ARG -- not covered by 'exit_on_error=False' (in __init__)
         if isinstance(exc, SystemExit):
@@ -120,16 +122,25 @@ class ArgumentHandler(argparse.ArgumentParser):
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
         """Get the args -- like argparse.parse_args but parses a dict."""
         if isinstance(self.source, bytes):
-            args_dict: dict[str, Any] = json.loads(self.source)
+            # TODO - does putting in values verbatim work? or do we need to filter primitive_types?
+            # args_dict: dict[str, Any] = json.loads(self.source)
+            arg_strings = []
+            for key, val in json.loads(self.source).items():
+                arg_strings.append(f"--{key}")
+                arg_strings.append(val)
         else:
-            args_dict = {
-                k: " ".join(to_unicode(v) for v in vlist)
-                for k, vlist in self.source.items()
-            }
+            # args_dict = {
+            #     k: " ".join(to_unicode(v) for v in vlist)
+            #     for k, vlist in self.source.items()
+            # }
+            arg_strings = []
+            for key, vlist in self.source.items():
+                arg_strings.append(f"--{key}")
+                arg_strings.extend(to_unicode(v) for v in vlist)
 
-        # TODO - does putting in values verbatim work? or do we need to filter primitive_types
-        args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
-        arg_strings = list(chain.from_iterable(args_tuples))
+        # args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
+        # arg_strings = " ".join(list(chain.from_iterable(args_tuples))).split()
+        print(arg_strings)  # TODO
 
         # parse
         with contextlib.redirect_stderr(io.StringIO()) as f:

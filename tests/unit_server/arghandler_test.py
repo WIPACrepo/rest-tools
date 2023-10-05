@@ -221,7 +221,7 @@ BODY_ARGUMENTS = "body-arguments"
 
 def setup_argument_handler(
     argument_source: str,
-    args: dict[str, Any],
+    args: dict[str, Any] | list[tuple[Any, Any]],
 ) -> httputil.HTTPServerRequest:
     if argument_source == QUERY_ARGUMENTS:
         rest_handler = RestHandler(
@@ -256,7 +256,7 @@ def setup_argument_handler(
     [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_100__defaults(argument_source: str) -> None:
-    """Test `request.arguments` arguments with default."""
+    """Test `argument_source` arguments with default."""
     default: Any
 
     for default in [None, "string", 100, 50.5]:
@@ -280,7 +280,7 @@ def test_100__defaults(argument_source: str) -> None:
     [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_110__no_default_no_typing(argument_source: str) -> None:
-    """Test `request.arguments` arguments."""
+    """Test `argument_source` arguments."""
     args = {
         "foo": ("-10", int),
         "bar": ("True", bool),
@@ -362,7 +362,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
     [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_112__no_default_with_typing__error(argument_source: str) -> None:
-    """Test `request.arguments` arguments."""
+    """Test `argument_source` arguments."""
     args = {
         "foo": ("hank", int),
         "bat": ("2.5", int),
@@ -391,7 +391,7 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
     [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_120__missing_argument(argument_source: str) -> None:
-    """Test `request.arguments` arguments error case."""
+    """Test `argument_source` arguments error case."""
 
     # set up ArgumentHandler
     arghand = setup_argument_handler(argument_source, {})
@@ -410,7 +410,7 @@ def test_120__missing_argument(argument_source: str) -> None:
     [QUERY_ARGUMENTS, BODY_ARGUMENTS],
 )
 def test_121__missing_argument(argument_source: str) -> None:
-    """Test `request.arguments` arguments error case."""
+    """Test `argument_source` arguments error case."""
 
     # set up ArgumentHandler
     arghand = setup_argument_handler(argument_source, {"foo": "val"})
@@ -423,6 +423,37 @@ def test_121__missing_argument(argument_source: str) -> None:
     assert str(e.value) == "HTTP 400: the following arguments are required: reqd"
 
     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+)
+def test_130__duplicates(argument_source: str) -> None:
+    """Test `argument_source` arguments with duplicate keys."""
+
+    args = [
+        ("foo", "22"),
+        ("foo", "44"),
+        ("foo", "66"),
+        ("foo", "88"),
+        ("bar", "abc"),
+        ("baz", "hello world!"),
+        ("baz", "hello mars!"),
+    ]
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+    arghand.add_argument("foo", type=int, nargs="*")
+    arghand.add_argument("baz", type=str, nargs="*")
+    arghand.add_argument("bar")
+    outargs = arghand.parse_args()
+    print(outargs)
+
+    # grab each
+    assert outargs.foo == [22, 44, 66, 88]
+    assert outargs.baz == ["hello world!", "hello mars!"]
+    assert outargs.bar == "abc"
 
 
 ########################################################################################
