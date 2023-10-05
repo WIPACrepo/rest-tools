@@ -12,6 +12,7 @@ import tornado.web
 from rest_tools.server.arghandler import ArgumentHandler, _InvalidArgumentError
 from rest_tools.server.handler import RestHandler
 from tornado import httputil
+from wipac_dev_tools import strtobool
 
 # def test_00_cast_type() -> None:
 #     """Test `_cast_type()`."""
@@ -247,6 +248,9 @@ def setup_argument_handler(
         raise ValueError(f"Invalid argument_source: {argument_source}")
 
 
+########################################################################################
+
+
 @pytest.mark.parametrize(
     "argument_source",
     [QUERY_ARGUMENTS, BODY_ARGUMENTS],
@@ -313,10 +317,18 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
     args = {
         "foo": ("-10", int),
+        #
         "bar": ("True", bool),
-        "bat": ("2.5", float),
-        "baz": ("Toyota Corolla", str),
         "boo": ("False", bool),
+        "ghi": ("no", bool),
+        "jkl": ("1", bool),
+        "mno": ("0", bool),
+        #
+        "bat": ("2.5", float),
+        "abc": ("2", float),
+        #
+        "baz": ("Toyota Corolla", str),
+        "def": ("1000", str),
     }
 
     # set up ArgumentHandler
@@ -336,18 +348,42 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         print(val)
         print(typ)
         if typ == bool:
-            if val == "False":
-                assert getattr(outargs, arg) is False
-            elif val == "True":
-                assert getattr(outargs, arg) is True
-            else:
-                raise RuntimeError("Invalid value")
+            assert getattr(outargs, arg) == strtobool(val)
         else:
             assert getattr(outargs, arg) == typ(val)
 
     # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
     # NOTE - `strip` use-cases depend solely on RequestHandler.get_argument(), so no tests
     # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+)
+def test_112__no_default_with_typing__error(argument_source: str) -> None:
+    """Test `request.arguments` arguments."""
+    args = {
+        "foo": ("hank", int),
+        "bat": ("2.5", int),
+        "baz": ("9e-33", int),
+        #
+        "bar": ("idk", bool),
+        "boo": ("2", bool),
+        #
+        "abc": ("222.111.333", float),
+    }
+
+    for arg, (val, typ) in args.items():
+        print()
+        print(arg)
+        print(val)
+        print(typ)
+        arghand = setup_argument_handler(argument_source, {arg: val})
+        arghand.add_argument(arg, type=typ)
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == f"HTTP 400: argument {arg}: invalid type"
 
 
 @pytest.mark.parametrize(
@@ -364,8 +400,7 @@ def test_120__missing_argument(argument_source: str) -> None:
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
-    error_msg = "HTTP 400: the following arguments are required: reqd"
-    assert str(e.value) == error_msg
+    assert str(e.value) == "HTTP 400: the following arguments are required: reqd"
 
     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
@@ -385,10 +420,12 @@ def test_121__missing_argument(argument_source: str) -> None:
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
-    error_msg = "HTTP 400: the following arguments are required: reqd"
-    assert str(e.value) == error_msg
+    assert str(e.value) == "HTTP 400: the following arguments are required: reqd"
 
     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
+
+
+########################################################################################
 
 
 # def test_30_get_json_body_argument() -> None:
@@ -464,6 +501,9 @@ def test_121__missing_argument(argument_source: str) -> None:
 #     assert str(e.value) == error_msg
 
 #     pjba.assert_called()
+
+
+########################################################################################
 
 
 # def test_40_get_argument_args_and_body() -> None:
