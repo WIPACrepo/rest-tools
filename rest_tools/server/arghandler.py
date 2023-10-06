@@ -9,6 +9,7 @@ import json
 import logging
 import re
 import time
+import traceback
 from itertools import chain
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
 
@@ -154,6 +155,7 @@ class ArgumentHandler:
         # FALL-THROUGH -- log unknown exception
         ts = time.time()  # log timestamp to aid debugging
         LOGGER.error(type(exc))
+        traceback.print_exception(type(exc), exc, exc.__traceback__)
         LOGGER.exception(exc)
         LOGGER.error(f"error timestamp: {ts}")
         LOGGER.error(captured_stderr)
