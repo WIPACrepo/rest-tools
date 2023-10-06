@@ -17,7 +17,7 @@ from rest_tools.server import (
     RestHandlerSetup,
 )
 from rest_tools.utils.auth import Auth, OpenIDAuth
-from tornado.web import Application
+from tornado.web import Application, HTTPError
 
 from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
 
@@ -207,64 +207,63 @@ def test_openid_login_handler_encode_decode_state(requests_mock):
     data2 = handler._decode_state(state)
     assert data == data2
 
-# from tornado.web import Application, HTTPError
-#
-# @pytest.mark.asyncio
-# async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
-#     application = Application([], cookie_secret='secret', login_url='/login', debug=True)
 
-#     auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
+@pytest.mark.asyncio
+async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
+    application = Application([], cookie_secret='secret', login_url='/login', debug=True)
 
-#     requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({
-#         'authorization_endpoint': 'http://foo/auth',
-#         'token_endpoint': 'http://foo/token',
-#         'end_session_endpoint': 'http://foo/logout',
-#         'userinfo_endpoint': 'http://foo/userinfo',
-#         'jwks_uri': 'http://foo/jwks',
-#     }))
-#     jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(gen_keys[1]))
-#     jwk['kid'] = '123'
-#     logging.debug(jwk)
-#     requests_mock.get('http://foo/jwks', text=json.dumps({
-#         'keys': [jwk],
-#     }))
-#     ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
-#     ret['oauth_client_id'] = 'foo'
-#     ret['oauth_client_secret'] = 'bar'
+    auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
 
-#     request = MagicMock()
-#     handler = OpenIDLoginHandler(application, request, **ret)
+    requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({
+        'authorization_endpoint': 'http://foo/auth',
+        'token_endpoint': 'http://foo/token',
+        'end_session_endpoint': 'http://foo/logout',
+        'userinfo_endpoint': 'http://foo/userinfo',
+        'jwks_uri': 'http://foo/jwks',
+    }))
+    jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(gen_keys[1]))
+    jwk['kid'] = '123'
+    logging.debug(jwk)
+    requests_mock.get('http://foo/jwks', text=json.dumps({
+        'keys': [jwk],
+    }))
+    ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
+    ret['oauth_client_id'] = 'foo'
+    ret['oauth_client_secret'] = 'bar'
 
-#     # first-time get
-#     handler.authorize_redirect = MagicMock()
-#     request.body = ''
-#     await handler.get()
-#     handler.authorize_redirect.assert_called()
+    request = MagicMock()
+    handler = OpenIDLoginHandler(application, request, **ret)
 
-#     # get with code
-#     token = auth.create_token('sub', headers={'kid': '123'})
-#     user_info = {
-#         'id_token': '{"id": "foo"}',
-#         'access_token': token,
-#         'expires_in': 3600,
-#     }
+    # first-time get
+    handler.authorize_redirect = MagicMock()
+    request.body = ''
+    await handler.get()
+    handler.authorize_redirect.assert_called()
 
-#     async def fn2(*args, **Kwargs):
-#         return user_info
+    # get with code
+    token = auth.create_token('sub', headers={'kid': '123'})
+    user_info = {
+        'id_token': '{"id": "foo"}',
+        'access_token': token,
+        'expires_in': 3600,
+    }
 
-#     handler.get_authenticated_user = MagicMock(side_effect=fn2)
+    async def fn2(*args, **Kwargs):
+        return user_info
 
-#     request.body = '{"code": "thecode", "state": "state"}'
-#     handler._decode_state = MagicMock(return_value={})
-#     handler.write = MagicMock()
-#     await handler.get()
-#     handler.write.assert_called()
-#     assert handler.write.call_args[0][0] == user_info
+    handler.get_authenticated_user = MagicMock(side_effect=fn2)
 
-#     # get with error
-#     request.body = '{"error": true, "error_description": "the error"}'
-#     handler._decode_state = MagicMock(return_value={})
-#     handler.authorize_redirect = MagicMock()
-#     with pytest.raises(HTTPError, match='the error'):
-#         await handler.get()
-#     handler.authorize_redirect.assert_not_called()
+    request.body = '{"code": "thecode", "state": "state"}'
+    handler._decode_state = MagicMock(return_value={})
+    handler.write = MagicMock()
+    await handler.get()
+    handler.write.assert_called()
+    assert handler.write.call_args[0][0] == user_info
+
+    # get with error
+    request.body = '{"error": true, "error_description": "the error"}'
+    handler._decode_state = MagicMock(return_value={})
+    handler.authorize_redirect = MagicMock()
+    with pytest.raises(HTTPError, match='the error'):
+        await handler.get()
+    handler.authorize_redirect.assert_not_called()
