@@ -65,7 +65,7 @@ class ArgumentHandler:
         def safe_json_loads(val: Any) -> Any:
             try:
                 return json_decode(val)
-            except:  # noqa: E722
+            except Exception:  # noqa: E722
                 return val
 
         if kwargs.get("type") == bool:
