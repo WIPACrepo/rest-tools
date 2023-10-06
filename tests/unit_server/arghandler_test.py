@@ -416,11 +416,12 @@ def test_121__missing_argument(argument_source: str) -> None:
     arghand = setup_argument_handler(argument_source, {"foo": "val"})
     arghand.add_argument("reqd")
     arghand.add_argument("foo")
+    arghand.add_argument("bar")
 
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
-    assert str(e.value) == "HTTP 400: the following arguments are required: reqd"
+    assert str(e.value) == "HTTP 400: the following arguments are required: reqd, bar"
 
     # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
@@ -454,6 +455,34 @@ def test_130__duplicates(argument_source: str) -> None:
     assert outargs.foo == [22, 44, 66, 88]
     assert outargs.baz == ["hello world!", "hello mars!"]
     assert outargs.bar == "abc"
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+)
+def test_140__extra_argument(argument_source: str) -> None:
+    """Test `argument_source` arguments error case."""
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        [
+            ("foo", "val"),
+            ("reqd", "2"),
+            ("xtra", 1),
+            ("another", True),
+            ("another", False),
+            ("another", "who knows"),
+        ],
+    )
+    arghand.add_argument("reqd")
+    arghand.add_argument("foo")
+
+    # Missing Required Argument
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+    assert str(e.value) == "HTTP 400: unrecognized arguments: xtra, another"
 
 
 ########################################################################################

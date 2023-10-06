@@ -56,6 +56,7 @@ def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
 ARGUMENTS_REQUIRED_PATTERN = re.compile(
     r".+: error: (the following arguments are required: .+)"
 )
+UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".+ error: (unrecognized arguments:) (.+)")
 INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 
 
@@ -102,10 +103,19 @@ class ArgumentHandler(argparse.ArgumentParser):
         print(exc)  # TODO
         print(captured_stderr)  # TODO
 
-        # MISSING ARG -- not covered by 'exit_on_error=False' (in __init__)
+        # errors not covered by 'exit_on_error=False' (in __init__)
         if isinstance(exc, SystemExit):
+            # MISSING ARG
             if match := ARGUMENTS_REQUIRED_PATTERN.search(captured_stderr):
                 return match.group(1).replace(" --", " ")
+            # EXTRA ARG
+            elif match := UNRECOGNIZED_ARGUMENTS_PATTERN.search(captured_stderr):
+                args = (
+                    k.replace("--", "")
+                    for k in match.group(2).split()
+                    if k.startswith("--")
+                )
+                return f"{match.group(1)} {', '.join(args)}"
 
         # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
         elif isinstance(exc, argparse.ArgumentError):
