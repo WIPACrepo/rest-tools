@@ -3,7 +3,7 @@
 # pylint: disable=W0212,W0621
 
 import json
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple, Union, cast
 from unittest.mock import Mock
 
 import pytest
@@ -20,7 +20,7 @@ JSON_BODY_ARGUMENTS = "json-body-arguments"
 
 def setup_argument_handler(
     argument_source: str,
-    args: Dict[str, Any] | List[Tuple[Any, Any]],
+    args: Union[Dict[str, Any], List[Tuple[Any, Any]]],
 ) -> ArgumentHandler:
     """Load data and return `ArgumentHandler` instance."""
     if argument_source == QUERY_ARGUMENTS:
