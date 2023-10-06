@@ -8,8 +8,9 @@ from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest  # type: ignore[import]
+import requests
 import tornado.web
-from rest_tools.server.arghandler import ArgumentHandler, _InvalidArgumentError
+from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
 from tornado import httputil
 from wipac_dev_tools import strtobool
@@ -216,7 +217,7 @@ from wipac_dev_tools import strtobool
 #                 )
 
 QUERY_ARGUMENTS = "query-arguments"
-BODY_ARGUMENTS = "body-arguments"
+JSON_BODY_ARGUMENTS = "json-body-arguments"
 
 
 def setup_argument_handler(
@@ -224,26 +225,41 @@ def setup_argument_handler(
     args: dict[str, Any] | list[tuple[Any, Any]],
 ) -> httputil.HTTPServerRequest:
     if argument_source == QUERY_ARGUMENTS:
+        req = requests.Request(url="https://foo.aq/all", params=args).prepare()
+        print("\n request:")
+        print(req.url)
+        print()
         rest_handler = RestHandler(
             application=Mock(),
             request=httputil.HTTPServerRequest(
-                uri=f"foo.aq/all?{urllib.parse.urlencode(args)}",
+                uri=req.url,
+                headers=req.headers,
             ),
         )
-        return ArgumentHandler(rest_handler.request.arguments)
-    elif argument_source == BODY_ARGUMENTS:
+        return ArgumentHandler(ArgumentSource.QUERY_ARGUMENTS, rest_handler)
+
+    elif argument_source == JSON_BODY_ARGUMENTS:
+        req = requests.Request(url="https://foo.aq/all", json=args).prepare()
+        print("\n request:")
+        print(req.url)
+        print(req.body)
+        print(req.headers)
+        print()
         rest_handler = RestHandler(
             application=Mock(),
             request=httputil.HTTPServerRequest(
-                uri="foo.aq/all",
-                body=urllib.parse.urlencode(args).encode("latin1"),
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                uri=req.url,
+                body=req.body,
+                headers=req.headers,
             ),
         )
         rest_handler.request._parse_body()  # normally called when request REST method starts
+        print("\n rest-handler:")
         print(rest_handler.request.body)
-        print(rest_handler.request.body_arguments)
-        return ArgumentHandler(rest_handler.request.body_arguments)
+        print(json.loads(rest_handler.request.body))
+        print()
+        return ArgumentHandler(ArgumentSource.JSON_BODY_ARGUMENTS, rest_handler)
+
     else:
         raise ValueError(f"Invalid argument_source: {argument_source}")
 
@@ -253,7 +269,7 @@ def setup_argument_handler(
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_100__defaults(argument_source: str) -> None:
     """Test `argument_source` arguments with default."""
@@ -277,22 +293,28 @@ def test_100__defaults(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_110__no_default_no_typing(argument_source: str) -> None:
     """Test `argument_source` arguments."""
     args = {
-        "foo": ("-10", int),
-        "bar": ("True", bool),
-        "bat": ("2.5", float),
-        "baz": ("Toyota Corolla", str),
-        "boo": ("False", bool),
+        "foo": "-10",
+        "bar": "True",
+        "bat": "2.5",
+        "baz": "Toyota Corolla",
+        "boo": "False",
     }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "dicto": {"abc": 123},
+                "listo": [1, 2, 3],
+                "compoundo": [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+            }
+        )
 
     # set up ArgumentHandler
-    arghand = setup_argument_handler(
-        argument_source, {arg: val for arg, (val, _) in args.items()}
-    )
+    arghand = setup_argument_handler(argument_source, args)
 
     for arg, _ in args.items():
         print()
@@ -301,17 +323,16 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
     outargs = arghand.parse_args()
 
     # grab each
-    for arg, (val, _) in args.items():
+    for arg, val in args.items():
         print()
         print(arg)
         print(val)
-        # print(typ)
         assert val == getattr(outargs, arg)
 
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_111__no_default_with_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
@@ -330,6 +351,8 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         "baz": ("Toyota Corolla", str),
         "def": ("1000", str),
     }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass
 
     # set up ArgumentHandler
     arghand = setup_argument_handler(
@@ -359,7 +382,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_112__no_default_with_typing__error(argument_source: str) -> None:
     """Test `argument_source` arguments."""
@@ -373,6 +396,8 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
         #
         "abc": ("222.111.333", float),
     }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass
 
     for arg, (val, typ) in args.items():
         print()
@@ -388,7 +413,7 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_120__missing_argument(argument_source: str) -> None:
     """Test `argument_source` arguments error case."""
@@ -407,7 +432,7 @@ def test_120__missing_argument(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_121__missing_argument(argument_source: str) -> None:
     """Test `argument_source` arguments error case."""
@@ -428,7 +453,7 @@ def test_121__missing_argument(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_130__duplicates(argument_source: str) -> None:
     """Test `argument_source` arguments with duplicate keys."""
@@ -442,6 +467,8 @@ def test_130__duplicates(argument_source: str) -> None:
         ("baz", "hello world!"),
         ("baz", "hello mars!"),
     ]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass
 
     # set up ArgumentHandler
     arghand = setup_argument_handler(argument_source, args)
@@ -459,7 +486,7 @@ def test_130__duplicates(argument_source: str) -> None:
 
 @pytest.mark.parametrize(
     "argument_source",
-    [QUERY_ARGUMENTS, BODY_ARGUMENTS],
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 def test_140__extra_argument(argument_source: str) -> None:
     """Test `argument_source` arguments error case."""
@@ -476,6 +503,8 @@ def test_140__extra_argument(argument_source: str) -> None:
             ("another", "who knows"),
         ],
     )
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass
     arghand.add_argument("reqd")
     arghand.add_argument("foo")
 

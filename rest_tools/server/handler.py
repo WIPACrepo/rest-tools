@@ -35,7 +35,6 @@ from tornado.auth import OAuth2Mixin
 
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
-from . import arghandler
 from .decorators import catch_error
 from .stats import RouteStats
 

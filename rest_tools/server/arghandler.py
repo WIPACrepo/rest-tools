@@ -3,6 +3,7 @@
 
 import argparse
 import contextlib
+import enum
 import io
 import json
 import logging
@@ -16,10 +17,18 @@ from tornado.escape import to_unicode
 from wipac_dev_tools import strtobool
 
 from ..utils.json_util import json_decode
+from .handler import RestHandler
 
 T = TypeVar("T")
 
 LOGGER = logging.getLogger(__name__)
+
+
+class ArgumentSource(enum.Enum):
+    """For mapping to argument sources."""
+
+    QUERY_ARGUMENTS = enum.auto()
+    JSON_BODY_ARGUMENTS = enum.auto()
 
 
 class _NoDefaultValue:  # pylint: disable=R0903
@@ -66,9 +75,12 @@ class ArgumentHandler(argparse.ArgumentParser):
     Like argparse.ArgumentParser, but for REST & JSON-body arguments.
     """
 
-    def __init__(self, source: dict[str, Any] | bytes) -> None:
+    def __init__(
+        self, argument_source: ArgumentSource, rest_handler: RestHandler
+    ) -> None:
         super().__init__(exit_on_error=False)
-        self.source = source
+        self.argument_source = argument_source
+        self.rest_handler = rest_handler
 
     def add_argument(  # type: ignore[override]
         self,
@@ -148,25 +160,32 @@ class ArgumentHandler(argparse.ArgumentParser):
 
     def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
         """Get the args -- like argparse.parse_args but parses a dict."""
-        if isinstance(self.source, bytes):
-            # TODO - does putting in values verbatim work? or do we need to filter primitive_types?
-            # args_dict: dict[str, Any] = json.loads(self.source)
-            arg_strings = []
-            for key, val in json.loads(self.source).items():
+        arg_strings: list[str] = []
+
+        # json-encoded body arguments
+        if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
+            try:
+                source = json.loads(self.rest_handler.request.body)
+            except json.JSONDecodeError:
+                raise tornado.web.HTTPError(
+                    400, reason="requests body is not JSON-encoded"
+                )
+            if not isinstance(source, dict):
+                raise tornado.web.HTTPError(
+                    400, reason="JSON-encoded requests body must be a 'dict'"
+                )
+            for key, val in source.items():
                 arg_strings.append(f"--{key}")
                 arg_strings.append(val)
-        else:
-            # args_dict = {
-            #     k: " ".join(to_unicode(v) for v in vlist)
-            #     for k, vlist in self.source.items()
-            # }
-            arg_strings = []
-            for key, vlist in self.source.items():
+        # query arguments
+        elif self.argument_source == ArgumentSource.QUERY_ARGUMENTS:
+            for key, vlist in self.rest_handler.request.arguments.items():
                 arg_strings.append(f"--{key}")
                 arg_strings.extend(to_unicode(v) for v in vlist)
+        # error
+        else:
+            raise ValueError(f"Invalid argument_source: {self}")
 
-        # args_tuples = [(f"--{k}", v) for k, v in args_dict.items()]
-        # arg_strings = " ".join(list(chain.from_iterable(args_tuples))).split()
         print(arg_strings)  # TODO
 
         # parse
