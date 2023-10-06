@@ -12,17 +12,7 @@ import time
 import urllib.parse
 from collections import defaultdict
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, MutableMapping, TypeVar, Union
 
 import rest_tools
 import tornado.escape

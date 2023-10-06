@@ -17,7 +17,7 @@ from rest_tools.server import (
     RestHandlerSetup,
 )
 from rest_tools.utils.auth import Auth, OpenIDAuth
-from tornado.web import Application, HTTPError
+from tornado.web import Application
 
 from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
 
@@ -71,9 +71,6 @@ def test_rest_handler_get_current_user():
     assert rh.get_current_user() == 'subject'
     assert rh.auth_data['foo'] == 'bar'
     assert rh.auth_key == token
-
-
-
 
 
 def test_keycloak_username_mixin():
@@ -210,7 +207,8 @@ def test_openid_login_handler_encode_decode_state(requests_mock):
     data2 = handler._decode_state(state)
     assert data == data2
 
-
+# from tornado.web import Application, HTTPError
+#
 # @pytest.mark.asyncio
 # async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
 #     application = Application([], cookie_secret='secret', login_url='/login', debug=True)
