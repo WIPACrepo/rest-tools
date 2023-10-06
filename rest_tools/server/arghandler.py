@@ -93,8 +93,21 @@ class ArgumentHandler:
 
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
         """
+
+        def safe_json_loads(val: Any) -> Any:
+            try:
+                return json.loads(val)
+            except:  # noqa: E722
+                return val
+
         if kwargs.get("type") == bool:
             kwargs["type"] = strtobool
+        if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
+            if "type" in kwargs:
+                typ = kwargs["type"]  # put in var to avoid unintended recursion
+                kwargs["type"] = lambda x: typ(safe_json_loads(x))
+            else:
+                kwargs["type"] = safe_json_loads
 
         if "default" not in kwargs:
             if "required" not in kwargs:
@@ -179,7 +192,11 @@ class ArgumentHandler:
                 )
             for key, val in source.items():
                 arg_strings.append(f"--{key}")
-                arg_strings.append(val)
+                print(type(val), val)
+                arg_strings.append(
+                    # NOTE: could optimize by not loading values above (lots of custom string parsing)
+                    json.dumps(val)
+                )
         # query arguments
         elif self.argument_source == ArgumentSource.QUERY_ARGUMENTS:
             for key, vlist in self.rest_handler.request.arguments.items():

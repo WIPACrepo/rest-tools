@@ -275,7 +275,7 @@ def test_100__defaults(argument_source: str) -> None:
     """Test `argument_source` arguments with default."""
     default: Any
 
-    for default in [None, "string", 100, 50.5]:
+    for default in [None, "a-string", 100, 50.5]:
         print(default)
         arghand = setup_argument_handler(argument_source, {})
         arghand.add_argument("myarg", default=default)
@@ -283,7 +283,7 @@ def test_100__defaults(argument_source: str) -> None:
         assert default == args.myarg
 
     # w/ typing
-    for default in ["string", 100, 50.5]:
+    for default in ["a-string", 100, 50.5]:
         print(default)
         arghand = setup_argument_handler(argument_source, {})
         arghand.add_argument("myarg", default=default, type=type(default))
