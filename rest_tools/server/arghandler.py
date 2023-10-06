@@ -106,9 +106,24 @@ class ArgumentHandler(argparse.ArgumentParser):
         # errors not covered by 'exit_on_error=False' (in __init__)
         if isinstance(exc, SystemExit):
             # MISSING ARG
+            # ex:
+            #   b'foo=val'
+            #   {'foo': [b'val']}
+            #   ['--foo', 'val']
+            # stderr:
+            #   usage: __main__.py [---h] --reqd REQD --foo FOO --bar BAR
+            #   __main__.py: error: the following arguments are required: --reqd, --bar
             if match := ARGUMENTS_REQUIRED_PATTERN.search(captured_stderr):
                 return match.group(1).replace(" --", " ")
+
             # EXTRA ARG
+            # ex:
+            #   b'foo=val&reqd=2&xtra=1&another=True&another=False&another=who+knows'
+            #   {'foo': [b'val'], 'reqd': [b'2'], 'xtra': [b'1'], 'another': [b'True', b'False', b'who knows']}
+            #   ['--foo', 'val', '--reqd', '2', '--xtra', '1', '--another', 'True', 'False', 'who knows']
+            # stderr:
+            #   usage: __main__.py [---h] --reqd REQD --foo FOO
+            #   __main__.py: error: unrecognized arguments: --xtra 1 --another True False who knows
             elif match := UNRECOGNIZED_ARGUMENTS_PATTERN.search(captured_stderr):
                 args = (
                     k.replace("--", "")
@@ -118,11 +133,13 @@ class ArgumentHandler(argparse.ArgumentParser):
                 return f"{match.group(1)} {', '.join(args)}"
 
         # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
+        # ex:
+        #   argument --foo: invalid int value: 'hank'
         elif isinstance(exc, argparse.ArgumentError):
             if match := INVALID_VALUE_PATTERN.search(str(exc)):
                 return f"{match.group(1).replace('--', '')} type"
 
-        # fall-through -- log unknown exception
+        # FALL-THROUGH -- log unknown exception
         ts = time.time()  # log timestamp to aid debugging
         LOGGER.exception(exc)
         LOGGER.error(f"error timestamp: {ts}")
