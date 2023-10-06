@@ -223,7 +223,7 @@ JSON_BODY_ARGUMENTS = "json-body-arguments"
 def setup_argument_handler(
     argument_source: str,
     args: dict[str, Any] | list[tuple[Any, Any]],
-) -> httputil.HTTPServerRequest:
+) -> ArgumentHandler:
     if argument_source == QUERY_ARGUMENTS:
         req = requests.Request(url="https://foo.aq/all", params=args).prepare()
         print("\n request:")

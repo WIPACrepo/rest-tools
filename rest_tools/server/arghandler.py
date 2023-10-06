@@ -69,7 +69,7 @@ UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".+ error: (unrecognized arguments:
 INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 
 
-class ArgumentHandler(argparse.ArgumentParser):
+class ArgumentHandler:
     """Helper class for argument parsing, defaulting, and casting.
 
     Like argparse.ArgumentParser, but for REST & JSON-body arguments.
@@ -78,11 +78,11 @@ class ArgumentHandler(argparse.ArgumentParser):
     def __init__(
         self, argument_source: ArgumentSource, rest_handler: RestHandler
     ) -> None:
-        super().__init__(exit_on_error=False)
+        self._argparser = argparse.ArgumentParser(exit_on_error=False)
         self.argument_source = argument_source
         self.rest_handler = rest_handler
 
-    def add_argument(  # type: ignore[override]
+    def add_argument(
         self,
         name: str,
         *args: Any,
@@ -104,7 +104,7 @@ class ArgumentHandler(argparse.ArgumentParser):
                     f"Argument '{name}' marked as not required but no default was provided."
                 )
 
-        super().add_argument(f"--{name}", *args, **kwargs)
+        self._argparser.add_argument(f"--{name}", *args, **kwargs)
 
     @staticmethod
     def _translate_error(
@@ -153,12 +153,13 @@ class ArgumentHandler(argparse.ArgumentParser):
 
         # FALL-THROUGH -- log unknown exception
         ts = time.time()  # log timestamp to aid debugging
+        LOGGER.error(type(exc))
         LOGGER.exception(exc)
         LOGGER.error(f"error timestamp: {ts}")
         LOGGER.error(captured_stderr)
         return f"Unknown argument-handling error ({ts})"
 
-    def parse_args(self) -> argparse.Namespace:  # type: ignore[override]
+    def parse_args(self) -> argparse.Namespace:
         """Get the args -- like argparse.parse_args but parses a dict."""
         arg_strings: list[str] = []
 
@@ -191,7 +192,7 @@ class ArgumentHandler(argparse.ArgumentParser):
         # parse
         with contextlib.redirect_stderr(io.StringIO()) as f:
             try:
-                return super().parse_args(args=arg_strings)
+                return self._argparser.parse_args(args=arg_strings)
             except (Exception, SystemExit) as e:
                 exc = e
                 captured_stderr = f.getvalue()
