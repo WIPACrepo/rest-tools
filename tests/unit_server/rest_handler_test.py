@@ -73,28 +73,7 @@ def test_rest_handler_get_current_user():
     assert rh.auth_key == token
 
 
-# def test_rest_handler_get_json_body_argument():
-#     rh = RestHandler()
-#     rh.initialize()
-#     rh.request = MagicMock()
-#     rh.request.body = json.dumps({'foo': 'bar'})
 
-#     assert rh.get_json_body_argument('foo') == 'bar'
-
-#     with pytest.raises(Exception):
-#         rh.get_json_body_argument('baz')
-
-
-# def test_rest_handler_get_argument():
-#     rh = RestHandler()
-#     rh.initialize()
-#     rh.request = MagicMock()
-#     rh.request.body = json.dumps({'foo': 'bar'})
-
-#     assert rh.get_argument('foo') == 'bar'
-
-#     with pytest.raises(Exception):
-#         rh.get_argument('baz')
 
 
 def test_keycloak_username_mixin():
