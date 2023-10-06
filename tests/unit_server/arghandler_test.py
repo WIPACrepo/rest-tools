@@ -3,7 +3,7 @@
 # pylint: disable=W0212,W0621
 
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 from unittest.mock import Mock
 
 import pytest
@@ -32,7 +32,7 @@ def setup_argument_handler(
             application=Mock(),
             request=httputil.HTTPServerRequest(
                 uri=req.url,
-                headers=req.headers,
+                headers=httputil.HTTPHeaders(req.headers),
             ),
         )
         return ArgumentHandler(ArgumentSource.QUERY_ARGUMENTS, rest_handler)
@@ -43,13 +43,14 @@ def setup_argument_handler(
         print(req.url)
         print(req.body)
         print(req.headers)
+        assert 0
         print()
         rest_handler = RestHandler(
             application=Mock(),
             request=httputil.HTTPServerRequest(
                 uri=req.url,
-                body=req.body,
-                headers=req.headers,
+                body=cast(bytes, req.body),
+                headers=httputil.HTTPHeaders(req.headers),
             ),
         )
         rest_handler.request._parse_body()  # normally called when request REST method starts
@@ -96,7 +97,7 @@ def test_100__defaults(argument_source: str) -> None:
 )
 def test_110__no_default_no_typing(argument_source: str) -> None:
     """Test `argument_source` arguments."""
-    args = {
+    args: Dict[str, Any] = {
         "foo": "-10",
         "bar": "True",
         "bat": "2.5",
@@ -139,7 +140,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
     def custom_type(_: Any) -> Any:
         return "this could be anything but it's just a string"
 
-    args = {
+    args: Dict[str, Any] = {
         "foo": ("-10", int),
         #
         "bar": ("True", bool),
@@ -205,7 +206,7 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
     def custom_type(val: Any) -> Any:
         raise ValueError("x")
 
-    args = {
+    args: Dict[str, Any] = {
         "foo": ("hank", int),
         "bat": ("2.5", int),
         "baz": ("9e-33", int),
@@ -329,7 +330,7 @@ def test_140__extra_argument(argument_source: str) -> None:
     """Test `argument_source` arguments error case."""
 
     # set up ArgumentHandler
-    args = {
+    args: Dict[str, Any] = {
         "foo": "val",
         "reqd": "2",
         "xtra": 1,
