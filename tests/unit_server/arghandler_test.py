@@ -327,7 +327,7 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
         print()
         print(arg)
         print(val)
-        assert val == getattr(outargs, arg)
+        assert val == getattr(outargs, arg.replace("-", "_"))
 
 
 @pytest.mark.parametrize(
@@ -336,6 +336,10 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
 )
 def test_111__no_default_with_typing(argument_source: str) -> None:
     """Test `request.arguments` arguments."""
+
+    def custom_type(_: Any) -> Any:
+        return "this could be anything but it's just a string"
+
     args = {
         "foo": ("-10", int),
         #
@@ -350,9 +354,25 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         #
         "baz": ("Toyota Corolla", str),
         "def": ("1000", str),
+        #
+        "zzz": ("yup", custom_type),
     }
     if argument_source == JSON_BODY_ARGUMENTS:
-        pass
+        args.update(
+            {
+                "dicto": ({"abc": 123}, dict),
+                "dicto-as-list": ({"def": 456}, list),
+                "listo": ([1, 2, 3], list),
+                "compoundo": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    list,
+                ),
+                "sure": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    custom_type,
+                ),
+            }
+        )
 
     # set up ArgumentHandler
     arghand = setup_argument_handler(
@@ -371,13 +391,9 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         print(val)
         print(typ)
         if typ == bool:
-            assert getattr(outargs, arg) == strtobool(val)
+            assert getattr(outargs, arg.replace("-", "_")) == strtobool(val)
         else:
-            assert getattr(outargs, arg) == typ(val)
-
-    # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
-    # NOTE - `strip` use-cases depend solely on RequestHandler.get_argument(), so no tests
-    # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
+            assert getattr(outargs, arg.replace("-", "_")) == typ(val)
 
 
 @pytest.mark.parametrize(
@@ -386,6 +402,10 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
 )
 def test_112__no_default_with_typing__error(argument_source: str) -> None:
     """Test `argument_source` arguments."""
+
+    def custom_type(val: Any) -> Any:
+        raise ValueError("x")
+
     args = {
         "foo": ("hank", int),
         "bat": ("2.5", int),
@@ -395,9 +415,24 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
         "boo": ("2", bool),
         #
         "abc": ("222.111.333", float),
+        #
+        "zzz": ("yup", custom_type),
     }
     if argument_source == JSON_BODY_ARGUMENTS:
-        pass
+        args.update(
+            {
+                "dicto": ({"abc": 123}, int),
+                "listo": ([1, 2, 3], int),
+                "compoundo": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    object,
+                ),
+                "nope": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    custom_type,
+                ),
+            }
+        )
 
     for arg, (val, typ) in args.items():
         print()
@@ -468,20 +503,27 @@ def test_130__duplicates(argument_source: str) -> None:
         ("baz", "hello mars!"),
     ]
     if argument_source == JSON_BODY_ARGUMENTS:
-        pass
+        pass  # no special data since duplicates not allowed for json
 
     # set up ArgumentHandler
     arghand = setup_argument_handler(argument_source, args)
     arghand.add_argument("foo", type=int, nargs="*")
     arghand.add_argument("baz", type=str, nargs="*")
     arghand.add_argument("bar")
-    outargs = arghand.parse_args()
-    print(outargs)
 
-    # grab each
-    assert outargs.foo == [22, 44, 66, 88]
-    assert outargs.baz == ["hello world!", "hello mars!"]
-    assert outargs.bar == "abc"
+    # duplicates not allowed for json
+    if argument_source == JSON_BODY_ARGUMENTS:
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == "HTTP 400: JSON-encoded requests body must be a 'dict'"
+    # but they are for query args!
+    else:
+        outargs = arghand.parse_args()
+        print(outargs)
+        # grab each
+        assert outargs.foo == [22, 44, 66, 88]
+        assert outargs.baz == ["hello world!", "hello mars!"]
+        assert outargs.bar == "abc"
 
 
 @pytest.mark.parametrize(
@@ -492,19 +534,16 @@ def test_140__extra_argument(argument_source: str) -> None:
     """Test `argument_source` arguments error case."""
 
     # set up ArgumentHandler
-    arghand = setup_argument_handler(
-        argument_source,
-        [
-            ("foo", "val"),
-            ("reqd", "2"),
-            ("xtra", 1),
-            ("another", True),
-            ("another", False),
-            ("another", "who knows"),
-        ],
-    )
+    args = {
+        "foo": "val",
+        "reqd": "2",
+        "xtra": 1,
+        "another": True,
+    }
     if argument_source == JSON_BODY_ARGUMENTS:
-        pass
+        args["another"] = [{"apple": True}, {"banana": 951}, {"cucumber": False}]
+
+    arghand = setup_argument_handler(argument_source, args)
     arghand.add_argument("reqd")
     arghand.add_argument("foo")
 
@@ -512,3 +551,40 @@ def test_140__extra_argument(argument_source: str) -> None:
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
     assert str(e.value) == "HTTP 400: unrecognized arguments: xtra, another"
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_141__extra_argument_with_duplicates(argument_source: str) -> None:
+    """Test `argument_source` arguments error case."""
+
+    # set up ArgumentHandler
+    args = [
+        ("foo", "val"),
+        ("reqd", "2"),
+        ("xtra", 1),
+        ("another", True),
+        ("another", False),
+        ("another", "who knows"),
+    ]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass  # no special data since duplicates not allowed for json
+
+    arghand = setup_argument_handler(argument_source, args)
+    arghand.add_argument("reqd")
+    arghand.add_argument("foo")
+
+    # Missing Required Argument...
+
+    # duplicates not allowed for json
+    if argument_source == JSON_BODY_ARGUMENTS:
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == "HTTP 400: JSON-encoded requests body must be a 'dict'"
+    # but they are for query args!
+    else:
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == "HTTP 400: unrecognized arguments: xtra, another"
