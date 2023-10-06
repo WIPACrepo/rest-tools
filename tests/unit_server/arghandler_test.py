@@ -43,7 +43,6 @@ def setup_argument_handler(
         print(req.url)
         print(req.body)
         print(req.headers)
-        assert 0
         print()
         rest_handler = RestHandler(
             application=Mock(),
