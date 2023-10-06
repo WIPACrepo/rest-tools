@@ -3,218 +3,16 @@
 # pylint: disable=W0212,W0621
 
 import json
-import urllib
 from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-import pytest  # type: ignore[import]
+import pytest
 import requests
 import tornado.web
 from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
 from tornado import httputil
 from wipac_dev_tools import strtobool
-
-# def test_00_cast_type() -> None:
-#     """Test `_cast_type()`."""
-#     # None - no casting
-#     # assert ArgumentHandler._cast_type("string", None) == "string"
-#     # assert ArgumentHandler._cast_type("0", None) == "0"
-#     # assert ArgumentHandler._cast_type("2.5", None) == "2.5"
-#     # str
-#     assert ArgumentHandler._cast_type("string", str) == "string"
-#     assert ArgumentHandler._cast_type("", str) == ""
-#     assert ArgumentHandler._cast_type(0, str) == "0"
-#     # int
-#     assert ArgumentHandler._cast_type("1", int) == 1
-#     assert ArgumentHandler._cast_type(1.0, int) == 1
-#     assert ArgumentHandler._cast_type("1", int) != "1"
-#     # float
-#     assert ArgumentHandler._cast_type("2.5", float) == 2.5
-#     assert ArgumentHandler._cast_type("2.0", float) == 2.0
-#     assert ArgumentHandler._cast_type("123", float) == 123.0
-#     assert ArgumentHandler._cast_type(4, float) == 4.0
-#     # True
-#     assert ArgumentHandler._cast_type("1", bool) is True
-#     assert ArgumentHandler._cast_type(1, bool) is True
-#     assert ArgumentHandler._cast_type(-99, bool) is True
-#     for trues in ["True", "T", "On", "Yes", "Y"]:
-#         for val in [
-#             trues.upper(),
-#             trues.lower(),
-#             trues[:-1] + trues[-1].upper(),  # upper only last char
-#         ]:
-#             assert ArgumentHandler._cast_type(val, bool) is True
-#     # False
-#     assert ArgumentHandler._cast_type("", bool) is False
-#     assert ArgumentHandler._cast_type("0", bool) is False
-#     assert ArgumentHandler._cast_type(0, bool) is False
-#     for falses in ["False", "F", "Off", "No", "N"]:
-#         for val in [
-#             falses.upper(),
-#             falses.lower(),
-#             falses[:-1] + falses[-1].upper(),  # upper only last char
-#         ]:
-#             assert ArgumentHandler._cast_type(val, bool) is False
-#     # list
-#     assert ArgumentHandler._cast_type("abcd", list) == ["a", "b", "c", "d"]
-#     assert ArgumentHandler._cast_type("", list) == []
-
-#     # callable
-#     assert ArgumentHandler._cast_type("abcd", len) == 4
-#     assert ArgumentHandler._cast_type("abcd", lambda x: 2 * len(x)) == 8
-
-#     def triple_len(val: Any) -> int:
-#         return 3 * len(val)
-
-#     assert ArgumentHandler._cast_type("abcd", triple_len) == 12
-
-
-# def test_01_cast_typ_errors() -> None:
-#     """Test `_cast_type()`."""
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._cast_type("", int)
-#     assert "(ValueError)" in str(e.value)
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._cast_type("", float)
-#     assert "(ValueError)" in str(e.value)
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._cast_type("123abc", float)
-#     assert "(ValueError)" in str(e.value)
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._cast_type("anything", bool)
-#     assert "(ValueError)" in str(e.value)
-
-
-# def test_02_validate_choice() -> None:
-#     """Test `_validate_choice()`."""
-#     ArgumentHandler._validate_choice("foo", None, [])
-#     ArgumentHandler._validate_choice("foo", None, None)
-
-#     # choices
-#     assert ArgumentHandler._validate_choice(True, [True, False], None) is True
-#     assert ArgumentHandler._validate_choice(1, [0, 1, 2], None) == 1
-#     assert ArgumentHandler._validate_choice("", [""], None) == ""
-#     ArgumentHandler._validate_choice("23", [23, "23"], None)
-#     ArgumentHandler._validate_choice("23", [23, r"\d\d"], None)  # regex
-
-#     # forbiddens
-#     ArgumentHandler._validate_choice("23", [23, "23"], [])
-#     ArgumentHandler._validate_choice("23", [23, "23"], ["boo!"])
-#     ArgumentHandler._validate_choice("23", ["23"], [23])
-#     ArgumentHandler._validate_choice(["list"], None, [list(), dict()])
-
-
-# def test_03_validate_choice__errors() -> None:
-#     """Test `_validate_choice()`."""
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("23", [23], None)
-#     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("string", ["STRING"], None)
-#     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("3", [0, 1, 2], None)
-#     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("abc", [["a", "b", "c", "d"]], None)
-#     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("foo", [], [])  # no allowed choices
-#     assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-
-#     # forbiddens
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("23", None, ["23"])
-#     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("baz", ["baz"], ["baz"])
-#     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice([], None, [list(), dict()])
-#     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice({}, None, [list(), dict()])
-#     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-#     #
-#     with pytest.raises(_InvalidArgumentError) as e:
-#         ArgumentHandler._validate_choice("   ", None, [123, r"\s*"])  # regex
-#     assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-
-
-# def test_04_cast_type() -> None:
-#     """Test `_cast_type()`."""
-#     vals = [
-#         "abcdefghijklmopqrstuvwxyz",
-#         1,
-#         None,
-#         ["this is", "a list"],
-#         "",
-#         2.5,
-#         {"but this": "is a dict"},
-#     ]
-
-#     def _agreeable_type(typ: Any, val: Any) -> bool:
-#         if val is None:
-#             return False
-#         try:
-#             typ(val)
-#             return True
-#         except Exception:
-#             return False
-
-#     for val in vals:
-#         print(val)
-#         # Passing Cases:
-#         # assert val == ArgumentHandler._cast_type(val, None)  # None is always allowed
-#         for o_type in [type(o) for o in vals if _agreeable_type(type(o), val)]:
-#             print(o_type)
-#             out = ArgumentHandler._cast_type(val, o_type)
-#             assert isinstance(out, o_type)
-
-#         # Error Cases:
-
-#         # None is not allowed (unless the type is type(None))
-#         if val is not None:
-#             with pytest.raises(_InvalidArgumentError):
-#                 ArgumentHandler._cast_type(None, type(val))
-#             with pytest.raises((ValueError, TypeError)):
-#                 ArgumentHandler._cast_type(None, type(val), server_side_error=True)
-
-#         # type-mismatch  # pylint: disable=C0123
-#         for o_type in [type(o) for o in vals if not _agreeable_type(type(o), val)]:
-#             print(o_type)
-#             with pytest.raises(_InvalidArgumentError):
-#                 ArgumentHandler._cast_type(val, o_type)
-#             with pytest.raises((ValueError, TypeError)):
-#                 ArgumentHandler._cast_type(val, o_type, server_side_error=True)
-
-
-# def test_05_strict_type() -> None:
-#     """Test `_cast_type(strict_type=True)`."""
-#     bad_vals = {
-#         str: [1, [], False],
-#         bool: [1, "True", [], [False]],
-#         int: [2.1, 9.0, "10", [], [5]],
-#         list: ["not a list", {"a": 1}, 1],
-#         float: [2, "1e4", [], [1.0]],
-#     }
-
-#     for o_type, values in bad_vals.items():
-#         for val in values:
-#             with pytest.raises(_InvalidArgumentError):
-#                 ArgumentHandler._cast_type(val, o_type, strict_type=True)
-#             with pytest.raises((ValueError, TypeError)):
-#                 ArgumentHandler._cast_type(
-#                     val, o_type, strict_type=True, server_side_error=True
-#                 )
 
 QUERY_ARGUMENTS = "query-arguments"
 JSON_BODY_ARGUMENTS = "json-body-arguments"
@@ -224,6 +22,7 @@ def setup_argument_handler(
     argument_source: str,
     args: dict[str, Any] | list[tuple[Any, Any]],
 ) -> ArgumentHandler:
+    """Load data and return `ArgumentHandler` instance."""
     if argument_source == QUERY_ARGUMENTS:
         req = requests.Request(url="https://foo.aq/all", params=args).prepare()
         print("\n request:")
@@ -462,8 +261,6 @@ def test_120__missing_argument(argument_source: str) -> None:
         arghand.parse_args()
     assert str(e.value) == "HTTP 400: the following arguments are required: reqd"
 
-    # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
-
 
 @pytest.mark.parametrize(
     "argument_source",
@@ -482,8 +279,6 @@ def test_121__missing_argument(argument_source: str) -> None:
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
     assert str(e.value) == "HTTP 400: the following arguments are required: reqd, bar"
-
-    # NOTE - `typ` and `choices` are tested in `_qualify_argument` tests
 
 
 @pytest.mark.parametrize(
