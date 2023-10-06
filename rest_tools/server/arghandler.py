@@ -10,8 +10,7 @@ import logging
 import re
 import time
 import traceback
-from itertools import chain
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
+from typing import Any, TypeVar, Union
 
 import tornado.web
 from tornado.escape import to_unicode
@@ -30,37 +29,6 @@ class ArgumentSource(enum.Enum):
 
     QUERY_ARGUMENTS = enum.auto()
     JSON_BODY_ARGUMENTS = enum.auto()
-
-
-class _NoDefaultValue:  # pylint: disable=R0903
-    """Signal no default value, AKA argument is required."""
-
-
-NO_DEFAULT = _NoDefaultValue()
-
-
-def _parse_json_body_arguments(request_body: bytes) -> Dict[str, Any]:
-    """Return the request-body JSON-decoded, but only if it's a `dict`."""
-    json_body = json_decode(request_body)
-
-    if isinstance(json_body, dict):
-        return cast(Dict[str, Any], json_body)
-    return {}
-
-
-class _InvalidArgumentError(Exception):
-    """Raise when an argument-validation fails."""
-
-
-def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
-    if isinstance(error, tornado.web.MissingArgumentError):
-        error.reason = (
-            f"`{arg_name}`: (MissingArgumentError) required argument is missing"
-        )
-        error.log_message = ""
-        return error
-    else:
-        return tornado.web.HTTPError(400, reason=f"`{arg_name}`: {error}")
 
 
 ARGUMENTS_REQUIRED_PATTERN = re.compile(
@@ -96,7 +64,7 @@ class ArgumentHandler:
 
         def safe_json_loads(val: Any) -> Any:
             try:
-                return json.loads(val)
+                return json_decode(val)
             except:  # noqa: E722
                 return val
 
@@ -126,8 +94,6 @@ class ArgumentHandler:
         captured_stderr: str,
     ) -> str:
         """Translate argparse-style error to a message str for HTTPError."""
-        print(exc)  # TODO
-        print(captured_stderr)  # TODO
 
         # errors not covered by 'exit_on_error=False' (in __init__)
         if isinstance(exc, SystemExit):
@@ -181,7 +147,7 @@ class ArgumentHandler:
         # json-encoded body arguments
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
             try:
-                source = json.loads(self.rest_handler.request.body)
+                source = json_decode(self.rest_handler.request.body)
             except json.JSONDecodeError:
                 raise tornado.web.HTTPError(
                     400, reason="requests body is not JSON-encoded"
@@ -205,8 +171,6 @@ class ArgumentHandler:
         # error
         else:
             raise ValueError(f"Invalid argument_source: {self}")
-
-        print(arg_strings)  # TODO
 
         # parse
         with contextlib.redirect_stderr(io.StringIO()) as f:
