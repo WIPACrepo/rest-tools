@@ -5,6 +5,7 @@
 
 import json
 import logging
+import sys
 from unittest.mock import MagicMock
 
 import jwt.algorithms
@@ -20,6 +21,10 @@ from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
 from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
+
+# these tests are only for 3.9+
+if sys.version_info < (3, 9):
+    sys.exit(0)
 
 
 def test_rest_handler_setup(requests_mock):
