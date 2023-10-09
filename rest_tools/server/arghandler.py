@@ -38,6 +38,8 @@ ARGUMENTS_REQUIRED_PATTERN = re.compile(
 UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".+ error: (unrecognized arguments:) (.+)")
 INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 
+USE_CACHED_VALUE_PLACEHOLDER = "PLACEHOLDER"
+
 
 class ArgumentHandler:
     """Helper class for argument parsing, defaulting, and casting.
@@ -72,20 +74,21 @@ class ArgumentHandler:
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
         """
 
-        def safe_json_loads(val: Any) -> Any:
-            try:
-                return json_decode(val)
-            except Exception:  # noqa: E722
-                return val
+        def retrieve_json_body_arg(parsed_val: Any) -> Any:
+            if parsed_val != USE_CACHED_VALUE_PLACEHOLDER:
+                raise RuntimeError(
+                    f"json value should be '{USE_CACHED_VALUE_PLACEHOLDER}' not: {parsed_val}"
+                )
+            return self.rest_handler.request.body_arguments[name]
 
         if kwargs.get("type") == bool:
             kwargs["type"] = strtobool
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
             if "type" in kwargs:
                 typ = kwargs["type"]  # put in var to avoid unintended recursion
-                kwargs["type"] = lambda x: typ(safe_json_loads(x))
+                kwargs["type"] = lambda x: typ(retrieve_json_body_arg(x))
             else:
-                kwargs["type"] = safe_json_loads
+                kwargs["type"] = retrieve_json_body_arg
 
         if "default" not in kwargs:
             if "required" not in kwargs:
@@ -157,22 +160,22 @@ class ArgumentHandler:
         # json-encoded body arguments
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
             try:
-                source = json_decode(self.rest_handler.request.body)
+                if not self.rest_handler.request.body:
+                    self.rest_handler.request.body_arguments = json_decode(
+                        self.rest_handler.request.body
+                    )
             except json.JSONDecodeError:
                 raise tornado.web.HTTPError(
                     400, reason="requests body is not JSON-encoded"
                 )
-            if not isinstance(source, dict):
+            if not isinstance(self.rest_handler.request.body_arguments, dict):
                 raise tornado.web.HTTPError(
                     400, reason="JSON-encoded requests body must be a 'dict'"
                 )
-            for key, val in source.items():
+            for key, _ in self.rest_handler.request.body_arguments.items():
                 arg_strings.append(f"--{key}")
-                print(type(val), val)
-                arg_strings.append(
-                    # NOTE: could optimize by not loading values above (lots of custom string parsing)
-                    json.dumps(val)
-                )
+                # use cached value (see add_argument()) to avoid unneeded encoding & decoding
+                arg_strings.append(USE_CACHED_VALUE_PLACEHOLDER)
         # query arguments
         elif self.argument_source == ArgumentSource.QUERY_ARGUMENTS:
             for key, vlist in self.rest_handler.request.arguments.items():
