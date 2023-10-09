@@ -24,7 +24,7 @@ from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
 
 # these tests are only for 3.9+
 if sys.version_info < (3, 9):
-    pytest.skip()
+    pytest.skip(allow_module_level=True)
 
 
 def test_rest_handler_setup(requests_mock):
