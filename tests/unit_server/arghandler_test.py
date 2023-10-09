@@ -3,6 +3,7 @@
 # pylint: disable=W0212,W0621
 
 import json
+import sys
 from typing import Any, Dict, List, Tuple, Union, cast
 from unittest.mock import Mock
 
@@ -13,6 +14,10 @@ from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
 from tornado import httputil
 from wipac_dev_tools import strtobool
+
+# these tests are only for 3.9+
+if sys.version_info < (3, 9):
+    pytestmark = pytest.skip("only for 3.9+")
 
 QUERY_ARGUMENTS = "query-arguments"
 JSON_BODY_ARGUMENTS = "json-body-arguments"
