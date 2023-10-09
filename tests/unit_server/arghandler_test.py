@@ -17,7 +17,7 @@ from wipac_dev_tools import strtobool
 
 # these tests are only for 3.9+
 if sys.version_info < (3, 9):
-    pytestmark = pytest.skip("only for 3.9+", allow_module_level=True)
+    pytestmark = pytest.skip("only for 3.9+", allow_module_level=True)  # type: ignore[var-annotated]
 
 QUERY_ARGUMENTS = "query-arguments"
 JSON_BODY_ARGUMENTS = "json-body-arguments"
