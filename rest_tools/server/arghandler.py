@@ -51,6 +51,8 @@ class ArgumentHandler:
         if sys.version_info < (3, 9):
             # ArgumentParser's `exit_on_error` is only python 3.9+
             self._argparser: argparse.ArgumentParser  # mypy hack
+            self.argument_source: ArgumentSource  # mypy hack
+            self.rest_handler: RestHandler  # mypy hack
             raise RuntimeError(
                 f"{self.__class__.__name__} is supported only for python 3.9+"
             )
