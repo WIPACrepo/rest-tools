@@ -8,6 +8,7 @@ import io
 import json
 import logging
 import re
+import sys
 import time
 import traceback
 from typing import Any, List, TypeVar, Union
@@ -47,6 +48,12 @@ class ArgumentHandler:
     def __init__(
         self, argument_source: ArgumentSource, rest_handler: RestHandler
     ) -> None:
+        if sys.version_info < (3, 9):
+            # ArgumentParser's `exit_on_error` is only python 3.9+
+            raise RuntimeError(
+                f"{self.__class__.__name__} is supported only for python 3.9+"
+            )
+
         self._argparser = argparse.ArgumentParser(exit_on_error=False)
         self.argument_source = argument_source
         self.rest_handler = rest_handler
