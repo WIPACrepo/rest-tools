@@ -171,6 +171,19 @@ class RestHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
 
+        # decode JSON-encoded requests body
+        if self.request.body:
+            try:
+                self.request.body_arguments = json_decode(self.request.body)
+            except json.JSONDecodeError:
+                raise tornado.web.HTTPError(
+                    400, reason="requests body is not JSON-encoded"
+                )
+            if not isinstance(self.request.body_arguments, dict):
+                raise tornado.web.HTTPError(
+                    400, reason="JSON-encoded requests body must be a 'dict'"
+                )
+
     @wtt.evented()
     def on_finish(self):
         """Cleanup after http-method request handlers."""
@@ -228,8 +241,6 @@ class RestHandler(tornado.web.RequestHandler):
 
         # 2nd: check json-body args w/o default
         try:
-            if not self.request.body_arguments:
-                self.request.body_arguments = json_decode(self.request.body)
             return self.request.body_arguments[name]  # no default
         except (json.decoder.JSONDecodeError, KeyError, TypeError):
             pass

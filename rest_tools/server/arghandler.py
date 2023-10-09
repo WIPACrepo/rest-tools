@@ -159,19 +159,6 @@ class ArgumentHandler:
 
         # json-encoded body arguments
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
-            try:
-                if not self.rest_handler.request.body:
-                    self.rest_handler.request.body_arguments = json_decode(
-                        self.rest_handler.request.body
-                    )
-            except json.JSONDecodeError:
-                raise tornado.web.HTTPError(
-                    400, reason="requests body is not JSON-encoded"
-                )
-            if not isinstance(self.rest_handler.request.body_arguments, dict):
-                raise tornado.web.HTTPError(
-                    400, reason="JSON-encoded requests body must be a 'dict'"
-                )
             for key, _ in self.rest_handler.request.body_arguments.items():
                 arg_strings.append(f"--{key}")
                 # use cached value (see add_argument()) to avoid unneeded encoding & decoding
