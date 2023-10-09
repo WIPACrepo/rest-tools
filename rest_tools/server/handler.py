@@ -6,6 +6,7 @@
 import base64
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 import time
@@ -25,6 +26,7 @@ from tornado.auth import OAuth2Mixin
 
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
+from ..utils.json_util import json_decode
 from .decorators import catch_error
 from .stats import RouteStats
 
@@ -185,6 +187,55 @@ class RestHandler(tornado.web.RequestHandler):
         }
         self.write(data)
         self.finish()
+
+    def get_argument(
+        self,
+        name: str,
+        default: Any = tornado.web._ARG_DEFAULT,
+        strip: bool = True,
+        # deprecated args
+        type: Any = None,
+        choices: Any = None,
+        forbiddens: Any = None,
+        strict_type: Any = None,
+    ) -> Any:
+        """Get argument from query base-arguments / JSON-decoded request-body.
+
+        If no `default` is provided, and the argument is not present, raise `400`.
+
+        Arguments:
+            name -- the argument's name
+
+        Keyword Arguments:
+            default -- a default value to use if the argument is not present
+            strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
+            type -- **deprecated**
+            choices -- **deprecated**
+            forbiddens -- **deprecated**
+            strict_type -- **deprecated**
+
+        Returns:
+            the argument's value, possibly stripped
+        """
+        if type is not None or choices is not None or forbiddens is not None or strict_type is not None:
+            raise RuntimeError("advanced argument checking is deprecated, please use ArgumentHandler instead")
+
+        # 1st: check query args w/o default
+        try:
+            return super().get_argument(name, strip=strip)  # no default
+        except tornado.web.MissingArgumentError:
+            pass
+
+        # 2nd: check json-body args w/o default
+        try:
+            if not self.request.body_arguments:
+                self.request.body_arguments = json_decode(self.request.body)
+            return self.request.body_arguments[name]  # no default
+        except (json.decoder.JSONDecodeError, KeyError, TypeError):
+            pass
+
+        # Finally: check json-body args w/ default
+        return super().get_argument(name, default, strip=strip)
 
 
 class KeycloakUsernameMixin:
