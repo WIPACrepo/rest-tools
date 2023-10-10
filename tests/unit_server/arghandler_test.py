@@ -429,3 +429,43 @@ def test_200__argparse_dest(argument_source: str) -> None:
             assert val == getattr(outargs, "new_name")
         else:
             assert val == getattr(outargs, arg.replace("-", "_"))
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_210__argparse_choices(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "pick_it": "paper",
+        "bar": "True",
+    }
+    choices = ["rock", "paper", "scissors"]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "pick_it": {"abc": 123},
+                "listo": [1, 2, 3],
+            }
+        )
+        choices = [{"abc": 123}, {"def": 456}, {"ghi": 789}]
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        if arg == "pick_it":
+            arghand.add_argument(arg, choices=choices)
+        else:
+            arghand.add_argument(arg)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, val in args.items():
+        print()
+        print(arg)
+        print(val)
+        assert val == getattr(outargs, arg.replace("-", "_"))
