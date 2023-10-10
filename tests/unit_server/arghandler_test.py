@@ -388,3 +388,44 @@ def test_141__extra_argument_with_duplicates(argument_source: str) -> None:
         with pytest.raises(tornado.web.HTTPError) as e:
             arghand.parse_args()
         assert str(e.value) == "HTTP 400: unrecognized arguments: xtra, another"
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_200__argparse_dest(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "old_name": "-10",
+        "bar": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "dicto": {"abc": 123},
+                "listo": [1, 2, 3],
+            }
+        )
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        if arg == "old_name":
+            arghand.add_argument("new_name")
+        else:
+            arghand.add_argument(arg)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, val in args.items():
+        print()
+        print(arg)
+        print(val)
+        if arg == "old_name":
+            assert val == getattr(outargs, "new_name")
+        else:
+            assert val == getattr(outargs, arg.replace("-", "_"))

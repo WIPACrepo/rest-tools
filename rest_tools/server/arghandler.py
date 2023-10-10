@@ -10,7 +10,7 @@ import re
 import sys
 import time
 import traceback
-from typing import Any, List, TypeVar, Union
+from typing import Any, List, TypeVar, Union, cast
 
 import tornado.web
 from tornado.escape import to_unicode
@@ -76,12 +76,13 @@ class ArgumentHandler:
             if parsed_val != USE_CACHED_VALUE_PLACEHOLDER:
                 return parsed_val  # this must be the **default** value
             # replace placeholder value with actual value
+            key = cast(str, name or kwargs.get("dest"))
             try:
-                return self.rest_handler.json_body_arguments[name]
+                return self.rest_handler.json_body_arguments[key]
             except KeyError as e:
                 # just in case, intercept so the user doesn't get a 400
                 raise RuntimeError(
-                    f"key '{name}' should exist in json body arguments"
+                    f"key '{key}' should exist in json body arguments"
                 ) from e
 
         # TYPE
