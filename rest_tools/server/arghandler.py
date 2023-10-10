@@ -79,7 +79,7 @@ class ArgumentHandler:
                 raise RuntimeError(
                     f"json value should be '{USE_CACHED_VALUE_PLACEHOLDER}' not: {parsed_val}"
                 )
-            return self.rest_handler.request.body_arguments[name]
+            return self.rest_handler.json_body_arguments[name]
 
         if kwargs.get("type") == bool:
             kwargs["type"] = strtobool
@@ -159,7 +159,7 @@ class ArgumentHandler:
 
         # json-encoded body arguments
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
-            for key, _ in self.rest_handler.request.body_arguments.items():
+            for key, _ in self.rest_handler.json_body_arguments.items():
                 arg_strings.append(f"--{key}")
                 # use cached value (see add_argument()) to avoid unneeded encoding & decoding
                 arg_strings.append(USE_CACHED_VALUE_PLACEHOLDER)

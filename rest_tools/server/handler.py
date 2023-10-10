@@ -4,6 +4,7 @@
 # pylint: skip-file
 
 import base64
+import functools
 import hashlib
 import hmac
 import json
@@ -171,19 +172,6 @@ class RestHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
 
-        # decode JSON-encoded requests body
-        if self.request.body:
-            try:
-                self.request.body_arguments = json_decode(self.request.body)
-            except json.JSONDecodeError:
-                raise tornado.web.HTTPError(
-                    400, reason="requests body is not JSON-encoded"
-                )
-            if not isinstance(self.request.body_arguments, dict):
-                raise tornado.web.HTTPError(
-                    400, reason="JSON-encoded requests body must be a 'dict'"
-                )
-
     @wtt.evented()
     def on_finish(self):
         """Cleanup after http-method request handlers."""
@@ -200,6 +188,25 @@ class RestHandler(tornado.web.RequestHandler):
         }
         self.write(data)
         self.finish()
+
+    @functools.cached_property
+    def json_body_arguments(self) -> Dict[str,Any]:
+        """Get the body arguments, decoded from a JSON-encoded request body."""
+        if not self.request.body:
+            return {}
+
+        try:
+            args = json_decode(self.request.body)
+        except json.JSONDecodeError:
+            raise tornado.web.HTTPError(
+                400, reason="requests body is not JSON-encoded"
+            )
+
+        if not isinstance(args, dict):
+            raise tornado.web.HTTPError(
+                400, reason="JSON-encoded requests body must be a 'dict'"
+            )
+        return args
 
     def get_argument(
         self,
@@ -241,8 +248,8 @@ class RestHandler(tornado.web.RequestHandler):
 
         # 2nd: check json-body args w/o default
         try:
-            return self.request.body_arguments[name]  # no default
-        except (json.decoder.JSONDecodeError, KeyError, TypeError):
+            return self.json_body_arguments[name]  # no default
+        except KeyError:
             pass
 
         # Finally: check json-body args w/ default
