@@ -469,3 +469,12 @@ def test_210__argparse_choices(argument_source: str) -> None:
         print(arg)
         print(val)
         assert val == getattr(outargs, arg.replace("-", "_"))
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_220__argparse_nargs(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    test_130__duplicates(argument_source)
