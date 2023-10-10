@@ -67,9 +67,16 @@ class ArgumentHandler:
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        """Add an argument -- like argparse.add_argument with additions.
+        """Add an argument -- `argparse.add_argument` with minimal additions.
+
+        No `--`-prefix is needed.
 
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
+
+        Note: Not all of `argparse.add_argument`'s parameters make sense
+              for key-value based arguments, such as flag-oriented
+              options. Nevertheless, no given parameters are excluded,
+              just make sure to test it first :)
         """
 
         def retrieve_json_body_arg(parsed_val: Any) -> Any:
@@ -105,6 +112,7 @@ class ArgumentHandler:
                     f"Argument '{name}' marked as not required but no default was provided."
                 )
 
+        # prepend with '--' and add!
         self._argparser.add_argument(f"--{name}", *args, **kwargs)
 
     @staticmethod
@@ -176,7 +184,7 @@ class ArgumentHandler:
                 arg_strings.extend(to_unicode(v) for v in vlist)
         # error
         else:
-            raise ValueError(f"Invalid argument_source: {self}")
+            raise ValueError(f"Invalid argument_source: {self.argument_source}")
 
         # parse
         with contextlib.redirect_stderr(io.StringIO()) as f:
@@ -185,6 +193,6 @@ class ArgumentHandler:
             except (Exception, SystemExit) as e:
                 exc = e
                 captured_stderr = f.getvalue()
-        # handle exception outside of context manager
+        # handle exception outside of context manager so *this* stderr is not intercepted
         msg = self._translate_error(exc, captured_stderr)
         raise tornado.web.HTTPError(400, reason=msg)
