@@ -77,9 +77,14 @@ class ArgumentHandler:
         def retrieve_json_body_arg(parsed_val: Any) -> Any:
             if parsed_val != USE_CACHED_VALUE_PLACEHOLDER:
                 raise RuntimeError(
-                    f"json value should be '{USE_CACHED_VALUE_PLACEHOLDER}' not: {parsed_val}"
+                    f"argparse value for json body arguments should be '{USE_CACHED_VALUE_PLACEHOLDER}' not: {parsed_val}"
                 )
-            return self.rest_handler.json_body_arguments[name]
+            try:
+                return self.rest_handler.json_body_arguments[name]
+            except KeyError as e:
+                raise RuntimeError(
+                    f"key '{name}' should exist in json body arguments"
+                ) from e
 
         if kwargs.get("type") == bool:
             kwargs["type"] = strtobool
