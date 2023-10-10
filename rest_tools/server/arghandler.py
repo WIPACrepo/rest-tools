@@ -74,16 +74,17 @@ class ArgumentHandler:
 
         def retrieve_json_body_arg(parsed_val: Any) -> Any:
             if parsed_val != USE_CACHED_VALUE_PLACEHOLDER:
-                raise RuntimeError(
-                    f"argparse value for json body arguments should be '{USE_CACHED_VALUE_PLACEHOLDER}' not: {parsed_val}"
-                )
+                return parsed_val  # this must be the **default** value
+            # replace placeholder value with actual value
             try:
                 return self.rest_handler.json_body_arguments[name]
             except KeyError as e:
+                # just in case, intercept so the user doesn't get a 400
                 raise RuntimeError(
                     f"key '{name}' should exist in json body arguments"
                 ) from e
 
+        # TYPE
         if kwargs.get("type") == bool:
             kwargs["type"] = strtobool
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
@@ -93,6 +94,7 @@ class ArgumentHandler:
             else:
                 kwargs["type"] = retrieve_json_body_arg
 
+        # REQUIRED
         if "default" not in kwargs:
             if "required" not in kwargs:
                 # no default? then it's required
