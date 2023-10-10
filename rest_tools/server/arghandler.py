@@ -5,7 +5,6 @@ import argparse
 import contextlib
 import enum
 import io
-import json
 import logging
 import re
 import sys
@@ -17,7 +16,6 @@ import tornado.web
 from tornado.escape import to_unicode
 from wipac_dev_tools import strtobool
 
-from ..utils.json_util import json_decode
 from .handler import RestHandler
 
 T = TypeVar("T")
