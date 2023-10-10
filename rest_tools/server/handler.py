@@ -13,8 +13,9 @@ import secrets
 import time
 import urllib.parse
 from collections import defaultdict
-from typing import Any, Dict, MutableMapping, TypeVar, Union
+from typing import Any, Dict, MutableMapping, Union
 
+import rest_tools
 import tornado.escape
 import tornado.gen
 import tornado.httpclient
@@ -23,16 +24,11 @@ import tornado.web
 from cachetools import TTLCache
 from tornado.auth import OAuth2Mixin
 
-import rest_tools
-
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
 from ..utils.json_util import json_decode
 from .decorators import catch_error
 from .stats import RouteStats
-
-T = TypeVar("T")
-
 
 logger = logging.getLogger('rest')
 
