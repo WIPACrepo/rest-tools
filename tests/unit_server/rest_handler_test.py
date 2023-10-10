@@ -243,7 +243,7 @@ async def test_openid_login_handler_get__no_body(gen_keys, gen_keys_bytes, reque
 
 
 @pytest.mark.asyncio
-async def test_openid_login_handler_get__invalid_state(cgen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
+async def test_openid_login_handler_get__invalid_state(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
     application = Application([], cookie_secret='secret', login_url='/login', debug=True)
 
     auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
