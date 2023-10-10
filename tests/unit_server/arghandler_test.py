@@ -415,7 +415,7 @@ def test_200__argparse_dest(argument_source: str) -> None:
         print()
         print(arg)
         if arg == "old_name":
-            arghand.add_argument("new_name")
+            arghand.add_argument(arg, dest="new_name")
         else:
             arghand.add_argument(arg)
     outargs = arghand.parse_args()
