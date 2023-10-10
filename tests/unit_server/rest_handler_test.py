@@ -9,6 +9,8 @@ from unittest.mock import MagicMock
 
 import jwt.algorithms
 import pytest
+from tornado.web import Application, HTTPError
+
 from rest_tools.server import (
     KeycloakUsernameMixin,
     OpenIDCookieHandlerMixin,
@@ -17,7 +19,6 @@ from rest_tools.server import (
     RestHandlerSetup,
 )
 from rest_tools.utils.auth import Auth, OpenIDAuth
-from tornado.web import Application, HTTPError
 
 from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
 

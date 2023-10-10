@@ -15,7 +15,6 @@ import urllib.parse
 from collections import defaultdict
 from typing import Any, Dict, MutableMapping, TypeVar, Union
 
-import rest_tools
 import tornado.escape
 import tornado.gen
 import tornado.httpclient
@@ -23,6 +22,8 @@ import tornado.httputil
 import tornado.web
 from cachetools import TTLCache
 from tornado.auth import OAuth2Mixin
+
+import rest_tools
 
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth

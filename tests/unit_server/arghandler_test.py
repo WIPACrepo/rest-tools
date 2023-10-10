@@ -10,10 +10,11 @@ from unittest.mock import Mock
 import pytest
 import requests
 import tornado.web
-from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
-from rest_tools.server.handler import RestHandler
 from tornado import httputil
 from wipac_dev_tools import strtobool
+
+from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
+from rest_tools.server.handler import RestHandler
 
 # these tests are only for 3.9+
 if sys.version_info < (3, 9):
