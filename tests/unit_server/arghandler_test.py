@@ -441,7 +441,7 @@ def test_210__argparse_choices(argument_source: str) -> None:
         "pick_it": "paper",
         "bar": "True",
     }
-    choices = ["rock", "paper", "scissors"]
+    choices: List = ["rock", "paper", "scissors"]
     if argument_source == JSON_BODY_ARGUMENTS:
         args.update(
             {
