@@ -64,3 +64,53 @@ asyncio.get_event_loop().run_forever()
 The server uses [Tornado](https://tornado.readthedocs.io) to handle HTTP
 connections. It is recommended to use Apache or Nginx as a front-facing proxy,
 to handle TLS sessions and non-standard HTTP requests in production.
+
+### Handling Arguments Server-side
+
+`server.ArgumentHandler` is a robust wrapper around `argparse.ArgumentParser`, extended for use in handling REST arguments, both query arguments and JSON-encoded body arguments. The intended design of this class is to follow the `argparse` pattern as closely as possible.
+
+
+```python
+from rest_tools.server import RestHandler, ArgumentHandler, ArgumentSource
+
+class Fruits(RestHandler):
+
+    def get(self):
+        argo = ArgumentHandler(ArgumentSource.QUERY_ARGUMENTS, self)
+
+        argo.add_argument('name', type=str)  # de-facto required
+        argo.add_argument('alias', dest='other_names', type=str, nargs='*', default=[])  # list
+
+        argo.add_argument('is-citrus', type=bool, default=False)
+        argo.add_argument('amount', type=float, required=True)
+
+        args = argo.parse_args()
+
+        fruit = get_fruit(args.name, args.other_names, args.is_citrus, args.amount)
+
+        ...
+
+    def post(self):
+        argo = ArgumentHandler(ArgumentSource.JSON_BODY_ARGUMENTS, self)
+
+        argo.add_argument('name', type=str)  # de-facto required
+        argo.add_argument('other-names', type=list, default=[])
+
+        argo.add_argument('supply', type=dict, required=True)
+
+        def _origin(val):
+            try:
+                return {'USA': 'United States of America', 'MEX': 'Mexico'}[val]
+            except KeyError:
+                # raise a ValueError or TypeError to propagate a 400 Error
+                raise ValueError('Invalid origin')
+
+        argo.add_argument('country_code', dest='origin', type=_origin, required=True)
+
+        args = argo.parse_args()
+
+        add_to_basket(args.name, args.other_names, args.supply, args.origin)
+
+        ...
+
+```
