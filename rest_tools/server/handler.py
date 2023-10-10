@@ -13,7 +13,6 @@ import secrets
 import time
 import urllib.parse
 from collections import defaultdict
-from functools import partial
 from typing import Any, Dict, MutableMapping, TypeVar, Union
 
 import rest_tools
@@ -80,7 +79,7 @@ def RestHandlerSetup(config={}):
         module_auth_key = config['rest_api']['auth_key']
 
     if 'route_stats' in config:
-        route_stats = defaultdict(partial(RouteStats, **config['route_stats']))
+        route_stats = defaultdict(functools.partial(RouteStats, **config['route_stats']))
     else:
         route_stats = defaultdict(RouteStats)
 
