@@ -475,6 +475,48 @@ def test_210__argparse_choices(argument_source: str) -> None:
     "argument_source",
     [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
+def test_211__argparse_choices__error(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "pick_it": "paper",
+        "bar": "True",
+    }
+    choices: List = ["rock", "paper", "scissors"]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "pick_it": {"abc": 123},
+                "listo": [1, 2, 3],
+            }
+        )
+        choices = [{"abc": 123}, {"def": 456}, {"ghi": 789}]
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        {k: v if k != "pick_it" else "hank" for k, v in args.items()},
+    )
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        if arg == "pick_it":
+            arghand.add_argument(arg, choices=choices)
+        else:
+            arghand.add_argument(arg)
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+    assert (
+        str(e.value)
+        == f"HTTP 400: argument pick_it: invalid choice: 'hank' (choose from {', '.join(repr(c) for c in choices)})"
+    )
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
 def test_220__argparse_nargs(argument_source: str) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
     test_130__duplicates(argument_source)

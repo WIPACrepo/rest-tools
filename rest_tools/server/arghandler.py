@@ -1,4 +1,4 @@
-"""Handle argument parsing, defaulting, and casting."""
+"""Handle argument parsing, defaulting, casting, and more."""
 
 
 import argparse
@@ -10,7 +10,7 @@ import re
 import sys
 import time
 import traceback
-from typing import Any, List, TypeVar, Union, cast
+from typing import Any, List, Union, cast
 
 import tornado.web
 from tornado.escape import to_unicode
@@ -18,9 +18,13 @@ from wipac_dev_tools import strtobool
 
 from .handler import RestHandler
 
-T = TypeVar("T")
-
 LOGGER = logging.getLogger(__name__)
+
+
+###############################################################################
+# Constants
+
+USE_CACHED_VALUE_PLACEHOLDER = "PLACEHOLDER"
 
 
 class ArgumentSource(enum.Enum):
@@ -30,13 +34,25 @@ class ArgumentSource(enum.Enum):
     JSON_BODY_ARGUMENTS = enum.auto()
 
 
+###############################################################################
+# Error Patterns
+
+# __main__.py: error: the following arguments are required: --reqd, --bar
 ARGUMENTS_REQUIRED_PATTERN = re.compile(
     r".+: error: (the following arguments are required: .+)"
 )
+
+# __main__.py: error: unrecognized arguments: --xtra 1 --another True False who knows
 UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".+ error: (unrecognized arguments:) (.+)")
+
+# argument --foo: invalid int value: 'hank'
 INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 
-USE_CACHED_VALUE_PLACEHOLDER = "PLACEHOLDER"
+# argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
+INVALID_CHOICE_PATTERN = re.compile(r"(argument .+: invalid choice: .+)")
+
+
+###############################################################################
 
 
 class ArgumentHandler:
@@ -152,11 +168,15 @@ class ArgumentHandler:
                 return f"{match.group(1)} {', '.join(args)}"
 
         # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
-        # ex:
-        #   argument --foo: invalid int value: 'hank'
         elif isinstance(exc, argparse.ArgumentError):
+            # ex:
+            #   argument --foo: invalid int value: 'hank'
             if match := INVALID_VALUE_PATTERN.search(str(exc)):
                 return f"{match.group(1).replace('--', '')} type"
+            # ex:
+            #   argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
+            elif match := INVALID_CHOICE_PATTERN.search(str(exc)):
+                return match.group(1).replace("--", "")
 
         # FALL-THROUGH -- log unknown exception
         ts = time.time()  # log timestamp to aid debugging
