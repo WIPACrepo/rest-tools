@@ -4,25 +4,16 @@
 # pylint: skip-file
 
 import base64
+import functools
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 import time
 import urllib.parse
 from collections import defaultdict
-from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, MutableMapping, Union
 
 import rest_tools
 import tornado.escape
@@ -35,12 +26,9 @@ from tornado.auth import OAuth2Mixin
 
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
-from . import arghandler
+from ..utils.json_util import json_decode
 from .decorators import catch_error
 from .stats import RouteStats
-
-T = TypeVar("T")
-
 
 logger = logging.getLogger('rest')
 
@@ -88,7 +76,7 @@ def RestHandlerSetup(config={}):
         module_auth_key = config['rest_api']['auth_key']
 
     if 'route_stats' in config:
-        route_stats = defaultdict(partial(RouteStats, **config['route_stats']))
+        route_stats = defaultdict(functools.partial(RouteStats, **config['route_stats']))
     else:
         route_stats = defaultdict(RouteStats)
 
@@ -197,46 +185,36 @@ class RestHandler(tornado.web.RequestHandler):
         self.write(data)
         self.finish()
 
-    def get_json_body_argument(
-        self,
-        name: str,
-        default: Any = arghandler.NO_DEFAULT,
-        type: Union[None, Type[T], Callable[[Any],T]] = None,
-        choices: Optional[List[Any]] = None,
-        forbiddens: Optional[List[Any]] = None,
-        strict_type: bool = False,
-    ) -> T:
-        """Get argument from the JSON-decoded request-body.
+    @functools.cached_property
+    def json_body_arguments(self) -> Dict[str,Any]:
+        """Get the body arguments, decoded from a JSON-encoded request body."""
+        if not self.request.body:
+            return {}
 
-        If no `default` is provided, and the argument is not present, raise `400`.
+        try:
+            args = json_decode(self.request.body)
+        except json.JSONDecodeError:
+            raise tornado.web.HTTPError(
+                400, reason="requests body is not JSON-encoded"
+            )
 
-        Arguments:
-            name -- the argument's name
-
-        Keyword Arguments:
-            default -- a default value to use if the argument is not present
-            type -- typecast (or call a one-argument callable) with the argument's value (raise `400` for ValueError and/or TypeError)
-            choices -- a list of valid argument values; regex is allowed for strings (raise `400`, if arg's value is not in list)
-            forbiddens -- a list of disallowed argument values; regex is allowed for strings (raise `400`, if arg's value is in list)
-            strict_type -- if True and `type` is passed, the arg's value is type-checked instead of type-casted
-
-        Returns:
-            the argument's value, possibly stripped/typecasted
-        """
-        return arghandler.ArgumentHandler.get_json_body_argument(
-            self.request.body, name, default, type, choices, forbiddens, strict_type
-        )
+        if not isinstance(args, dict):
+            raise tornado.web.HTTPError(
+                400, reason="JSON-encoded requests body must be a 'dict'"
+            )
+        return args
 
     def get_argument(
         self,
         name: str,
-        default: Any = arghandler.NO_DEFAULT,
+        default: Any = tornado.web._ARG_DEFAULT,
         strip: bool = True,
-        type: Union[None, Type[T], Callable[[Any],T]] = None,
-        choices: Optional[List[Any]] = None,
-        forbiddens: Optional[List[Any]] = None,
-        strict_type: bool = False,
-    ) -> T:
+        # deprecated args
+        type: Any = None,
+        choices: Any = None,
+        forbiddens: Any = None,
+        strict_type: Any = None,
+    ) -> Any:
         """Get argument from query base-arguments / JSON-decoded request-body.
 
         If no `default` is provided, and the argument is not present, raise `400`.
@@ -247,25 +225,31 @@ class RestHandler(tornado.web.RequestHandler):
         Keyword Arguments:
             default -- a default value to use if the argument is not present
             strip {`bool`} -- whether to `str.strip()` the arg's value (default: {`True`})
-            type -- typecast (or call a one-argument callable) with the argument's value (raise `400` for ValueError and/or TypeError)
-            choices -- a list of valid argument values; regex is allowed for strings (raise `400`, if arg's value is not in list)
-            forbiddens -- a list of disallowed argument values; regex is allowed for strings(raise `400`, if arg's value is in list)
-            strict_type -- if True and `type` is passed, the arg's value is type-checked instead of type-casted
+            type -- **deprecated**
+            choices -- **deprecated**
+            forbiddens -- **deprecated**
+            strict_type -- **deprecated**
 
         Returns:
-            the argument's value, possibly stripped/typecasted
+            the argument's value, possibly stripped
         """
-        return arghandler.ArgumentHandler.get_argument(
-            self.request.body,
-            super().get_argument,
-            name,
-            default,
-            strip,
-            type,
-            choices,
-            forbiddens,
-            strict_type,
-        )
+        if type is not None or choices is not None or forbiddens is not None or strict_type is not None:
+            raise RuntimeError("advanced argument checking is deprecated, please use ArgumentHandler instead")
+
+        # 1st: check query args w/o default
+        try:
+            return super().get_argument(name, strip=strip)  # no default
+        except tornado.web.MissingArgumentError:
+            pass
+
+        # 2nd: check json-body args w/o default
+        try:
+            return self.json_body_arguments[name]  # no default
+        except KeyError:
+            pass
+
+        # Finally: check json-body args w/ default
+        return super().get_argument(name, default, strip=strip)
 
 
 class KeycloakUsernameMixin:
@@ -311,8 +295,7 @@ class OpenIDCookieHandlerMixin:
         user_info=None,
         user_info_exp=None,
     ):
-        """
-        Store jwt tokens and user info from OpenID-compliant auth source.
+        """Store jwt tokens and user info from OpenID-compliant auth source.
 
         Args:
             access_token (str): jwt access token
@@ -332,9 +315,7 @@ class OpenIDCookieHandlerMixin:
                                    expires_days=float(user_info_exp)/3600/24)
 
     def clear_tokens(self):
-        """
-        Clear token data, usually on logout.
-        """
+        """Clear token data, usually on logout."""
         self.clear_cookie('access_token')
         self.clear_cookie('refresh_token')
         self.clear_cookie('user_info')

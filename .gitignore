@@ -111,6 +111,7 @@ venv.bak/
 
 src/
 
+*token
 
 # wipac-dev-py-setup-action
 !dependencies*.log

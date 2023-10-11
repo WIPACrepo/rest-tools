@@ -1,47 +1,58 @@
-"""Handle argument parsing, defaulting, and casting."""
+"""Handle argument parsing, defaulting, casting, and more."""
 
 
-import json
+import argparse
+import contextlib
+import enum
+import io
+import logging
 import re
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, cast
+import sys
+import time
+import traceback
+from typing import Any, List, Union, cast
 
 import tornado.web
+from tornado.escape import to_unicode
 from wipac_dev_tools import strtobool
 
-from ..utils.json_util import json_decode
+from .handler import RestHandler
 
-T = TypeVar("T")
-
-
-class _NoDefaultValue:  # pylint: disable=R0903
-    """Signal no default value, AKA argument is required."""
+LOGGER = logging.getLogger(__name__)
 
 
-NO_DEFAULT = _NoDefaultValue()
+###############################################################################
+# Constants
+
+USE_CACHED_VALUE_PLACEHOLDER = "PLACEHOLDER"
 
 
-def _parse_json_body_arguments(request_body: bytes) -> Dict[str, Any]:
-    """Return the request-body JSON-decoded, but only if it's a `dict`."""
-    json_body = json_decode(request_body)
+class ArgumentSource(enum.Enum):
+    """For mapping to argument sources."""
 
-    if isinstance(json_body, dict):
-        return cast(Dict[str, Any], json_body)
-    return {}
+    QUERY_ARGUMENTS = enum.auto()
+    JSON_BODY_ARGUMENTS = enum.auto()
 
 
-class _InvalidArgumentError(Exception):
-    """Raise when an argument-validation fails."""
+###############################################################################
+# Error Patterns
+
+# __main__.py: error: the following arguments are required: --reqd, --bar
+ARGUMENTS_REQUIRED_PATTERN = re.compile(
+    r".+: error: (the following arguments are required: .+)"
+)
+
+# __main__.py: error: unrecognized arguments: --xtra 1 --another True False who knows
+UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".+ error: (unrecognized arguments:) (.+)")
+
+# argument --foo: invalid int value: 'hank'
+INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
+
+# argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
+INVALID_CHOICE_PATTERN = re.compile(r"(argument .+: invalid choice: .+)")
 
 
-def _make_400_error(arg_name: str, error: Exception) -> tornado.web.HTTPError:
-    if isinstance(error, tornado.web.MissingArgumentError):
-        error.reason = (
-            f"`{arg_name}`: (MissingArgumentError) required argument is missing"
-        )
-        error.log_message = ""
-        return error
-    else:
-        return tornado.web.HTTPError(400, reason=f"`{arg_name}`: {error}")
+###############################################################################
 
 
 class ArgumentHandler:
@@ -50,194 +61,158 @@ class ArgumentHandler:
     Like argparse.ArgumentParser, but for REST & JSON-body arguments.
     """
 
-    @staticmethod
-    def _cast_type(
-        value: Any,
-        type_: Union[Type[T], Callable[[Any], T]],
-        strict_type: bool = False,
-        server_side_error: bool = False,
-    ) -> T:
-        """Cast `value` to `cast_type` type.
-
-        Keyword Arguments:
-            server_side_error {bool} -- *see "Raises" below* (default: {False})
-
-        Raises:
-            ValueError -- if typecast fails and `server_side_error=True`
-            _InvalidArgumentError -- if typecast fails and `server_side_error=False`
-        """
-        if type_ is None:
-            raise ValueError("argument 'type_' cannot be 'None'")
-
-        try:
-            if strict_type and not isinstance(value, type_):  # type: ignore[arg-type]
-                raise TypeError(
-                    f"type mismatch: '{type_.__name__}' (value is '{type(value)}')"
-                )
-            elif isinstance(value, str) and (type_ == bool) and (value != ""):
-                value = strtobool(value)  # ~> ValueError
-            elif value is None and (type_ == str):  # don't want None -> "None"
-                raise ValueError("value cannot be cast to 'str' from 'None'")
-            else:
-                value = type_(value)  # type: ignore  # ~> ValueError or TypeError
-        except (ValueError, TypeError) as e:
-            if server_side_error:
-                raise
-            else:
-                raise _InvalidArgumentError(f"(ValueError) {e}")
-
-        return value
-
-    @staticmethod
-    def _validate_choice(
-        value: T, choices: Optional[List[Any]], forbiddens: Optional[List[Any]]
-    ) -> T:
-        """Check that `value` is in `choices` and not in `forbiddens`.
-
-        Raise _InvalidArgumentError if qualification fails.
-        """
-
-        def _value_in(the_list: List[Any]) -> bool:
-            if not isinstance(value, str):
-                return value in the_list
-            # regex matching
-            for pat in the_list:
-                try:
-                    if re.fullmatch(pat, value):
-                        return True
-                except TypeError:  # ignore illegal patterns
-                    pass
-            return False
-
-        if choices is not None and not _value_in(choices):
-            # choices=[] is weird, but is still valid
-            raise _InvalidArgumentError(
-                f"(ValueError) {value} not in choices ({choices})"
+    def __init__(
+        self, argument_source: ArgumentSource, rest_handler: RestHandler
+    ) -> None:
+        if sys.version_info < (3, 9):
+            # ArgumentParser's `exit_on_error` is only python 3.9+
+            self._argparser: argparse.ArgumentParser  # mypy hack
+            self.argument_source: ArgumentSource  # mypy hack
+            self.rest_handler: RestHandler  # mypy hack
+            raise RuntimeError(
+                f"{self.__class__.__name__} is supported only for python 3.9+"
             )
 
-        if forbiddens and _value_in(forbiddens):
-            # [] === None: (an empty forbiddens list is the same as no forbiddens list)
-            raise _InvalidArgumentError(
-                f"(ValueError) {value} is forbidden ({forbiddens})"
-            )
+        self._argparser = argparse.ArgumentParser(exit_on_error=False)
+        self.argument_source = argument_source
+        self.rest_handler = rest_handler
 
-        return value
-
-    @staticmethod
-    def get_json_body_argument(  # pylint: disable=R0913
-        request_body: bytes,
+    def add_argument(
+        self,
         name: str,
-        default: Any,
-        type_: Union[None, Type[T], Callable[[Any], T]],
-        choices: Optional[List[Any]],
-        forbiddens: Optional[List[Any]],
-        strict_type: bool,
-    ) -> T:
-        """Get argument from the JSON-decoded request-body."""
-        try:  # first, assume arg is required
-            value = _parse_json_body_arguments(request_body)[name]
-            if type_:
-                value = ArgumentHandler._cast_type(value, type_, strict_type)
-            return ArgumentHandler._validate_choice(value, choices, forbiddens)
-        except (KeyError, json.decoder.JSONDecodeError):
-            # Required -> raise 400
-            if isinstance(default, type(NO_DEFAULT)):
-                raise _make_400_error(name, tornado.web.MissingArgumentError(name))
-        except _InvalidArgumentError as e:
-            raise _make_400_error(name, e)
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """Add an argument -- `argparse.add_argument` with minimal additions.
 
-        # Else: Optional (aka use default value)
-        try:
-            return ArgumentHandler._validate_choice(default, choices, forbiddens)
-        except _InvalidArgumentError as e:
-            raise _make_400_error(name, e)
+        No `--`-prefix is needed.
+
+        See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
+
+        Note: Not all of `argparse.add_argument`'s parameters make sense
+              for key-value based arguments, such as flag-oriented
+              options. Nevertheless, no given parameters are excluded,
+              just make sure to test it first :)
+        """
+
+        def retrieve_json_body_arg(parsed_val: Any) -> Any:
+            if parsed_val != USE_CACHED_VALUE_PLACEHOLDER:
+                return parsed_val  # this must be the **default** value
+            # replace placeholder value with actual value
+            key = cast(str, name or kwargs.get("dest"))
+            try:
+                return self.rest_handler.json_body_arguments[key]
+            except KeyError as e:
+                # just in case, intercept so the user doesn't get a 400
+                raise RuntimeError(
+                    f"key '{key}' should exist in json body arguments"
+                ) from e
+
+        # TYPE
+        if kwargs.get("type") == bool:
+            kwargs["type"] = strtobool
+        if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
+            if "type" in kwargs:
+                typ = kwargs["type"]  # put in var to avoid unintended recursion
+                kwargs["type"] = lambda x: typ(retrieve_json_body_arg(x))
+            else:
+                kwargs["type"] = retrieve_json_body_arg
+
+        # REQUIRED
+        if "default" not in kwargs:
+            if "required" not in kwargs:
+                # no default? then it's required
+                kwargs["required"] = True
+            elif not kwargs["required"]:
+                raise ValueError(
+                    f"Argument '{name}' marked as not required but no default was provided."
+                )
+
+        # prepend with '--' and add!
+        self._argparser.add_argument(f"--{name}", *args, **kwargs)
 
     @staticmethod
-    def get_argument(  # pylint: disable=W0221,R0913
-        request_body: bytes,
-        rest_handler_get_argument: Callable[..., Optional[str]],
-        name: str,
-        default: Any,
-        strip: bool,
-        type_: Union[None, Type[T], Callable[[Any], T]],
-        choices: Optional[List[Any]],
-        forbiddens: Optional[List[Any]],
-        strict_type: bool,
-    ) -> T:
-        """Get argument from query base-arguments / JSON-decoded request-body.
+    def _translate_error(
+        exc: Union[Exception, SystemExit],
+        captured_stderr: str,
+    ) -> str:
+        """Translate argparse-style error to a message str for HTTPError."""
 
-        Try from `get_json_body_argument()` first, then from
-        `request_handler.get_argument()`.
-        """
-        # If: Required -> raise 400
-        if isinstance(default, type(NO_DEFAULT)):
-            # check JSON-body arguments
-            try:
-                return ArgumentHandler.get_json_body_argument(
-                    request_body,
-                    name,
-                    NO_DEFAULT,
-                    type_,
-                    choices,
-                    forbiddens,
-                    strict_type,
-                )
-            except tornado.web.MissingArgumentError:
-                pass
-            except _InvalidArgumentError as e:
-                raise _make_400_error(name, e)
-            # check query/base and body arguments
-            try:
-                str_val = rest_handler_get_argument(name, strip=strip)
-                if type_:
-                    return ArgumentHandler._validate_choice(
-                        ArgumentHandler._cast_type(str_val, type_, strict_type),
-                        choices,
-                        forbiddens,
-                    )
-                else:
-                    return cast(
-                        # this was Optional[str] but that info would get lost anyways
-                        Any,
-                        ArgumentHandler._validate_choice(str_val, choices, forbiddens),
-                    )
-            except (tornado.web.MissingArgumentError, _InvalidArgumentError) as e:
-                raise _make_400_error(name, e)
+        # errors not covered by 'exit_on_error=False' (in __init__)
+        if isinstance(exc, SystemExit):
+            # MISSING ARG
+            # ex:
+            #   b'foo=val'
+            #   {'foo': [b'val']}
+            #   ['--foo', 'val']
+            # stderr:
+            #   usage: __main__.py [---h] --reqd REQD --foo FOO --bar BAR
+            #   __main__.py: error: the following arguments are required: --reqd, --bar
+            if match := ARGUMENTS_REQUIRED_PATTERN.search(captured_stderr):
+                return match.group(1).replace(" --", " ")
 
-        # Else: Optional (aka use default value)
-        if default is not None and type_:
-            ArgumentHandler._cast_type(
-                default, type_, strict_type, server_side_error=True
-            )
-        # check JSON-body arguments
-        try:  # DON'T pass `default` b/c we want to know if there ISN'T a value
-            return ArgumentHandler.get_json_body_argument(
-                request_body,
-                name,
-                NO_DEFAULT,
-                type_,
-                choices,
-                forbiddens,
-                strict_type,
-            )
-        except tornado.web.MissingArgumentError:
-            pass  # OK. Next, we'll try query base-arguments...
-        except _InvalidArgumentError as e:
-            raise _make_400_error(name, e)
-        # check query base-arguments
-        try:
-            str_val = rest_handler_get_argument(name, default, strip=strip)
-            if type_:
-                return ArgumentHandler._validate_choice(
-                    ArgumentHandler._cast_type(str_val, type_, strict_type),
-                    choices,
-                    forbiddens,
+            # EXTRA ARG
+            # ex:
+            #   b'foo=val&reqd=2&xtra=1&another=True&another=False&another=who+knows'
+            #   {'foo': [b'val'], 'reqd': [b'2'], 'xtra': [b'1'], 'another': [b'True', b'False', b'who knows']}
+            #   ['--foo', 'val', '--reqd', '2', '--xtra', '1', '--another', 'True', 'False', 'who knows']
+            # stderr:
+            #   usage: __main__.py [---h] --reqd REQD --foo FOO
+            #   __main__.py: error: unrecognized arguments: --xtra 1 --another True False who knows
+            elif match := UNRECOGNIZED_ARGUMENTS_PATTERN.search(captured_stderr):
+                args = (
+                    k.replace("--", "")
+                    for k in match.group(2).split()
+                    if k.startswith("--")
                 )
-            else:
-                return cast(
-                    # this was Optional[str] but that info would get lost anyways
-                    Any,
-                    ArgumentHandler._validate_choice(str_val, choices, forbiddens),
-                )
-        except _InvalidArgumentError as e:
-            raise _make_400_error(name, e)
+                return f"{match.group(1)} {', '.join(args)}"
+
+        # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
+        elif isinstance(exc, argparse.ArgumentError):
+            # ex:
+            #   argument --foo: invalid int value: 'hank'
+            if match := INVALID_VALUE_PATTERN.search(str(exc)):
+                return f"{match.group(1).replace('--', '')} type"
+            # ex:
+            #   argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
+            elif match := INVALID_CHOICE_PATTERN.search(str(exc)):
+                return match.group(1).replace("--", "")
+
+        # FALL-THROUGH -- log unknown exception
+        ts = time.time()  # log timestamp to aid debugging
+        LOGGER.error(type(exc))
+        traceback.print_exception(type(exc), exc, exc.__traceback__)
+        LOGGER.exception(exc)
+        LOGGER.error(f"error timestamp: {ts}")
+        LOGGER.error(captured_stderr)
+        return f"Unknown argument-handling error ({ts})"
+
+    def parse_args(self) -> argparse.Namespace:
+        """Get the args -- like argparse.parse_args but parses a dict."""
+        arg_strings: List[str] = []
+
+        # json-encoded body arguments
+        if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
+            for key, _ in self.rest_handler.json_body_arguments.items():
+                arg_strings.append(f"--{key}")
+                # use cached value (see add_argument()) to avoid unneeded encoding & decoding
+                arg_strings.append(USE_CACHED_VALUE_PLACEHOLDER)
+        # query arguments
+        elif self.argument_source == ArgumentSource.QUERY_ARGUMENTS:
+            for key, vlist in self.rest_handler.request.arguments.items():
+                arg_strings.append(f"--{key}")
+                arg_strings.extend(to_unicode(v) for v in vlist)
+        # error
+        else:
+            raise ValueError(f"Invalid argument_source: {self.argument_source}")
+
+        # parse
+        with contextlib.redirect_stderr(io.StringIO()) as f:
+            try:
+                return self._argparser.parse_args(args=arg_strings)
+            except (Exception, SystemExit) as e:
+                exc = e
+                captured_stderr = f.getvalue()
+        # handle exception outside of context manager so *this* stderr is not intercepted
+        msg = self._translate_error(exc, captured_stderr)
+        raise tornado.web.HTTPError(400, reason=msg)

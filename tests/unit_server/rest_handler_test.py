@@ -9,7 +9,13 @@ from unittest.mock import MagicMock
 
 import jwt.algorithms
 import pytest
-from rest_tools.server import OpenIDLoginHandler, RestHandler, RestHandlerSetup, OpenIDCookieHandlerMixin, KeycloakUsernameMixin
+from rest_tools.server import (
+    KeycloakUsernameMixin,
+    OpenIDCookieHandlerMixin,
+    OpenIDLoginHandler,
+    RestHandler,
+    RestHandlerSetup,
+)
 from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
@@ -65,30 +71,6 @@ def test_rest_handler_get_current_user():
     assert rh.get_current_user() == 'subject'
     assert rh.auth_data['foo'] == 'bar'
     assert rh.auth_key == token
-
-
-def test_rest_handler_get_json_body_argument():
-    rh = RestHandler()
-    rh.initialize()
-    rh.request = MagicMock()
-    rh.request.body = json.dumps({'foo': 'bar'})
-
-    assert rh.get_json_body_argument('foo') == 'bar'
-
-    with pytest.raises(Exception):
-        rh.get_json_body_argument('baz')
-
-
-def test_rest_handler_get_argument():
-    rh = RestHandler()
-    rh.initialize()
-    rh.request = MagicMock()
-    rh.request.body = json.dumps({'foo': 'bar'})
-
-    assert rh.get_argument('foo') == 'bar'
-
-    with pytest.raises(Exception):
-        rh.get_argument('baz')
 
 
 def test_keycloak_username_mixin():
@@ -227,7 +209,41 @@ def test_openid_login_handler_encode_decode_state(requests_mock):
 
 
 @pytest.mark.asyncio
-async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
+async def test_openid_login_handler_get__no_body(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
+    application = Application([], cookie_secret='secret', login_url='/login', debug=True)
+
+    # auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
+
+    requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({
+        'authorization_endpoint': 'http://foo/auth',
+        'token_endpoint': 'http://foo/token',
+        'end_session_endpoint': 'http://foo/logout',
+        'userinfo_endpoint': 'http://foo/userinfo',
+        'jwks_uri': 'http://foo/jwks',
+    }))
+    jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(gen_keys[1]))
+    jwk['kid'] = '123'
+    logging.debug(jwk)
+    requests_mock.get('http://foo/jwks', text=json.dumps({
+        'keys': [jwk],
+    }))
+    ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
+    ret['oauth_client_id'] = 'foo'
+    ret['oauth_client_secret'] = 'bar'
+
+    # setup request
+    request = MagicMock()
+    handler = OpenIDLoginHandler(application, request, **ret)
+
+    # first-time get
+    handler.authorize_redirect = MagicMock()
+    request.body = ''
+    await handler.get()
+    handler.authorize_redirect.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_openid_login_handler_get__okay(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
     application = Application([], cookie_secret='secret', login_url='/login', debug=True)
 
     auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
@@ -249,14 +265,9 @@ async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock)
     ret['oauth_client_id'] = 'foo'
     ret['oauth_client_secret'] = 'bar'
 
+    # setup request
     request = MagicMock()
     handler = OpenIDLoginHandler(application, request, **ret)
-
-    # first-time get
-    handler.authorize_redirect = MagicMock()
-    request.body = ''
-    await handler.get()
-    handler.authorize_redirect.assert_called()
 
     # get with code
     token = auth.create_token('sub', headers={'kid': '123'})
@@ -277,6 +288,34 @@ async def test_openid_login_handler_get(gen_keys, gen_keys_bytes, requests_mock)
     await handler.get()
     handler.write.assert_called()
     assert handler.write.call_args[0][0] == user_info
+
+
+@pytest.mark.asyncio
+async def test_openid_login_handler_get__with_error(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
+    application = Application([], cookie_secret='secret', login_url='/login', debug=True)
+
+    # auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
+
+    requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({
+        'authorization_endpoint': 'http://foo/auth',
+        'token_endpoint': 'http://foo/token',
+        'end_session_endpoint': 'http://foo/logout',
+        'userinfo_endpoint': 'http://foo/userinfo',
+        'jwks_uri': 'http://foo/jwks',
+    }))
+    jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(gen_keys[1]))
+    jwk['kid'] = '123'
+    logging.debug(jwk)
+    requests_mock.get('http://foo/jwks', text=json.dumps({
+        'keys': [jwk],
+    }))
+    ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
+    ret['oauth_client_id'] = 'foo'
+    ret['oauth_client_secret'] = 'bar'
+
+    # setup request
+    request = MagicMock()
+    handler = OpenIDLoginHandler(application, request, **ret)
 
     # get with error
     request.body = '{"error": true, "error_description": "the error"}'

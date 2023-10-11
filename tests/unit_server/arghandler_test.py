@@ -2,553 +2,522 @@
 
 # pylint: disable=W0212,W0621
 
-from typing import Any
-from unittest.mock import Mock, patch
+import json
+import sys
+from typing import Any, Dict, List, Tuple, Union, cast
+from unittest.mock import Mock
 
-import pytest  # type: ignore[import]
+import pytest
+import requests
 import tornado.web
-from rest_tools.server.arghandler import ArgumentHandler, _InvalidArgumentError
+from tornado import httputil
+from wipac_dev_tools import strtobool
+
+from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
 
+# these tests are only for 3.9+
+if sys.version_info < (3, 9):
+    pytest.skip("only for 3.9+", allow_module_level=True)  # type: ignore[var-annotated]
 
-@pytest.fixture  # type: ignore[misc]
-def rest_handler() -> RestHandler:
-    """Get a RestHandler instance."""
-    return RestHandler(application=Mock(), request=Mock())
-
-
-def test_00_cast_type() -> None:
-    """Test `_cast_type()`."""
-    # None - no casting
-    # assert ArgumentHandler._cast_type("string", None) == "string"
-    # assert ArgumentHandler._cast_type("0", None) == "0"
-    # assert ArgumentHandler._cast_type("2.5", None) == "2.5"
-    # str
-    assert ArgumentHandler._cast_type("string", str) == "string"
-    assert ArgumentHandler._cast_type("", str) == ""
-    assert ArgumentHandler._cast_type(0, str) == "0"
-    # int
-    assert ArgumentHandler._cast_type("1", int) == 1
-    assert ArgumentHandler._cast_type(1.0, int) == 1
-    assert ArgumentHandler._cast_type("1", int) != "1"
-    # float
-    assert ArgumentHandler._cast_type("2.5", float) == 2.5
-    assert ArgumentHandler._cast_type("2.0", float) == 2.0
-    assert ArgumentHandler._cast_type("123", float) == 123.0
-    assert ArgumentHandler._cast_type(4, float) == 4.0
-    # True
-    assert ArgumentHandler._cast_type("1", bool) is True
-    assert ArgumentHandler._cast_type(1, bool) is True
-    assert ArgumentHandler._cast_type(-99, bool) is True
-    for trues in ["True", "T", "On", "Yes", "Y"]:
-        for val in [
-            trues.upper(),
-            trues.lower(),
-            trues[:-1] + trues[-1].upper(),  # upper only last char
-        ]:
-            assert ArgumentHandler._cast_type(val, bool) is True
-    # False
-    assert ArgumentHandler._cast_type("", bool) is False
-    assert ArgumentHandler._cast_type("0", bool) is False
-    assert ArgumentHandler._cast_type(0, bool) is False
-    for falses in ["False", "F", "Off", "No", "N"]:
-        for val in [
-            falses.upper(),
-            falses.lower(),
-            falses[:-1] + falses[-1].upper(),  # upper only last char
-        ]:
-            assert ArgumentHandler._cast_type(val, bool) is False
-    # list
-    assert ArgumentHandler._cast_type("abcd", list) == ["a", "b", "c", "d"]
-    assert ArgumentHandler._cast_type("", list) == []
-
-    # callable
-    assert ArgumentHandler._cast_type("abcd", len) == 4
-    assert ArgumentHandler._cast_type("abcd", lambda x: 2 * len(x)) == 8
-
-    def triple_len(val: Any) -> int:
-        return 3 * len(val)
-
-    assert ArgumentHandler._cast_type("abcd", triple_len) == 12
+QUERY_ARGUMENTS = "query-arguments"
+JSON_BODY_ARGUMENTS = "json-body-arguments"
 
 
-def test_01_cast_type__errors() -> None:
-    """Test `_cast_type()`."""
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type("", int)
-    assert "(ValueError)" in str(e.value)
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type("", float)
-    assert "(ValueError)" in str(e.value)
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type("123abc", float)
-    assert "(ValueError)" in str(e.value)
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._cast_type("anything", bool)
-    assert "(ValueError)" in str(e.value)
+def setup_argument_handler(
+    argument_source: str,
+    args: Union[Dict[str, Any], List[Tuple[Any, Any]]],
+) -> ArgumentHandler:
+    """Load data and return `ArgumentHandler` instance."""
+    if argument_source == QUERY_ARGUMENTS:
+        req = requests.Request(url="https://foo.aq/all", params=args).prepare()
+        print("\n request:")
+        print(req.url)
+        print()
+        rest_handler = RestHandler(
+            application=Mock(),
+            request=httputil.HTTPServerRequest(
+                uri=req.url,
+                headers=httputil.HTTPHeaders(req.headers),
+            ),
+        )
+        return ArgumentHandler(ArgumentSource.QUERY_ARGUMENTS, rest_handler)
+
+    elif argument_source == JSON_BODY_ARGUMENTS:
+        req = requests.Request(url="https://foo.aq/all", json=args).prepare()
+        print("\n request:")
+        print(req.url)
+        print(req.body)
+        print(req.headers)
+        print()
+        rest_handler = RestHandler(
+            application=Mock(),
+            request=httputil.HTTPServerRequest(
+                uri=req.url,
+                body=cast(bytes, req.body),
+                headers=httputil.HTTPHeaders(req.headers),
+            ),
+        )
+        rest_handler.request._parse_body()  # normally called when request REST method starts
+        print("\n rest-handler:")
+        print(rest_handler.request.body)
+        print(json.loads(rest_handler.request.body))
+        print()
+        return ArgumentHandler(ArgumentSource.JSON_BODY_ARGUMENTS, rest_handler)
+
+    else:
+        raise ValueError(f"Invalid argument_source: {argument_source}")
 
 
-def test_02_validate_choice() -> None:
-    """Test `_validate_choice()`."""
-    ArgumentHandler._validate_choice("foo", None, [])
-    ArgumentHandler._validate_choice("foo", None, None)
-
-    # choices
-    assert ArgumentHandler._validate_choice(True, [True, False], None) is True
-    assert ArgumentHandler._validate_choice(1, [0, 1, 2], None) == 1
-    assert ArgumentHandler._validate_choice("", [""], None) == ""
-    ArgumentHandler._validate_choice("23", [23, "23"], None)
-    ArgumentHandler._validate_choice("23", [23, r"\d\d"], None)  # regex
-
-    # forbiddens
-    ArgumentHandler._validate_choice("23", [23, "23"], [])
-    ArgumentHandler._validate_choice("23", [23, "23"], ["boo!"])
-    ArgumentHandler._validate_choice("23", ["23"], [23])
-    ArgumentHandler._validate_choice(["list"], None, [list(), dict()])
+########################################################################################
 
 
-def test_03_validate_choice__errors() -> None:
-    """Test `_validate_choice()`."""
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("23", [23], None)
-    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("string", ["STRING"], None)
-    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("3", [0, 1, 2], None)
-    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("abc", [["a", "b", "c", "d"]], None)
-    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("foo", [], [])  # no allowed choices
-    assert "(ValueError)" in str(e.value) and "not in choices" in str(e.value)
-
-    # forbiddens
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("23", None, ["23"])
-    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("baz", ["baz"], ["baz"])
-    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice([], None, [list(), dict()])
-    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice({}, None, [list(), dict()])
-    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-    #
-    with pytest.raises(_InvalidArgumentError) as e:
-        ArgumentHandler._validate_choice("   ", None, [123, r"\s*"])  # regex
-    assert "(ValueError)" in str(e.value) and "is forbidden" in str(e.value)
-
-
-def test_04_cast_type() -> None:
-    """Test `_cast_type()`."""
-    vals = [
-        "abcdefghijklmopqrstuvwxyz",
-        1,
-        None,
-        ["this is", "a list"],
-        "",
-        2.5,
-        {"but this": "is a dict"},
-    ]
-
-    def _agreeable_type(typ: Any, val: Any) -> bool:
-        if val is None:
-            return False
-        try:
-            typ(val)
-            return True
-        except Exception:
-            return False
-
-    for val in vals:
-        print(val)
-        # Passing Cases:
-        # assert val == ArgumentHandler._cast_type(val, None)  # None is always allowed
-        for o_type in [type(o) for o in vals if _agreeable_type(type(o), val)]:
-            print(o_type)
-            out = ArgumentHandler._cast_type(val, o_type)
-            assert isinstance(out, o_type)
-
-        # Error Cases:
-
-        # None is not allowed (unless the type is type(None))
-        if val is not None:
-            with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._cast_type(None, type(val))
-            with pytest.raises((ValueError, TypeError)):
-                ArgumentHandler._cast_type(None, type(val), server_side_error=True)
-
-        # type-mismatch  # pylint: disable=C0123
-        for o_type in [type(o) for o in vals if not _agreeable_type(type(o), val)]:
-            print(o_type)
-            with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._cast_type(val, o_type)
-            with pytest.raises((ValueError, TypeError)):
-                ArgumentHandler._cast_type(val, o_type, server_side_error=True)
-
-
-def test_05_strict_type() -> None:
-    """Test `_cast_type(strict_type=True)`."""
-    bad_vals = {
-        str: [1, [], False],
-        bool: [1, "True", [], [False]],
-        int: [2.1, 9.0, "10", [], [5]],
-        list: ["not a list", {"a": 1}, 1],
-        float: [2, "1e4", [], [1.0]],
-    }
-
-    for o_type, values in bad_vals.items():
-        for val in values:
-            with pytest.raises(_InvalidArgumentError):
-                ArgumentHandler._cast_type(val, o_type, strict_type=True)
-            with pytest.raises((ValueError, TypeError)):
-                ArgumentHandler._cast_type(
-                    val, o_type, strict_type=True, server_side_error=True
-                )
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_10_default(rhga: Mock, pjba: Mock, rest_handler: RestHandler) -> None:
-    """Test cases where just the default is returned.
-
-    NOTE: RequestHandler.get_argument() always returns the default if the arg is absent.
-    """
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_100__defaults(argument_source: str) -> None:
+    """Test `argument_source` arguments with default."""
     default: Any
-    for default in [None, "string", 100, 50.5]:
+
+    for default in [None, "a-string", 100, 50.5]:
         print(default)
-        pjba.return_value = {}
-        rhga.return_value = default
-        assert default == rest_handler.get_argument("arg", default=default)
+        arghand = setup_argument_handler(argument_source, {})
+        arghand.add_argument("myarg", default=default)
+        args = arghand.parse_args()
+        assert default == args.myarg
 
     # w/ typing
-    for default in ["string", 100, 50.5]:
+    for default in ["a-string", 100, 50.5]:
         print(default)
-        pjba.return_value = {}
-        rhga.return_value = default
-        ret = rest_handler.get_argument("arg", type=type(default), default=default)
-        assert ret == default
+        arghand = setup_argument_handler(argument_source, {})
+        arghand.add_argument("myarg", default=default, type=type(default))
+        args = arghand.parse_args()
+        assert default == args.myarg
 
 
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_20_get_argument_no_body(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
-
-    No tests for body-parsing.
-    """
-    args = {
-        "foo": ("-10", int),
-        "bar": ("True", bool),
-        "bat": ("2.5", float),
-        "baz": ("Toyota Corolla", str),
-        "boo": ("False", bool),
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_110__no_default_no_typing(argument_source: str) -> None:
+    """Test `argument_source` arguments."""
+    args: Dict[str, Any] = {
+        "foo": "-10",
+        "bar": "True",
+        "bat": "2.5",
+        "baz": "Toyota Corolla",
+        "boo": "False",
     }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "dicto": {"abc": 123},
+                "listo": [1, 2, 3],
+                "compoundo": [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+            }
+        )
 
-    for arg, (val, type_) in args.items():
-        # pylint: disable=E1102
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(arg)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, val in args.items():
+        print()
         print(arg)
         print(val)
-        print(type_)
-        # w/o typing
-        pjba.return_value = {}
-        rhga.return_value = val
-        assert val == rest_handler.get_argument(arg, default=None)
-        # w/ typing
-        pjba.return_value = {}
-        rhga.return_value = val
-        ret = rest_handler.get_argument(arg, default=None, type=type_)  # type: ignore  # dynamic types aren't real-world issues
-        assert ret == type_(val) or (val == "False" and ret is False and type_ == bool)
-
-    # NOTE - `default` non-error use-cases solely on RequestHandler.get_argument(), so no tests
-    # NOTE - `strip` use-cases depend solely on RequestHandler.get_argument(), so no tests
-    # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
+        assert val == getattr(outargs, arg.replace("-", "_"))
 
 
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_21_get_argument_no_body__errors(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `request.arguments`/`RequestHandler.get_argument()` arguments.
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_111__no_default_with_typing(argument_source: str) -> None:
+    """Test `request.arguments` arguments."""
 
-    No tests for body-parsing.
-    """
+    def custom_type(_: Any) -> Any:
+        return "this could be anything but it's just a string"
+
+    args: Dict[str, Any] = {
+        "foo": ("-10", int),
+        #
+        "bar": ("True", bool),
+        "boo": ("False", bool),
+        "ghi": ("no", bool),
+        "jkl": ("1", bool),
+        "mno": ("0", bool),
+        #
+        "bat": ("2.5", float),
+        "abc": ("2", float),
+        #
+        "baz": ("Toyota Corolla", str),
+        "def": ("1000", str),
+        #
+        "zzz": ("yup", custom_type),
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "dicto": ({"abc": 123}, dict),
+                "dicto-as-list": ({"def": 456}, list),
+                "listo": ([1, 2, 3], list),
+                "compoundo": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    list,
+                ),
+                "sure": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    custom_type,
+                ),
+            }
+        )
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source, {arg: val for arg, (val, _) in args.items()}
+    )
+    for arg, (_, typ) in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(arg, type=typ)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, (val, typ) in args.items():
+        print()
+        print(arg)
+        print(val)
+        print(typ)
+        if typ == bool:
+            assert getattr(outargs, arg.replace("-", "_")) == strtobool(val)
+        else:
+            assert getattr(outargs, arg.replace("-", "_")) == typ(val)
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_112__no_default_with_typing__error(argument_source: str) -> None:
+    """Test `argument_source` arguments."""
+
+    def custom_type(val: Any) -> Any:
+        raise ValueError("x")
+
+    args: Dict[str, Any] = {
+        "foo": ("hank", int),
+        "bat": ("2.5", int),
+        "baz": ("9e-33", int),
+        #
+        "bar": ("idk", bool),
+        "boo": ("2", bool),
+        #
+        "abc": ("222.111.333", float),
+        #
+        "zzz": ("yup", custom_type),
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "dicto": ({"abc": 123}, int),
+                "listo": ([1, 2, 3], int),
+                "compoundo": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    object,
+                ),
+                "nope": (
+                    [{"apple": True}, {"banana": 951}, {"cucumber": False}],
+                    custom_type,
+                ),
+            }
+        )
+
+    for arg, (val, typ) in args.items():
+        print()
+        print(arg)
+        print(val)
+        print(typ)
+        arghand = setup_argument_handler(argument_source, {arg: val})
+        arghand.add_argument(arg, type=typ)
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == f"HTTP 400: argument {arg}: invalid type"
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_120__missing_argument(argument_source: str) -> None:
+    """Test `argument_source` arguments error case."""
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, {})
+    arghand.add_argument("reqd")
+
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
-        pjba.return_value = {}
-        rhga.side_effect = tornado.web.MissingArgumentError("Reqd")
-        rest_handler.get_argument("Reqd")
-    error_msg = "HTTP 400: `Reqd`: (MissingArgumentError) required argument is missing"
-    assert str(e.value) == error_msg
-
-    # NOTE - `type_` and `choices` are tested in `_qualify_argument` tests
+        arghand.parse_args()
+    assert str(e.value) == "HTTP 400: the following arguments are required: reqd"
 
 
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-def test_30_get_json_body_argument(pjba: Mock, rest_handler: RestHandler) -> None:
-    """Test `request.body` JSON arguments."""
-    body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_121__missing_argument(argument_source: str) -> None:
+    """Test `argument_source` arguments error case."""
 
-    # Simple Use Cases
-    for arg, val in body.items():
-        print(arg)
-        pjba.return_value = body
-        assert val == rest_handler.get_json_body_argument(arg)
-
-    # Default Use Cases
-    for arg, val in body.items():
-        print(arg)
-        pjba.return_value = {a: v for a, v in body.items() if a != arg}
-        assert "Terry" == rest_handler.get_json_body_argument(arg, default="Terry")
-
-    # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-def test_31_get_json_body_argument__errors(
-    pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `request.body` JSON arguments."""
-    body = {"green": 10, "eggs": True, "and": "wait for it...", "ham": [1, 2, 4]}
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, {"foo": "val"})
+    arghand.add_argument("reqd")
+    arghand.add_argument("foo")
+    arghand.add_argument("bar")
 
     # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
-        pjba.return_value = body
-        rest_handler.get_json_body_argument("Reqd")
-    error_msg = "HTTP 400: `Reqd`: (MissingArgumentError) required argument is missing"
-    assert str(e.value) == error_msg
-
-    # NOTE - `choices` use-cases are tested in `_qualify_argument` tests
+        arghand.parse_args()
+    assert str(e.value) == "HTTP 400: the following arguments are required: reqd, bar"
 
 
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-def test_32_get_json_body_argument_typechecking(
-    pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_json_body_argument()`.
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_130__duplicates(argument_source: str) -> None:
+    """Test `argument_source` arguments with duplicate keys."""
 
-    **Test JSON-body arg type-checking**
-    """
-    pjba.return_value = {"foo": "99.9"}
+    args = [
+        ("foo", "22"),
+        ("foo", "44"),
+        ("foo", "66"),
+        ("foo", "88"),
+        ("bar", "abc"),
+        ("baz", "hello world!"),
+        ("baz", "hello mars!"),
+    ]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass  # no special data since duplicates not allowed for json
 
-    ret = rest_handler.get_json_body_argument("foo", default=None, type=str)
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+    arghand.add_argument("foo", type=int, nargs="*")
+    arghand.add_argument("baz", type=str, nargs="*")
+    arghand.add_argument("bar")
 
-    pjba.assert_called()
-    assert ret == "99.9"
+    # duplicates not allowed for json
+    if argument_source == JSON_BODY_ARGUMENTS:
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == "HTTP 400: JSON-encoded requests body must be a 'dict'"
+    # but they are for query args!
+    else:
+        outargs = arghand.parse_args()
+        print(outargs)
+        # grab each
+        assert outargs.foo == [22, 44, 66, 88]
+        assert outargs.baz == ["hello world!", "hello mars!"]
+        assert outargs.bar == "abc"
 
-    # # #
 
-    pjba.return_value = {"foo": ["a", "bc"]}
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_140__extra_argument(argument_source: str) -> None:
+    """Test `argument_source` arguments error case."""
 
-    ret2 = rest_handler.get_json_body_argument("foo", default=None, type=list)
+    # set up ArgumentHandler
+    args: Dict[str, Any] = {
+        "foo": "val",
+        "reqd": "2",
+        "xtra": 1,
+        "another": True,
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args["another"] = [{"apple": True}, {"banana": 951}, {"cucumber": False}]
 
-    pjba.assert_called()
-    assert ret2 == ["a", "bc"]
+    arghand = setup_argument_handler(argument_source, args)
+    arghand.add_argument("reqd")
+    arghand.add_argument("foo")
 
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-def test_33_get_json_body_argument_typechecking__errors(
-    pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_json_body_argument()`.
-
-    If there's a matching argument in JSON-body, but it's the wrong
-    type, raise 400.
-    """
-    pjba.return_value = {"foo": "NINETY-NINE"}
-
+    # Missing Required Argument
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_json_body_argument("foo", default=None, type=float)
-    error_msg = (
-        "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
+        arghand.parse_args()
+    assert str(e.value) == "HTTP 400: unrecognized arguments: xtra, another"
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_141__extra_argument_with_duplicates(argument_source: str) -> None:
+    """Test `argument_source` arguments error case."""
+
+    # set up ArgumentHandler
+    args = [
+        ("foo", "val"),
+        ("reqd", "2"),
+        ("xtra", 1),
+        ("another", True),
+        ("another", False),
+        ("another", "who knows"),
+    ]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        pass  # no special data since duplicates not allowed for json
+
+    arghand = setup_argument_handler(argument_source, args)
+    arghand.add_argument("reqd")
+    arghand.add_argument("foo")
+
+    # Missing Required Argument...
+
+    # duplicates not allowed for json
+    if argument_source == JSON_BODY_ARGUMENTS:
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == "HTTP 400: JSON-encoded requests body must be a 'dict'"
+    # but they are for query args!
+    else:
+        with pytest.raises(tornado.web.HTTPError) as e:
+            arghand.parse_args()
+        assert str(e.value) == "HTTP 400: unrecognized arguments: xtra, another"
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_200__argparse_dest(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "old_name": "-10",
+        "bar": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "dicto": {"abc": 123},
+                "listo": [1, 2, 3],
+            }
+        )
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        if arg == "old_name":
+            arghand.add_argument(arg, dest="new_name")
+        else:
+            arghand.add_argument(arg)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, val in args.items():
+        print()
+        print(arg)
+        print(val)
+        if arg == "old_name":
+            assert val == getattr(outargs, "new_name")
+        else:
+            assert val == getattr(outargs, arg.replace("-", "_"))
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_210__argparse_choices(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "pick_it": "paper",
+        "bar": "True",
+    }
+    choices: List = ["rock", "paper", "scissors"]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "pick_it": {"abc": 123},
+                "listo": [1, 2, 3],
+            }
+        )
+        choices = [{"abc": 123}, {"def": 456}, {"ghi": 789}]
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(argument_source, args)
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        if arg == "pick_it":
+            arghand.add_argument(arg, choices=choices)
+        else:
+            arghand.add_argument(arg)
+    outargs = arghand.parse_args()
+
+    # grab each
+    for arg, val in args.items():
+        print()
+        print(arg)
+        print(val)
+        assert val == getattr(outargs, arg.replace("-", "_"))
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_211__argparse_choices__error(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "pick_it": "paper",
+        "bar": "True",
+    }
+    choices: List = ["rock", "paper", "scissors"]
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args.update(
+            {
+                "pick_it": {"abc": 123},
+                "listo": [1, 2, 3],
+            }
+        )
+        choices = [{"abc": 123}, {"def": 456}, {"ghi": 789}]
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        {k: v if k != "pick_it" else "hank" for k, v in args.items()},
     )
-    assert str(e.value) == error_msg
 
-    pjba.assert_called()
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_40_get_argument_args_and_body(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    From JSON-body (no Query-Args)
-    """
-    # TODO - patch based on argument: https://stackoverflow.com/a/16162316/13156561
-    pjba.return_value = {"foo": 14}
-
-    ret: int = rest_handler.get_argument("foo", default=None)
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-    assert ret == 14
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_41_get_argument_args_and_body(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    From Query-Args (no JSON-body arguments)
-    """
-    pjba.return_value = {}
-    rhga.return_value = 55
-
-    ret: int = rest_handler.get_argument("foo", default=None)
-
-    pjba.assert_called()
-    rhga.assert_called_with("foo", None, strip=True)
-    assert ret == 55
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_42_get_argument_args_and_body(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    From Query-Args (with JSON & Query-Arg values) -- but only 1 match
-    """
-    pjba.return_value = {"baz": 7}
-    rhga.return_value = 90
-
-    ret: int = rest_handler.get_argument("foo", default=None)
-
-    pjba.assert_called()
-    rhga.assert_called_with("foo", None, strip=True)
-    assert ret == 90
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_43_get_argument_args_and_body(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
-    """
-    pjba.return_value = {"foo": 1}
-    rhga.return_value = -8
-
-    ret: int = rest_handler.get_argument("foo", default=None)
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-    assert ret == 1
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_44_get_argument_args_and_body(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    From JSON-body (with JSON & Query-Arg matches) -> should grab JSON
-
-    **Test JSON-body arg type-checking**
-    """
-    pjba.return_value = {"foo": "99.9"}
-    rhga.return_value = -0.5
-
-    ret = rest_handler.get_argument("foo", default=None, type=str)
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-    assert ret == "99.9"
-
-    # # #
-
-    pjba.return_value = {"foo": ["a", "bc"]}
-    rhga.return_value = "1 2 3"
-
-    ret2 = rest_handler.get_argument("foo", default=None, type=list)
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-    assert ret2 == ["a", "bc"]
-
-
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_45_get_argument_args_and_body__errors(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    **Error-Test JSON-body arg typing**
-
-    If there's a matching argument in JSON-body, but it's the wrong type, raise 400;
-    REGARDLESS if there's a value in the Query-Args.
-    """
-    pjba.return_value = {"foo": "NINETY-NINE"}
-    rhga.return_value = -0.5
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        if arg == "pick_it":
+            arghand.add_argument(arg, choices=choices)
+        else:
+            arghand.add_argument(arg)
 
     with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("foo", default=None, type=float)
-    error_msg = (
-        "HTTP 400: `foo`: (ValueError) could not convert string to float: 'NINETY-NINE'"
+        arghand.parse_args()
+    assert (
+        str(e.value)
+        == f"HTTP 400: argument pick_it: invalid choice: 'hank' (choose from {', '.join(repr(c) for c in choices)})"
     )
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-    rhga.assert_not_called()
 
 
-@patch("rest_tools.server.arghandler._parse_json_body_arguments")
-@patch("tornado.web.RequestHandler.get_argument")
-def test_46_get_argument_args_and_body__errors(
-    rhga: Mock, pjba: Mock, rest_handler: RestHandler
-) -> None:
-    """Test `get_argument()`.
-
-    **Error-Test JSON-body arg choices**
-
-    If there's a matching argument in JSON-body, but it's not in choices
-    or it's forbidden, raise 400;
-    REGARDLESS if there's a value in the Query-Args.
-    """
-    pjba.return_value = {"foo": 5}
-    rhga.return_value = 0
-
-    with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("foo", default=None, choices=[0])
-    error_msg = "HTTP 400: `foo`: (ValueError) 5 not in choices ([0])"
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-    rhga.assert_not_called()
-
-    # # #
-
-    pjba.return_value = {"foo": 5}
-    rhga.return_value = 0
-
-    with pytest.raises(tornado.web.HTTPError) as e:
-        rest_handler.get_argument("foo", default=None, forbiddens=[5, 6, 7])
-    error_msg = "HTTP 400: `foo`: (ValueError) 5 is forbidden ([5, 6, 7])"
-    assert str(e.value) == error_msg
-
-    pjba.assert_called()
-    rhga.assert_not_called()
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_220__argparse_nargs(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    test_130__duplicates(argument_source)
