@@ -9,8 +9,6 @@ from unittest.mock import MagicMock
 
 import jwt.algorithms
 import pytest
-from tornado.web import Application, HTTPError
-
 from rest_tools.server import (
     KeycloakUsernameMixin,
     OpenIDCookieHandlerMixin,
@@ -19,6 +17,7 @@ from rest_tools.server import (
     RestHandlerSetup,
 )
 from rest_tools.utils.auth import Auth, OpenIDAuth
+from tornado.web import Application, HTTPError
 
 from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
 
@@ -244,7 +243,7 @@ async def test_openid_login_handler_get__no_body(gen_keys, gen_keys_bytes, reque
 
 
 @pytest.mark.asyncio
-async def test_openid_login_handler_get__invalid_state(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
+async def test_openid_login_handler_get__okay(gen_keys, gen_keys_bytes, requests_mock):  # noqa: F811
     application = Application([], cookie_secret='secret', login_url='/login', debug=True)
 
     auth = Auth(gen_keys_bytes[0], pub_secret=gen_keys_bytes[1], algorithm='RS256')
@@ -283,7 +282,7 @@ async def test_openid_login_handler_get__invalid_state(gen_keys, gen_keys_bytes,
 
     handler.get_authenticated_user = MagicMock(side_effect=fn2)
 
-    request.body = '{"code": "thecode", "state": "state"}'  # invalid state
+    request.body = '{"code": "thecode", "state": "state"}'
     handler._decode_state = MagicMock(return_value={})
     handler.write = MagicMock()
     await handler.get()
