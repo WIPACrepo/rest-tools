@@ -1,15 +1,20 @@
+"""decorators.py."""
 
-from functools import wraps
-from inspect import isawaitable
+
+# fmt:off
+
 import logging
 import re
+from functools import wraps
+from inspect import isawaitable
 
 import requests.exceptions
 import tornado.web
 
 from .. import telemetry as wtt
 
-logger = logging.getLogger('auth_decorators')
+LOGGER = logging.getLogger(__name__)
+
 
 
 def authenticated(method):
@@ -22,6 +27,7 @@ def authenticated(method):
     Raises:
         :py:class:`tornado.web.HTTPError`
     """
+
     @wraps(method)
     async def wrapper(self, *args, **kwargs):
         if not self.current_user:
@@ -52,7 +58,7 @@ def catch_error(method):
         except tornado.httpclient.HTTPError:
             raise  # tornado can handle this
         except requests.exceptions.HTTPError as e:
-            logger.warning('Error in website handler', exc_info=True)
+            LOGGER.warning('Error in website handler', exc_info=True)
             try:
                 self.statsd.incr(self.__class__.__name__+'.error')
             except Exception:
@@ -65,7 +71,7 @@ def catch_error(method):
                 message = 'Error contacting backend in '+self.__class__.__name__
             self.send_error(code, reason=message)
         except Exception:
-            logger.warning('Error in website handler', exc_info=True)
+            LOGGER.warning('Error in website handler', exc_info=True)
             try:
                 self.statsd.incr(self.__class__.__name__+'.error')
             except Exception:
@@ -101,9 +107,9 @@ def role_authorization(**_auth):
             if roles and auth_role in roles:
                 wtt.set_current_span_attribute('self.auth_data.roles', auth_role)
             else:
-                logger.info('roles: %r', roles)
-                logger.info('token_role: %r', auth_role)
-                logger.info('role mismatch')
+                LOGGER.info('roles: %r', roles)
+                LOGGER.info('token_role: %r', auth_role)
+                LOGGER.info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
             ret = method(self, *args, **kwargs)
@@ -148,9 +154,9 @@ def scope_role_auth(**_auth):
             authorized = set(roles).intersection(auth_roles)
 
             if not authorized:
-                logging.info('roles: %r', roles)
-                logging.info('token_roles: %r', auth_roles)
-                logging.info('role mismatch')
+                LOGGER.info('roles: %r', roles)
+                LOGGER.info('token_roles: %r', auth_roles)
+                LOGGER.info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
             wtt.set_current_span_attribute('self.auth_data.roles', ','.join(sorted(authorized)))
@@ -165,11 +171,10 @@ def scope_role_auth(**_auth):
 
 
 def keycloak_role_auth(**_auth):
-    """Handle RBAC authorization using keycloak realm roles.
-    Like :py:func:`authenticated`, this requires the Authorization header
-    to be filled with a valid token.  Note that calling both decorators
-    is not necessary, as this decorator will perform authentication
-    checking as well.
+    """Handle RBAC authorization using keycloak realm roles. Like
+    :py:func:`authenticated`, this requires the Authorization header to be
+    filled with a valid token.  Note that calling both decorators is not
+    necessary, as this decorator will perform authentication checking as well.
 
     Args:
         roles (list): The roles to match
@@ -193,9 +198,9 @@ def keycloak_role_auth(**_auth):
             authorized = set(roles).intersection(auth_roles)
 
             if not authorized:
-                logging.info('roles: %r', roles)
-                logging.info('token_roles: %r', auth_roles)
-                logging.info('role mismatch')
+                LOGGER.info('roles: %r', roles)
+                LOGGER.info('token_roles: %r', auth_roles)
+                LOGGER.info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
             wtt.set_current_span_attribute('self.auth_data.roles', ','.join(sorted(authorized)))
@@ -283,7 +288,7 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                 prefix = prefix[1:]
             token_val = token.get(name.split('.')[-1], None)
 
-        logger.debug('token_val = %r', token_val)
+        LOGGER.debug('token_val = %r', token_val)
         if token_val is None:
             return []
 
@@ -314,17 +319,17 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                             rolenames = [match.expand(name) for match in ret]
                             authorized_roles.update(role for role in roles if role in rolenames)
                 except Exception as exc:
-                    logging.warning('exception in role auth', exc_info=True)
+                    LOGGER.warning('exception in role auth', exc_info=True)
                     raise tornado.web.HTTPError(500, reason="internal server error") from exc
 
                 if not authorized_roles:
-                    logging.debug('roles requested: %r', roles)
-                    logging.debug('role mismatch')
+                    LOGGER.debug('roles requested: %r', roles)
+                    LOGGER.debug('role mismatch')
                     raise tornado.web.HTTPError(403, reason="authorization failed")
 
-                logging.debug('roles requested: %r', roles)
+                LOGGER.debug('roles requested: %r', roles)
                 authorized_roles = sorted(authorized_roles)
-                logging.debug('roles authorized: %r', authorized_roles)
+                LOGGER.debug('roles authorized: %r', authorized_roles)
                 wtt.set_current_span_attribute('self.auth_data.roles', ','.join(authorized_roles))
                 self.auth_roles = authorized_roles
 
@@ -335,12 +340,12 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                             ret = eval_expression(self.auth_data, expression)
                             authorized_groups.update(match.expand(name) for match in ret)
                 except Exception as exc:
-                    logging.warning('exception in group auth', exc_info=True)
+                    LOGGER.warning('exception in group auth', exc_info=True)
                     raise tornado.web.HTTPError(500, reason="internal server error") from exc
 
                 if authorized_groups:
                     authorized_groups = sorted(authorized_groups)
-                    logging.debug('groups authorized: %r', authorized_groups)
+                    LOGGER.debug('groups authorized: %r', authorized_groups)
                     wtt.set_current_span_attribute('self.auth_data.groups', ','.join(authorized_groups))
                     self.auth_groups = authorized_groups
 
