@@ -16,7 +16,6 @@ from .. import telemetry as wtt
 LOGGER = logging.getLogger(__name__)
 
 
-
 def authenticated(method):
     """Decorate methods with this to require that the Authorization header is
     filled with a valid token. Does *not* check the authorization of the token,
