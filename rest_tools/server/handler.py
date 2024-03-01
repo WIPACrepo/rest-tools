@@ -1,5 +1,6 @@
 """RestHandler and related classes."""
 
+
 # fmt:off
 # pylint: skip-file
 
@@ -97,7 +98,7 @@ class RestHandler(tornado.web.RequestHandler):
         try:
             super().__init__(*args, **kwargs)
         except Exception:
-            logging.error('error', exc_info=True)
+            logger.error('error', exc_info=True)
 
     def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
         super().initialize(**kwargs)
