@@ -171,10 +171,11 @@ def scope_role_auth(**_auth):
 
 
 def keycloak_role_auth(**_auth):
-    """Handle RBAC authorization using keycloak realm roles. Like
-    :py:func:`authenticated`, this requires the Authorization header to be
-    filled with a valid token.  Note that calling both decorators is not
-    necessary, as this decorator will perform authentication checking as well.
+    """Handle RBAC authorization using keycloak realm roles.
+    Like :py:func:`authenticated`, this requires the Authorization header
+    to be filled with a valid token.  Note that calling both decorators
+    is not necessary, as this decorator will perform authentication
+    checking as well.
 
     Args:
         roles (list): The roles to match
