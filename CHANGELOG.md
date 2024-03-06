@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.6.1 (2024-03-06)
+
+### Other
+
+* Replace "root" Logger Usage ([#139](https://github.com/WIPACrepo/rest-tools/issues/139)) ([`3b6d49e`](https://github.com/WIPACrepo/rest-tools/commit/3b6d49e8eb783f69373512acf624fe76fe01468e))
+
 ## v1.6.0 (2023-10-11)
 
 
