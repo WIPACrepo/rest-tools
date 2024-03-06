@@ -31,7 +31,7 @@ from ..utils.json_util import json_decode
 from .decorators import catch_error
 from .stats import RouteStats
 
-logger = logging.getLogger('rest')
+LOGGER = logging.getLogger('rest')
 
 
 def RestHandlerSetup(config={}):
@@ -98,7 +98,7 @@ class RestHandler(tornado.web.RequestHandler):
         try:
             super().__init__(*args, **kwargs)
         except Exception:
-            logger.error('error', exc_info=True)
+            LOGGER.error('error', exc_info=True)
 
     def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
         super().initialize(**kwargs)
@@ -142,7 +142,7 @@ class RestHandler(tornado.web.RequestHandler):
             type, token = self.request.headers['Authorization'].split(' ', 1)
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
-            logger.debug('token: %r', token)
+            LOGGER.debug('token: %r', token)
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
@@ -150,21 +150,21 @@ class RestHandler(tornado.web.RequestHandler):
         # Auth Failed
         except Exception:
             if self.debug and 'Authorization' in self.request.headers:
-                logger.info('Authorization: %r', self.request.headers['Authorization'])
-            logger.info('failed auth', exc_info=True)
+                LOGGER.info('Authorization: %r', self.request.headers['Authorization'])
+            LOGGER.info('failed auth', exc_info=True)
 
         return None
 
     @wtt.evented()
     def prepare(self):
         """Prepare before http-method request handlers."""
-        logger.debug(f"{self.request.method} [{self.__class__.__name__}]")
+        LOGGER.debug(f"{self.request.method} [{self.__class__.__name__}]")
 
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
                 backoff = stat.get_backoff_time()
-                logger.warn('Server is overloaded, backoff %r', backoff)
+                LOGGER.warn('Server is overloaded, backoff %r', backoff)
                 self.set_header('Retry-After', backoff)
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
@@ -265,7 +265,7 @@ class KeycloakUsernameMixin:
         if not username:
             username = self.auth_data.get('upn', None)
             if not username:
-                logger.info('could not find auth username')
+                LOGGER.info('could not find auth username')
         return username
 
 
@@ -283,7 +283,7 @@ class OpenIDCookieHandlerMixin:
             return data['sub']
         # Auth Failed
         except Exception:
-            logger.debug('failed auth', exc_info=True)
+            LOGGER.debug('failed auth', exc_info=True)
 
         return None
 
@@ -400,7 +400,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
             self.auth.validate(ret['access_token'])
         except Exception:
             if self.debug:
-                logger.debug(f'bad token: {ret}')
+                LOGGER.debug(f'bad token: {ret}')
             raise
         return ret
 
