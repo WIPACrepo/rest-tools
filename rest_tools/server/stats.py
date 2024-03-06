@@ -9,6 +9,8 @@ import statistics
 import time
 from collections import deque
 
+LOGGER = logging.getLogger(__name__)
+
 
 class RouteStats:
     """
@@ -48,7 +50,7 @@ class RouteStats:
             if t >= window_cutoff:
                 break
         if i > 0:
-            logging.debug('routestats: removing %d entries due to age', i)
+            LOGGER.debug('routestats: removing %d entries due to age', i)
             self.data = deque((self.data[j] for j in range(i,len(self.data))), maxlen=self.window_size)
             self.times = deque((self.times[j] for j in range(i,len(self.times))), maxlen=self.window_size)
 
@@ -60,12 +62,12 @@ class RouteStats:
         median = 0
         try:
             stats = statistics.quantiles(self.data)
-            logging.debug('routestats: %r',stats)
+            LOGGER.debug('routestats: %r',stats)
             if stats[1] >= self.timeout or stats[2] >= 2*self.timeout:
                 median = stats[1]
         except AttributeError:
             med = statistics.median(self.data)
-            logging.debug('routestats: %r',med)
+            LOGGER.debug('routestats: %r',med)
             if med >= self.timeout:
                 median = med
         return median > 0 and random.random()*median >= self.timeout

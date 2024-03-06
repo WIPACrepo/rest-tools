@@ -16,7 +16,7 @@ AsyncIOMainLoop().install()
 
 
 def tornado_logger(handler):
-    """Log tornado messages to our logger"""
+    """Log tornado messages to root logger."""
     if handler.get_status() < 400:
         log_method = logging.debug
     elif handler.get_status() < 500:

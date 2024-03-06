@@ -1,5 +1,6 @@
 """Some JSON encoding and decoding utilities."""
 
+
 # fmt:off
 # pylint: skip-file
 
@@ -13,7 +14,7 @@ from typing import Any, Optional, Union
 
 from tornado.escape import recursive_unicode
 
-logger = logging.getLogger('jsonUtil')
+LOGGER = logging.getLogger(__name__)
 
 
 JSONType = Any
@@ -149,14 +150,14 @@ def objToJSON(obj):
         if name in JSONConverters:
             return {'__jsonclass__':[name,JSONConverters[name].dumps(obj)]}
         else:
-            logger.error('name: %s, obj: %r', name, obj)
+            LOGGER.error('name: %s, obj: %r', name, obj)
             raise Exception('Cannot encode %s class to JSON'%name)
 
 
 def JSONToObj(obj):
     ret = obj
     if isinstance(obj,dict) and '__jsonclass__' in obj:
-        logger.info('try unpacking class')
+        LOGGER.info('try unpacking class')
         try:
             name = obj['__jsonclass__'][0]
             if name not in JSONConverters:
@@ -164,7 +165,7 @@ def JSONToObj(obj):
             obj_repr = obj['__jsonclass__'][1]
             ret = JSONConverters[name].loads(obj_repr,name=name)
         except Exception as e:
-            logger.warning('error making json class: %r',e,exc_info=True)
+            LOGGER.warning('error making json class: %r',e,exc_info=True)
     return ret
 
 

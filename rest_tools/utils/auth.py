@@ -1,3 +1,6 @@
+"""auth.py."""
+
+
 # fmt:off
 # pylint: skip-file
 
@@ -7,6 +10,8 @@ import time
 
 import jwt
 import requests
+
+LOGGER = logging.getLogger(__name__)
 
 
 class _AuthValidate:
@@ -140,12 +145,12 @@ class OpenIDAuth(_AuthValidate):
             r = requests.get(self.provider_info['jwks_uri'])
             r.raise_for_status()
             for jwk in r.json()['keys']:
-                logging.debug(f'jwk: {jwk}')
+                LOGGER.debug(f'jwk: {jwk}')
                 kid = jwk['kid']
-                logging.debug(f'loaded JWT key {kid}')
+                LOGGER.debug(f'loaded JWT key {kid}')
                 self.public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
         except Exception:
-            logging.warning('failed to refresh OpenID keys', exc_info=True)
+            LOGGER.warning('failed to refresh OpenID keys', exc_info=True)
 
     def validate(self, token, **kwargs):
         """
