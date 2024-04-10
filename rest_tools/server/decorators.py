@@ -381,7 +381,6 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
 ########################################################################################################################
 # fmt:on
 
-
 try:
     import openapi_core
     from openapi_core.contrib import requests as openapi_core_requests
@@ -390,7 +389,7 @@ except ImportError:
     pass  # if client code wants to use these features, then let the built-in errors raise
 
 
-def validate_request(openapi_spec: openapi_core.OpenAPI):  # type: ignore
+def validate_request(openapi_spec: 'openapi_core.OpenAPI'):  # type: ignore
     """Validate request obj against the given OpenAPI spec."""
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
@@ -440,7 +439,7 @@ def validate_request(openapi_spec: openapi_core.OpenAPI):  # type: ignore
 
 def _http_server_request_to_openapi_request(
     req: tornado.httputil.HTTPServerRequest,
-) -> openapi_core_requests.RequestsOpenAPIRequest:
+) -> 'openapi_core_requests.RequestsOpenAPIRequest':
     """Convert a `tornado.httputil.HTTPServerRequest` to openapi's type."""
     return openapi_core_requests.RequestsOpenAPIRequest(
         requests.Request(
