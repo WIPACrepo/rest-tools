@@ -1,7 +1,7 @@
 """Utility functions for RestClient."""
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 import requests
 
@@ -25,7 +25,7 @@ def request_and_validate(
     openapi_spec: "openapi_core.OpenAPI",
     method: str,
     path: str,
-    args: Optional[dict[str, Any]] = None,
+    args: Optional[Dict[str, Any]] = None,
 ) -> Any:
     """Make request and validate the response against a given OpenAPI spec.
 
