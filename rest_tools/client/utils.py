@@ -1,7 +1,7 @@
 """Utility functions for RestClient."""
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 import requests
 
@@ -25,7 +25,7 @@ def request_and_validate(
     openapi_spec: "openapi_core.OpenAPI",
     method: str,
     path: str,
-    args: dict[str, Any] | None = None,
+    args: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Make request and validate the response against a given OpenAPI spec.
 
@@ -39,7 +39,7 @@ def request_and_validate(
         """AKA 'openapi_core_requests.RequestsOpenAPIResponse' but correct."""
 
         @property
-        def data(self) -> bytes | None:
+        def data(self) -> Optional[bytes]:
             return response.content
 
         @property
