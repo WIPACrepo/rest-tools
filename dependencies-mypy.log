@@ -22,7 +22,7 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.4.3
+coverage[toml]==7.4.4
     # via
     #   pytest-cov
     #   wipac-rest-tools (setup.py)
@@ -42,7 +42,7 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.62.0
+grpcio==1.62.1
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -50,7 +50,7 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.6
     # via requests
-importlib-metadata==6.11.0
+importlib-metadata==7.0.0
     # via opentelemetry-api
 iniconfig==2.0.0
     # via pytest
@@ -60,11 +60,11 @@ markupsafe==2.1.5
     # via jinja2
 mccabe==0.7.0
     # via flake8
-mypy==1.8.0
+mypy==1.9.0
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
-opentelemetry-api==1.23.0
+opentelemetry-api==1.24.0
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-jaeger-thrift
@@ -77,23 +77,23 @@ opentelemetry-exporter-jaeger-proto-grpc==1.21.0
     # via opentelemetry-exporter-jaeger
 opentelemetry-exporter-jaeger-thrift==1.21.0
     # via opentelemetry-exporter-jaeger
-opentelemetry-exporter-otlp-proto-common==1.23.0
+opentelemetry-exporter-otlp-proto-common==1.24.0
     # via opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-http==1.23.0
+opentelemetry-exporter-otlp-proto-http==1.24.0
     # via wipac-telemetry
-opentelemetry-proto==1.23.0
+opentelemetry-proto==1.24.0
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.23.0
+opentelemetry-sdk==1.24.0
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-jaeger-thrift
     #   opentelemetry-exporter-otlp-proto-http
     #   wipac-telemetry
-opentelemetry-semantic-conventions==0.44b0
+opentelemetry-semantic-conventions==0.45b0
     # via opentelemetry-sdk
-packaging==23.2
+packaging==24.0
     # via pytest
 pluggy==1.4.0
     # via pytest
@@ -104,7 +104,7 @@ protobuf==4.25.3
     #   wipac-telemetry
 pycodestyle==2.11.1
     # via flake8
-pycparser==2.21
+pycparser==2.22
     # via cffi
 pycycle==0.0.8
     # via wipac-rest-tools (setup.py)
@@ -114,18 +114,18 @@ pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.0.2
+pytest==8.1.1
     # via
     #   pycycle
     #   pytest-asyncio
     #   pytest-cov
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.23.5
+pytest-asyncio==0.23.6
     # via wipac-rest-tools (setup.py)
-pytest-cov==4.1.0
+pytest-cov==5.0.0
     # via wipac-rest-tools (setup.py)
-pytest-mock==3.12.0
+pytest-mock==3.14.0
     # via wipac-rest-tools (setup.py)
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
@@ -138,24 +138,23 @@ requests==2.31.0
     #   wipac-rest-tools (setup.py)
 requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
-requests-mock==1.11.0
+requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.3.0
+ruff==0.3.5
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
 six==1.16.0
     # via
     #   click-completion
-    #   requests-mock
     #   thrift
-thrift==0.16.0
+thrift==0.20.0
     # via opentelemetry-exporter-jaeger-thrift
 tornado==6.4
     # via wipac-rest-tools (setup.py)
-types-requests==2.31.0.20240218
+types-requests==2.31.0.20240406
     # via wipac-rest-tools (setup.py)
-typing-extensions==4.10.0
+typing-extensions==4.11.0
     # via
     #   mypy
     #   opentelemetry-sdk
@@ -167,7 +166,7 @@ urllib3==2.2.1
     #   requests
     #   types-requests
     #   wipac-rest-tools (setup.py)
-wheel==0.42.0
+wheel==0.43.0
     # via wipac-rest-tools (setup.py)
 wipac-dev-tools==1.9.1
     # via
@@ -177,5 +176,5 @@ wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
-zipp==3.17.0
+zipp==3.18.1
     # via importlib-metadata
