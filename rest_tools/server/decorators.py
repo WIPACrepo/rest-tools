@@ -394,7 +394,7 @@ def validate_request(openapi_spec: openapi_core.OpenAPI):  # type: ignore
     """Validate request obj against the given OpenAPI spec."""
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
-        async def wrapper(zelf: web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
+        async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
             LOGGER.info("validating with openapi spec")
             # NOTE - don't change data (unmarshal) b/c we are downstream of data separation
             try:
