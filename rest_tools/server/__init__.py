@@ -1,6 +1,5 @@
 """Sub-package __init__."""
 
-
 from .arghandler import ArgumentHandler, ArgumentSource
 from .decorators import (
     authenticated,
@@ -9,6 +8,7 @@ from .decorators import (
     role_authorization,
     scope_role_auth,
     token_attribute_role_mapping_auth,
+    validate_request,
 )
 from .handler import (
     KeycloakUsernameMixin,
@@ -34,4 +34,5 @@ __all__ = [
     "token_attribute_role_mapping_auth",
     "ArgumentHandler",
     "ArgumentSource",
+    "validate_request",
 ]

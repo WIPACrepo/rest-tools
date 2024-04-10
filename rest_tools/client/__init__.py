@@ -1,5 +1,6 @@
 """Sub-package __init__."""
 
+from . import utils
 from .client import (
     MAX_RETRIES,
     CalcRetryFromBackoffMax,
@@ -22,4 +23,5 @@ __all__ = [
     "CalcRetryFromBackoffMax",
     "CalcRetryFromWaittimeMax",
     "MAX_RETRIES",
+    "utils",
 ]
