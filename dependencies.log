@@ -16,7 +16,7 @@ cryptography==42.0.5
     # via pyjwt
 idna==3.6
     # via requests
-pycparser==2.21
+pycparser==2.22
     # via cffi
 pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
@@ -33,7 +33,7 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 tornado==6.4
     # via wipac-rest-tools (setup.py)
-typing-extensions==4.10.0
+typing-extensions==4.11.0
     # via
     #   qrcode
     #   wipac-dev-tools
