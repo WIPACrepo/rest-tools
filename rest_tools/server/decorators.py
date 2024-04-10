@@ -382,13 +382,14 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
 
 try:
     import openapi_core
+    from openapi_core import OpenAPI
     from openapi_core.contrib import requests as openapi_core_requests
     from openapi_core.validation.exceptions import ValidationError
 except ImportError:
     pass  # if client code wants to use these features, then let the built-in errors raise
 
 
-def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
+def validate_request(openapi_spec: "OpenAPI"):
     """Validate request obj against the given OpenAPI spec."""
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
