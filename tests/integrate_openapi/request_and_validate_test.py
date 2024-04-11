@@ -31,8 +31,7 @@ async def server() -> AsyncIterator[Callable[[], RestClient]]:
     rs = RestServer(debug=True)
     rs.add_route(TestHandler.ROUTE, TestHandler, {})
     rs.startup(address="localhost", port=8080)
-    server_task = asyncio.create_task(asyncio.Event().wait())
-    await asyncio.sleep(0)
+    await asyncio.sleep(10)
 
     def client() -> RestClient:
         return RestClient(f"http://localhost:{8080}", retries=0)
@@ -41,7 +40,6 @@ async def server() -> AsyncIterator[Callable[[], RestClient]]:
         yield client
     finally:
         await rs.stop()  # type: ignore[no-untyped-call]
-        server_task.cancel()
 
 
 OPENAPI_SPEC = openapi_core.OpenAPI(
