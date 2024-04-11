@@ -118,7 +118,7 @@ jobs:
           pip install .[telemetry,tests]
       - name: Run Tests
         run: |
-          python -m pytest tests --tb=short --log-level=DEBUG
+          python -m pytest tests/unit_* --tb=short --log-level=DEBUG
           pycycle --here --verbose
       - name: Run Integration Test
         run: |
