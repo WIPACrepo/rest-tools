@@ -15,7 +15,7 @@ from tornado.web import RequestHandler
 
 from rest_tools.client import RestClient
 from rest_tools.client.utils import request_and_validate
-from rest_tools.server import RestServer
+from rest_tools.server import RestServer, RestHandlerSetup
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
             self.write(self.get_argument("echo"))
 
     rs = RestServer(debug=True)
-    rs.add_route(TestHandler.ROUTE, TestHandler, {})
+    rs.add_route(TestHandler.ROUTE, TestHandler, RestHandlerSetup())
     rs.startup(address="localhost", port=port)
     await asyncio.sleep(10)
 
