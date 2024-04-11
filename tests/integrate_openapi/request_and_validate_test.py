@@ -18,7 +18,7 @@ from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")  # persist for entire test suite
 def port() -> int:
     """Get an ephemeral port number."""
     # unix.stackexchange.com/a/132524
