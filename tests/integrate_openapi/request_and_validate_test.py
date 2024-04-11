@@ -1,6 +1,5 @@
 """Test client.utils.request_and_validate module."""
 
-import asyncio
 import socket
 from typing import AsyncIterator, Callable
 
@@ -42,10 +41,10 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
                 raise tornado.web.HTTPError(400, self.get_argument("raise"))
             self.write(self.get_argument("echo"))
 
+    args = RestHandlerSetup({"debug": True})
     rs = RestServer(debug=True)
-    rs.add_route(TestHandler.ROUTE, TestHandler, RestHandlerSetup({"debug": True}))
+    rs.add_route(TestHandler.ROUTE, TestHandler, args)
     rs.startup(address="localhost", port=port)
-    await asyncio.sleep(10)
 
     def client() -> RestClient:
         return RestClient(f"http://localhost:{port}", retries=0)
@@ -132,7 +131,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
 )
 
 
-def test_000__valid(server: Callable[[], RestClient]) -> None:
+async def test_000__valid(server: Callable[[], RestClient]) -> None:
     """Test valid request data."""
     rc = server()
 
@@ -154,7 +153,7 @@ def test_000__valid(server: Callable[[], RestClient]) -> None:
     assert e.value.response.status_code == 400
 
 
-def test_010__invalid(server: Callable[[], RestClient]) -> None:
+async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     """Test invalid request data."""
     rc = server()
 
