@@ -5,6 +5,7 @@ from typing import AsyncIterator, Callable
 
 import openapi_core
 import pytest
+import pytest_asyncio
 import requests
 import tornado
 from jsonschema_path import SchemaPath
@@ -16,7 +17,7 @@ from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer
 
 
-@pytest.fixture(scope="session")  # persist for entire test suite
+@pytest_asyncio.fixture(scope="session")  # persist for entire test suite
 async def server() -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
 
