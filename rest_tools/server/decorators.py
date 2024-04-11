@@ -414,9 +414,8 @@ def validate_request(openapi_spec: "OpenAPI"):
                     )
                 else:
                     reason = str(e)  # to client
-                if os.getenv(
-                    "CI"
-                ):  # in prod, don't fill up logs w/ traces from invalid data
+                if os.getenv("CI"):
+                    # in prod, don't fill up logs w/ traces from invalid data
                     LOGGER.exception(e)
                 raise tornado.web.HTTPError(
                     status_code=400,
