@@ -52,7 +52,7 @@ httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
 humanfriendly==10.0
     # via coloredlogs
-idna==3.6
+idna==3.7
     # via requests
 importlib-metadata==7.0.0
     # via opentelemetry-api
@@ -191,7 +191,7 @@ rpds-py==0.18.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.3.5
+ruff==0.3.6
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
