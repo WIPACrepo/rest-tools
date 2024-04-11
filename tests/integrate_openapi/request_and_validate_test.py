@@ -1,7 +1,7 @@
 """Test client.utils.request_and_validate module."""
 
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncIterator, Callable
 
 import openapi_core
 import pytest
@@ -17,7 +17,7 @@ from rest_tools.server import RestServer
 
 
 @pytest.fixture(scope="session")  # persist for entire test suite
-async def rc() -> AsyncIterator[RestClient]:
+async def server() -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
 
     class TestHandler(RequestHandler):
@@ -34,9 +34,14 @@ async def rc() -> AsyncIterator[RestClient]:
     server_task = asyncio.create_task(asyncio.Event().wait())
     await asyncio.sleep(0)
 
-    yield RestClient("https://localhost", retries=0)
+    def client() -> RestClient:
+        return RestClient(f"http://localhost:{8080}", retries=0)
 
-    server_task.cancel()
+    try:
+        yield client
+    finally:
+        await rs.stop()  # type: ignore[no-untyped-call]
+        server_task.cancel()
 
 
 OPENAPI_SPEC = openapi_core.OpenAPI(
@@ -115,8 +120,9 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
 )
 
 
-def test_000__valid(rc: RestClient) -> None:
+def test_000__valid(server: Callable[[], RestClient]) -> None:
     """Test valid request data."""
+    rc = server()
 
     # validate response data
     res = request_and_validate(
@@ -136,8 +142,9 @@ def test_000__valid(rc: RestClient) -> None:
     assert e.value.response.status_code == 400
 
 
-def test_010__invalid(rc: RestClient) -> None:
+def test_010__invalid(server: Callable[[], RestClient]) -> None:
     """Test invalid request data."""
+    rc = server()
 
     # validate response data
 
