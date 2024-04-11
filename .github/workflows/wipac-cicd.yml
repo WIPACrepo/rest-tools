@@ -1,6 +1,6 @@
 name: wipac ci/cd
 
-on: [push]
+on: [ push ]
 
 jobs:
 
@@ -21,7 +21,7 @@ jobs:
       - uses: WIPACrepo/wipac-dev-flake8-action@v1.0
 
   mypy:
-    needs: [py-versions]
+    needs: [ py-versions ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -58,8 +58,8 @@ jobs:
         with:
           base-keywords: "WIPAC IceCube"
 
-  py-tests:
-    needs: [py-versions]
+  unit-tests:
+    needs: [ py-versions ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -76,11 +76,32 @@ jobs:
           pip install .[tests]
       - name: Run Tests
         run: |
-          python -m pytest tests --tb=short --log-level=DEBUG -vvv
+          python -m pytest tests/unit_* --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
-  py-tests-telemetry:
-    needs: [py-versions]
+  tests-with-openapi:
+    needs: [ py-versions ]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+        python-version: ${{ matrix.py3 }}
+      - name: Setup Dependencies
+        run: |
+          pip install --upgrade pip wheel setuptools
+          pip install .[tests,openapi]
+      - name: Run Tests
+        run: |
+          python -m pytest tests/integrate_openapi --tb=short --log-level=DEBUG -vvv
+          pycycle --here --verbose
+
+  tests-with-telemetry:
+    needs: [ py-versions ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -108,16 +129,16 @@ jobs:
   release:
     # only run on main/master/default
     if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
-    needs: [py-setup, py-tests, py-tests-telemetry]
+    needs: [ py-setup, examples, unit-tests, tests-with-openapi, tests-with-telemetry ]
     runs-on: ubuntu-latest
     concurrency: release
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Python Semantic Release
-      uses: python-semantic-release/python-semantic-release@v7.34.6
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        repository_username: __token__
-        repository_password: ${{ secrets.PYPI_TOKEN }}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Python Semantic Release
+        uses: python-semantic-release/python-semantic-release@v7.34.6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository_username: __token__
+          repository_password: ${{ secrets.PYPI_TOKEN }}
