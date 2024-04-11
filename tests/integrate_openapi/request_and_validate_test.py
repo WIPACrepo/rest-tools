@@ -34,7 +34,7 @@ async def rc() -> AsyncIterator[RestClient]:
     server_task = asyncio.create_task(asyncio.Event().wait())
     await asyncio.sleep(0)
 
-    yield RestClient("localhost", retries=0)
+    yield RestClient("https://localhost", retries=0)
 
     server_task.cancel()
 
