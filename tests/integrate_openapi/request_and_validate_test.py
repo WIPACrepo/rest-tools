@@ -141,19 +141,19 @@ def test_010__invalid(rc: RestClient) -> None:
 
     # validate response data
 
-    with pytest.raises(exceptions.DataValidationError) as e:
+    with pytest.raises(exceptions.DataValidationError):
         request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123})
 
-    with pytest.raises(exceptions.DataValidationError) as e:
+    with pytest.raises(exceptions.DataValidationError):
         request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "string"}}
         )
 
-    with pytest.raises(exceptions.DataValidationError) as e:
+    with pytest.raises(exceptions.DataValidationError):
         request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
 
     # validate response error
-    with pytest.raises(exceptions.DataValidationError) as e:
+    with pytest.raises(exceptions.DataValidationError):
         request_and_validate(
             rc,
             OPENAPI_SPEC,
