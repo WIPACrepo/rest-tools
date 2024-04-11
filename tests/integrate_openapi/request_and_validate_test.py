@@ -1,6 +1,7 @@
 """Test client.utils.request_and_validate module."""
 
 import asyncio
+import socket
 from typing import AsyncIterator, Callable
 
 import openapi_core
@@ -17,8 +18,20 @@ from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer
 
 
+@pytest.fixture
+def port() -> int:
+    """Get an ephemeral port number."""
+    # unix.stackexchange.com/a/132524
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("", 0))
+    addr = s.getsockname()
+    ephemeral_port = addr[1]
+    s.close()
+    return ephemeral_port
+
+
 @pytest_asyncio.fixture(scope="session")  # persist for entire test suite
-async def server() -> AsyncIterator[Callable[[], RestClient]]:
+async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
 
     class TestHandler(RequestHandler):
@@ -31,11 +44,11 @@ async def server() -> AsyncIterator[Callable[[], RestClient]]:
 
     rs = RestServer(debug=True)
     rs.add_route(TestHandler.ROUTE, TestHandler, {})
-    rs.startup(address="localhost", port=8080)
+    rs.startup(address="localhost", port=port)
     await asyncio.sleep(10)
 
     def client() -> RestClient:
-        return RestClient(f"http://localhost:{8080}", retries=0)
+        return RestClient(f"http://localhost:{port}", retries=0)
 
     try:
         yield client
