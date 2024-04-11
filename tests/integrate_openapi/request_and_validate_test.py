@@ -43,7 +43,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
             self.write(self.get_argument("echo"))
 
     rs = RestServer(debug=True)
-    rs.add_route(TestHandler.ROUTE, TestHandler, RestHandlerSetup())
+    rs.add_route(TestHandler.ROUTE, TestHandler, RestHandlerSetup({"debug": True}))
     rs.startup(address="localhost", port=port)
     await asyncio.sleep(10)
 
