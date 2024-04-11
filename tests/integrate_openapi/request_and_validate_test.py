@@ -1,6 +1,7 @@
 """Test client.utils.request_and_validate module."""
 
 import asyncio
+from typing import AsyncIterator
 
 import openapi_core
 import pytest
@@ -16,7 +17,7 @@ from rest_tools.server import RestServer
 
 
 @pytest.fixture(scope="session")  # persist for entire test suite
-async def rc() -> RestClient:
+async def rc() -> AsyncIterator[RestClient]:
     """Start up REST server and attach handlers."""
 
     class TestHandler(RequestHandler):
