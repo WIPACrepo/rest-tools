@@ -18,7 +18,7 @@ from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer
 
 
-@pytest.fixture(scope="session")  # persist for entire test suite
+@pytest.fixture
 def port() -> int:
     """Get an ephemeral port number."""
     # unix.stackexchange.com/a/132524
@@ -30,7 +30,7 @@ def port() -> int:
     return ephemeral_port
 
 
-@pytest_asyncio.fixture(scope="session")  # persist for entire test suite
+@pytest_asyncio.fixture
 async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
 
