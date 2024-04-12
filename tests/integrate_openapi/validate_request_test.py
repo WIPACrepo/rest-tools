@@ -49,7 +49,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         @validate_request(OPENAPI_SPEC)
         async def post(self) -> None:
             # args in JSON
-            self.write({"message": f"hey {self.get_argument('nickname')}"})
+            self.write({"message": f"hey {self.get_argument('uf')}"})
 
     class FooURLParamsAndArgsHandler(RestHandler):
         ROUTE = r"/foo/params-and-args/(?P<the_id>\w+)/(?P<the_name>\w+)$"
@@ -88,6 +88,30 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
         {
             "openapi": "3.1.0",
             "info": {"title": "Foo API", "version": "1.0.0"},
+            "components": {
+                "parameters": {
+                    "TheNameParam": {
+                        "name": "the_name",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    },
+                },
+                "schemas": {
+                    "MessageResponseObject": {
+                        "type": "object",
+                        "properties": {"message": {"type": "string"}},
+                        "additionalProperties": False,
+                    },
+                    "PseudonymsObject": {
+                        "type": "object",
+                        "properties": {
+                            "alias": {"type": "string"},
+                            "nickname": {"type": "string"},
+                        },
+                    },
+                },
+            },
             "paths": {
                 "/foo/no-args": {
                     "get": {
@@ -133,12 +157,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                             "required": True,
                             "schema": {"type": "string"},
                         },
-                        {
-                            "name": "the_name",
-                            "in": "path",
-                            "required": True,
-                            "schema": {"type": "string"},
-                        },
+                        {"$ref": "#/components/parameters/TheNameParam"},
                     ],
                     "get": {
                         "responses": {
@@ -147,10 +166,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
+                                            "$ref": "#/components/schemas/MessageResponseObject"
                                         }
                                     }
                                 },
@@ -164,10 +180,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
+                                            "$ref": "#/components/schemas/MessageResponseObject"
                                         }
                                     }
                                 },
@@ -191,10 +204,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
+                                            "$ref": "#/components/schemas/MessageResponseObject"
                                         }
                                     }
                                 },
@@ -207,7 +217,12 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "application/json": {
                                     "schema": {
                                         "type": "object",
-                                        "properties": {"nickname": {"type": "string"}},
+                                        "properties": {
+                                            "nickname": {
+                                                "$ref": "#/components/schemas/PseudonymsObject/properties/nickname"
+                                            },
+                                        },
+                                        "required": ["nickname"],
                                     }
                                 }
                             }
@@ -218,10 +233,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
+                                            "$ref": "#/components/schemas/MessageResponseObject"
                                         }
                                     }
                                 },
@@ -237,12 +249,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                             "required": True,
                             "schema": {"type": "string"},
                         },
-                        {
-                            "name": "the_name",
-                            "in": "path",
-                            "required": True,
-                            "schema": {"type": "string"},
-                        },
+                        {"$ref": "#/components/parameters/TheNameParam"},
                     ],
                     "get": {
                         "parameters": [
@@ -259,10 +266,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
+                                            "$ref": "#/components/schemas/MessageResponseObject"
                                         }
                                     }
                                 },
@@ -286,10 +290,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
+                                            "$ref": "#/components/schemas/MessageResponseObject"
                                         }
                                     }
                                 },
