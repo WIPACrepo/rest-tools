@@ -32,7 +32,9 @@ def request_and_validate(
     Useful for testing and debugging.
     """
     url, kwargs = rc._prepare(method, path, args=args)
+    logging.critical(f"{method} {path} {args} {url} {kwargs}")
     response = requests.request(method, url, **kwargs)
+    logging.critical(f"response: {response}")
 
     # duck typing magic
     class _DuckResponse(openapi_core.protocols.Response):
@@ -63,6 +65,7 @@ def request_and_validate(
     )
 
     out = rc._decode(response.content)
+    logging.critical(f"out: {out}: {response}")
     response.raise_for_status()
     return out
 
