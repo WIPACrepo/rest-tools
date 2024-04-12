@@ -233,9 +233,9 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
 
     # args
     res = await rc.request("GET", "/foo/args", {"rank": 123})
-    assert res == {"message": "hello tim"}
+    assert res == {"message": "hello 123"}
     res = await rc.request("POST", "/foo/args", {"rank": 456})
-    assert res == {"message": "hey timbo"}
+    assert res == {"message": "hey 456"}
 
     # args + url params
     res = await rc.request(
