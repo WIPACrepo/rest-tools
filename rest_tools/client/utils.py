@@ -29,6 +29,8 @@ async def request_and_validate(
     """Make request and validate the response against a given OpenAPI spec.
 
     Useful for testing and debugging.
+
+    NOTE: this essentially mimics RestClient.request() with added features.
     """
     url, kwargs = rc._prepare(method, path, args=args)
 
