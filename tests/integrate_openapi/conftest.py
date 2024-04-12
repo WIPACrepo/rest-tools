@@ -1,12 +1,11 @@
 """Integration test fixtures."""
 
+import logging
 import socket
 from typing import AsyncIterator, Callable
 
 import pytest
 import pytest_asyncio
-import tornado
-from tornado.web import RequestHandler
 
 from rest_tools.client import RestClient
 from rest_tools.server import RestServer, RestHandler
@@ -23,19 +22,21 @@ def port() -> int:
     s.close()
     return ephemeral_port
 
+
 class TestHandler(RestHandler):
     ROUTE = "/echo/this"
 
     async def post(self) -> None:
+        logging.critical("HERE IS THE POST")
         self.write({})
         # if self.get_argument("raise", None):
         #     raise tornado.web.HTTPError(400, self.get_argument("raise"))
         # self.write(self.get_argument("echo", {}))
+
+
 @pytest_asyncio.fixture
 async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
-
-
 
     rs = RestServer(debug=True)
     rs.add_route(TestHandler.ROUTE, TestHandler)
