@@ -124,7 +124,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 }
                             }
                         },
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
                 "/foo/params/{the_id}/{the_name}": {
@@ -138,10 +138,10 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                         {"$ref": "#/components/parameters/TheNameParam"},
                     ],
                     "get": {
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                     "post": {
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
                 "/foo/args": {
@@ -154,7 +154,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "schema": {"type": "string"},
                             }
                         ],
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                     "post": {
                         "requestBody": {
@@ -172,7 +172,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 }
                             }
                         },
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
                 "/foo/params-and-args/{the_id}/{the_name}": {
@@ -194,7 +194,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "schema": {"type": "string"},
                             }
                         ],
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                     "post": {
                         "requestBody": {
@@ -207,7 +207,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 }
                             }
                         },
-                        "responses": {},  # we're not validating/testing this, so don't bother
+                        # "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
             },
