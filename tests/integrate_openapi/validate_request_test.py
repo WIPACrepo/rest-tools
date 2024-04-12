@@ -34,11 +34,11 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         ROUTE = r"/foo/params/(?P<the_id>\w+)/(?P<the_name>\w+)$"
 
         @validate_request(OPENAPI_SPEC)
-        async def get(self, the_id: str, the_name: str) -> None:
+        async def get(self, the_id: int, the_name: str) -> None:
             self.write({"message": f"got {the_id} {the_name}"})
 
         @validate_request(OPENAPI_SPEC)
-        async def post(self, the_id: str, the_name: str) -> None:
+        async def post(self, the_id: int, the_name: str) -> None:
             self.write({"message": f"posted {the_id} {the_name}"})
 
     class FooArgsHandler(RestHandler):
@@ -47,12 +47,12 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         @validate_request(OPENAPI_SPEC)
         async def get(self) -> None:
             # args embedded in url's query string
-            self.write({"message": f"hello {self.get_argument('name')}"})
+            self.write({"message": f"hello {self.get_argument('rank')}"})
 
         @validate_request(OPENAPI_SPEC)
         async def post(self) -> None:
             # args in JSON
-            self.write({"message": f"hey {self.get_argument('nickname')}"})
+            self.write({"message": f"hey {self.get_argument('rank')}"})
 
     class FooURLParamsAndArgsHandler(RestHandler):
         ROUTE = r"/foo/params-and-args/(?P<the_id>\w+)/(?P<the_name>\w+)$"
@@ -149,10 +149,10 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                     "get": {
                         "parameters": [
                             {
-                                "name": "name",
+                                "name": "rank",
                                 "in": "query",
                                 "required": True,
-                                "schema": {"type": "string"},
+                                "schema": {"type": "integer"},
                             }
                         ],
                         # "responses": {},  # we're not validating/testing this, so don't bother
@@ -163,12 +163,8 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "application/json": {
                                     "schema": {
                                         "type": "object",
-                                        "properties": {
-                                            "nickname": {
-                                                "$ref": "#/components/schemas/PseudonymsObject/properties/nickname"
-                                            },
-                                        },
-                                        "required": ["nickname"],
+                                        "properties": {"rank": {"type": "integer"}},
+                                        "required": ["rank"],
                                     }
                                 }
                             }
@@ -232,9 +228,9 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     assert res == {"message": "posted 456 tilly"}
 
     # args
-    res = await rc.request("GET", "/foo/args", {"name": "tim"})
+    res = await rc.request("GET", "/foo/args", {"rank": 123})
     assert res == {"message": "hello tim"}
-    res = await rc.request("POST", "/foo/args", {"nickname": "timbo"})
+    res = await rc.request("POST", "/foo/args", {"rank": 456})
     assert res == {"message": "hey timbo"}
 
     # args + url params
@@ -297,7 +293,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     #     await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await rc.request("GET", "/foo/args", {"name": 123})
+        await rc.request("GET", "/foo/args", {"rank": 123})
     print(e.value)
     #
     with pytest.raises(requests.HTTPError) as e:
@@ -306,11 +302,11 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     print(e.value)
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
-        await rc.request("POST", "/foo/args", {"nickname": "rock", "suv": "gas"})
+        await rc.request("POST", "/foo/args", {"rank": 123, "suv": "gas"})
     print(e.value)
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await rc.request("POST", "/foo/args", {"nickname": 123})
+        await rc.request("POST", "/foo/args", {"rank": "abc"})
     print(e.value)
 
     # args + url params
