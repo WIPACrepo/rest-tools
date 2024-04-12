@@ -186,5 +186,3 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
             "/echo/this",
             {"raise": 401},
         )
-
-    assert 0
