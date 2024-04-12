@@ -1,15 +1,44 @@
 """Test client.utils.request_and_validate module."""
 
-from typing import Callable
+from typing import AsyncIterator, Callable
 
 import openapi_core
 import pytest
+import pytest_asyncio
 import requests
+import tornado
 from jsonschema_path import SchemaPath
 from openapi_core.validation.response import exceptions
 
 from rest_tools.client import RestClient
 from rest_tools.client.utils import request_and_validate
+from rest_tools.server import RestServer, RestHandler
+
+
+@pytest_asyncio.fixture
+async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
+    """Start up REST server and attach handlers."""
+    rs = RestServer(debug=True)
+
+    class TestHandler(RestHandler):
+        ROUTE = "/echo/this"
+
+        async def post(self) -> None:
+            if self.get_argument("raise", None):
+                raise tornado.web.HTTPError(self.get_argument("raise"), "it's an error")
+            self.write(self.get_argument("echo", {}))
+
+    rs.add_route(TestHandler.ROUTE, TestHandler)
+    rs.startup(address="localhost", port=port)
+
+    def client() -> RestClient:
+        return RestClient(f"http://localhost:{port}", retries=0)
+
+    try:
+        yield client
+    finally:
+        await rs.stop()
+
 
 OPENAPI_SPEC = openapi_core.OpenAPI(
     SchemaPath.from_dict(
@@ -104,7 +133,7 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
             OPENAPI_SPEC,
             "POST",
             "/echo/this",
-            {"raise": {"code": 123, "error": "its an error"}},
+            {"raise": 400},
         )
     assert e.value.response.status_code == 400
 
@@ -129,11 +158,13 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
 
     # validate response error
-    with pytest.raises(exceptions.DataValidationError):
+    with pytest.raises(exceptions.DataValidationError) as e:
         await request_and_validate(
             rc,
             OPENAPI_SPEC,
             "POST",
             "/echo/this",
-            {"raise": {"foo": 123, "bar": "its an error"}},
+            {"raise": 401},
         )
+    print(e.value)
+    assert 0
