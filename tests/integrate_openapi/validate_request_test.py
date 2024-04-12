@@ -1,5 +1,6 @@
 """Test route handlers for the OpenAPI spec validation."""
 
+import re
 from typing import AsyncIterator, Callable
 
 import openapi_core
@@ -133,7 +134,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                             "name": "the_id",
                             "in": "path",
                             "required": True,
-                            "schema": {"type": "string"},
+                            "schema": {"type": "integer"},
                         },
                         {"$ref": "#/components/parameters/TheNameParam"},
                     ],
@@ -181,7 +182,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                             "name": "the_id",
                             "in": "path",
                             "required": True,
-                            "schema": {"type": "string"},
+                            "schema": {"type": "integer"},
                         },
                         {"$ref": "#/components/parameters/TheNameParam"},
                     ],
@@ -250,10 +251,15 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     rc = server()
 
     # no args allowed
-    with pytest.raises(requests.HTTPError) as e:
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Additional properties are not allowed ('have' was unexpected) for url: {rc.address}/foo/no-args"
+        ),
+    ) as e:
         # extra arg(s)
         await rc.request("POST", "/foo/no-args", {"have": "some args"})
-    print(e.value)
+    assert e.value.response.status_code == 400
 
     # url params
     with pytest.raises(requests.HTTPError) as e:
