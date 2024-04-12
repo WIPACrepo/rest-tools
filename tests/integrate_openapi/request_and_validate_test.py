@@ -8,8 +8,8 @@ import pytest_asyncio
 import requests
 import tornado
 from jsonschema_path import SchemaPath
-from openapi_core.validation.response import exceptions
-
+from openapi_core.validation.response.exceptions import DataValidationError
+from openapi_core.templating.responses.exceptions import ResponseNotFound
 from rest_tools.client import RestClient
 from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer, RestHandler
@@ -149,21 +149,21 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
 
     # validate response data
 
-    with pytest.raises(exceptions.DataValidationError):
+    with pytest.raises(DataValidationError):
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123}
         )
 
-    with pytest.raises(exceptions.DataValidationError):
+    with pytest.raises(DataValidationError):
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "string"}}
         )
 
-    with pytest.raises(exceptions.DataValidationError):
+    with pytest.raises(DataValidationError):
         await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
 
     # validate response error
-    with pytest.raises(exceptions.DataValidationError) as e:
+    with pytest.raises(ResponseNotFound) as e:
         await request_and_validate(
             rc,
             OPENAPI_SPEC,
