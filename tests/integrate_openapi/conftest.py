@@ -34,7 +34,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         def post(self) -> None:
             if self.get_argument("raise", None):
                 raise tornado.web.HTTPError(400, self.get_argument("raise"))
-            self.write(self.get_argument("echo",None))
+            self.write(self.get_argument("echo", {}))
 
     rs = RestServer(debug=True)
     rs.add_route(TestHandler.ROUTE, TestHandler)
