@@ -36,7 +36,7 @@ async def request_and_validate(
     url, kwargs = rc._prepare(method, path, args=args)
     await asyncio.sleep(0)
     logging.critical(f"{time.time()} - {method} {path} {args} {url} {kwargs}")
-    response = requests.request(method, url, **kwargs)
+    response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]
     await asyncio.sleep(0)
     logging.critical(f"{time.time()} - response: {response}")
 
