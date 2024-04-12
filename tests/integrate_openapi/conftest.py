@@ -23,19 +23,19 @@ def port() -> int:
     s.close()
     return ephemeral_port
 
+class TestHandler(RestHandler):
+    ROUTE = "/echo/this"
 
+    async def post(self) -> None:
+        self.write({})
+        # if self.get_argument("raise", None):
+        #     raise tornado.web.HTTPError(400, self.get_argument("raise"))
+        # self.write(self.get_argument("echo", {}))
 @pytest_asyncio.fixture
 async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
 
-    class TestHandler(RestHandler):
-        ROUTE = "/echo/this"
 
-        async def post(self) -> None:
-            self.write({})
-            # if self.get_argument("raise", None):
-            #     raise tornado.web.HTTPError(400, self.get_argument("raise"))
-            # self.write(self.get_argument("echo", {}))
 
     rs = RestServer(debug=True)
     rs.add_route(TestHandler.ROUTE, TestHandler)
