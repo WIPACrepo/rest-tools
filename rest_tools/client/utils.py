@@ -2,10 +2,7 @@
 
 import asyncio
 import logging
-import time
 from typing import Any, Optional, Dict
-
-import requests
 
 from .client import RestClient
 
@@ -34,11 +31,9 @@ async def request_and_validate(
     Useful for testing and debugging.
     """
     url, kwargs = rc._prepare(method, path, args=args)
-    await asyncio.sleep(0)
-    logging.critical(f"{time.time()} - {method} {path} {args} {url} {kwargs}")
+
+    # run request as async in case of other dependent, concurrent actions (ex: test suite runs server in same process)
     response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]
-    await asyncio.sleep(0)
-    logging.critical(f"{time.time()} - response: {response}")
 
     # duck typing magic
     class _DuckResponse(openapi_core.protocols.Response):
