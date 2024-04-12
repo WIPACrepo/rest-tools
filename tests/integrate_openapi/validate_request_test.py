@@ -49,7 +49,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         @validate_request(OPENAPI_SPEC)
         async def post(self) -> None:
             # args in JSON
-            self.write({"message": f"hey {self.get_argument('uf')}"})
+            self.write({"message": f"hey {self.get_argument('nickname')}"})
 
     class FooURLParamsAndArgsHandler(RestHandler):
         ROUTE = r"/foo/params-and-args/(?P<the_id>\w+)/(?P<the_name>\w+)$"
