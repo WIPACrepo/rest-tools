@@ -118,6 +118,18 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
             "paths": {
                 "/foo/no-args": {
                     "post": {
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {  # no args allowed
+                                        "type": "object",
+                                        "properties": {},
+                                        "required": [],
+                                        "additionalProperties": False,
+                                    }
+                                }
+                            }
+                        },
                         "responses": {
                             "200": {
                                 "description": "Returns a hello world message",
@@ -132,7 +144,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                     }
                                 },
                             }
-                        }
+                        },
                     },
                 },
                 "/foo/params/{the_id}/{the_name}": {
