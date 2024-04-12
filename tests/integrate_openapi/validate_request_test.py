@@ -9,7 +9,6 @@ import requests
 from jsonschema_path import SchemaPath
 
 from rest_tools.client import RestClient
-from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer, RestHandler, validate_request
 
 
@@ -101,11 +100,6 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                     },
                 },
                 "schemas": {
-                    "MessageResponseObject": {
-                        "type": "object",
-                        "properties": {"message": {"type": "string"}},
-                        "additionalProperties": False,
-                    },
                     "PseudonymsObject": {
                         "type": "object",
                         "properties": {
@@ -130,21 +124,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 }
                             }
                         },
-                        "responses": {
-                            "200": {
-                                "description": "Returns a hello world message",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
-                                        }
-                                    }
-                                },
-                            }
-                        },
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
                 "/foo/params/{the_id}/{the_name}": {
@@ -158,32 +138,10 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                         {"$ref": "#/components/parameters/TheNameParam"},
                     ],
                     "get": {
-                        "responses": {
-                            "200": {
-                                "description": "Returns a message with the id and name",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "$ref": "#/components/schemas/MessageResponseObject"
-                                        }
-                                    }
-                                },
-                            }
-                        },
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                     "post": {
-                        "responses": {
-                            "200": {
-                                "description": "Returns a message with the id and name",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "$ref": "#/components/schemas/MessageResponseObject"
-                                        }
-                                    }
-                                },
-                            }
-                        }
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
                 "/foo/args": {
@@ -196,18 +154,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "schema": {"type": "string"},
                             }
                         ],
-                        "responses": {
-                            "200": {
-                                "description": "Returns a hello message with the name",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "$ref": "#/components/schemas/MessageResponseObject"
-                                        }
-                                    }
-                                },
-                            }
-                        },
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                     "post": {
                         "requestBody": {
@@ -225,18 +172,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 }
                             }
                         },
-                        "responses": {
-                            "200": {
-                                "description": "Returns a hey message with the nickname",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "$ref": "#/components/schemas/MessageResponseObject"
-                                        }
-                                    }
-                                },
-                            }
-                        },
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
                 "/foo/params-and-args/{the_id}/{the_name}": {
@@ -258,18 +194,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "schema": {"type": "string"},
                             }
                         ],
-                        "responses": {
-                            "200": {
-                                "description": "Returns a message with the id, name and why",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "$ref": "#/components/schemas/MessageResponseObject"
-                                        }
-                                    }
-                                },
-                            }
-                        },
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                     "post": {
                         "requestBody": {
@@ -282,18 +207,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 }
                             }
                         },
-                        "responses": {
-                            "200": {
-                                "description": "Returns a message with the id, name and why",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "$ref": "#/components/schemas/MessageResponseObject"
-                                        }
-                                    }
-                                },
-                            }
-                        },
+                        "responses": {},  # we're not validating/testing this, so don't bother
                     },
                 },
             },
@@ -307,33 +221,27 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     rc = server()
 
     # no args allowed
-    res = await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/no-args")
+    res = await rc.request("POST", "/foo/no-args")
     assert res == {"message": "hello world"}
 
     # url params
-    res = await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/params/123/hank")
+    res = await rc.request("GET", "/foo/params/123/hank")
     assert res == {"message": "got 123 hank"}
-    res = await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/params/456/tilly")
+    res = await rc.request("POST", "/foo/params/456/tilly")
     assert res == {"message": "posted 456 tilly"}
 
     # args
-    res = await request_and_validate(
-        rc, OPENAPI_SPEC, "GET", "/foo/args", {"name": "tim"}
-    )
+    res = await rc.request("GET", "/foo/args", {"name": "tim"})
     assert res == {"message": "hello tim"}
-    res = await request_and_validate(
-        rc, OPENAPI_SPEC, "POST", "/foo/args", {"nickname": "timbo"}
-    )
+    res = await rc.request("POST", "/foo/args", {"nickname": "timbo"})
     assert res == {"message": "hey timbo"}
 
     # args + url params
-    res = await request_and_validate(
-        rc, OPENAPI_SPEC, "GET", "/foo/params-and-args/789/book", {"why": "the future"}
+    res = await rc.request(
+        "GET", "/foo/params-and-args/789/book", {"why": "the future"}
     )
     assert res == {"message": "got 789 book -- the future"}
-    res = await request_and_validate(
-        rc, OPENAPI_SPEC, "POST", "/foo/params-and-args/248/saru", {"why": "the past"}
-    )
+    res = await rc.request("POST", "/foo/params-and-args/248/saru", {"why": "the past"})
     assert res == {"message": "posted 248 saru -- the past"}
 
 
@@ -344,53 +252,45 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     # no args allowed
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
-        await request_and_validate(
-            rc, OPENAPI_SPEC, "POST", "/foo/no-args", {"have": "some args"}
-        )
+        await rc.request("POST", "/foo/no-args", {"have": "some args"})
     print(e.value)
 
     # url params
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/params/abc/888")
+        await rc.request("GET", "/foo/params/abc/888")
     print(e.value)
     #
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/params/xyz/999")
+        await rc.request("POST", "/foo/params/xyz/999")
     print(e.value)
 
     # args
     with pytest.raises(requests.HTTPError) as e:
         # missing arg(s)
-        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/args")
+        await rc.request("GET", "/foo/args")
     print(e.value)
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
-        await request_and_validate(
-            rc, OPENAPI_SPEC, "GET", "/foo/args", {"name": "dwayne", "car": "vroom"}
-        )
+        await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
     print(e.value)
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/args", {"name": 123})
+        await rc.request("GET", "/foo/args", {"name": 123})
     print(e.value)
     #
     with pytest.raises(requests.HTTPError) as e:
         # missing arg(s)
-        await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/args")
+        await rc.request("POST", "/foo/args")
     print(e.value)
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
-        await request_and_validate(
-            rc, OPENAPI_SPEC, "POST", "/foo/args", {"nickname": "rock", "suv": "gas"}
-        )
+        await rc.request("POST", "/foo/args", {"nickname": "rock", "suv": "gas"})
     print(e.value)
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await request_and_validate(
-            rc, OPENAPI_SPEC, "POST", "/foo/args", {"nickname": 123}
-        )
+        await rc.request("POST", "/foo/args", {"nickname": 123})
     print(e.value)
 
     # args + url params
