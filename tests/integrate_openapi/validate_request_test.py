@@ -101,11 +101,11 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                     },
                 },
                 "schemas": {
-                    "PseudonymsObject": {
+                    "InfoObject": {
                         "type": "object",
                         "properties": {
                             "alias": {"type": "string"},
-                            "nickname": {"type": "string"},
+                            "rank": {"type": "integer"},
                         },
                     },
                 },
@@ -163,7 +163,11 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "application/json": {
                                     "schema": {
                                         "type": "object",
-                                        "properties": {"rank": {"type": "integer"}},
+                                        "properties": {
+                                            "rank": {
+                                                "$ref": "#/components/schemas/InfoObject/properties/rank"
+                                            },
+                                        },
                                         "required": ["rank"],
                                     }
                                 }
