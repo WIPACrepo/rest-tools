@@ -325,29 +325,29 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
 
     # url params
     res = await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/params/123/hank")
-    assert res == {"message": f"got 123 hank"}
+    assert res == {"message": "got 123 hank"}
     res = await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/params/456/tilly")
-    assert res == {"message": f"got 456 tilly"}
+    assert res == {"message": "got 456 tilly"}
 
     # args
     res = await request_and_validate(
         rc, OPENAPI_SPEC, "GET", "/foo/args", {"name": "tim"}
     )
-    assert res == {"message": f"hello tim"}
+    assert res == {"message": "hello tim"}
     res = await request_and_validate(
         rc, OPENAPI_SPEC, "POST", "/foo/args", {"nickname": "timbo"}
     )
-    assert res == {"message": f"hey timbo"}
+    assert res == {"message": "hey timbo"}
 
     # args + url params
     res = await request_and_validate(
         rc, OPENAPI_SPEC, "GET", "/foo/params/789/book", {"why": "the future"}
     )
-    assert res == {"message": f"got 789 book -- the future"}
+    assert res == {"message": "got 789 book -- the future"}
     res = await request_and_validate(
         rc, OPENAPI_SPEC, "POST", "/foo/params/248/saru", {"why": "the past"}
     )
-    assert res == {"message": f"posted 248 saru -- the past"}
+    assert res == {"message": "posted 248 saru -- the past"}
 
 
 async def test_010__invalid(server: Callable[[], RestClient]) -> None:
