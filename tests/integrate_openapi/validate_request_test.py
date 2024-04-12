@@ -106,209 +106,199 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 },
                             }
                         },
-                        "post": {
-                            "responses": {
-                                "200": {
-                                    "description": "Returns a hello world message",
-                                    "content": {
-                                        "application/json": {
-                                            "schema": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "message": {"type": "string"}
-                                                },
-                                            }
+                    },
+                    "post": {
+                        "responses": {
+                            "200": {
+                                "description": "Returns a hello world message",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
+                                            },
                                         }
-                                    },
-                                }
+                                    }
+                                },
+                            }
+                        }
+                    },
+                },
+                "/foo/params/{the_id}/{the_name}": {
+                    "parameters": [
+                        {
+                            "name": "the_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "the_name",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        },
+                    ],
+                    "get": {
+                        "responses": {
+                            "200": {
+                                "description": "Returns a message with the id and name",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
+                                            },
+                                        }
+                                    }
+                                },
                             }
                         },
                     },
-                    "/foo/params/{the_id}/{the_name}": {
+                    "post": {
+                        "responses": {
+                            "200": {
+                                "description": "Returns a message with the id and name",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
+                                            },
+                                        }
+                                    }
+                                },
+                            }
+                        }
+                    },
+                },
+                "/foo/args": {
+                    "get": {
                         "parameters": [
                             {
-                                "name": "the_id",
-                                "in": "path",
+                                "name": "name",
+                                "in": "query",
                                 "required": True,
                                 "schema": {"type": "string"},
-                            },
-                            {
-                                "name": "the_name",
-                                "in": "path",
-                                "required": True,
-                                "schema": {"type": "string"},
-                            },
+                            }
                         ],
-                        "get": {
-                            "responses": {
-                                "200": {
-                                    "description": "Returns a message with the id and name",
-                                    "content": {
-                                        "application/json": {
-                                            "schema": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "message": {"type": "string"}
-                                                },
-                                            }
-                                        }
-                                    },
-                                }
-                            },
-                            "post": {
-                                "responses": {
-                                    "200": {
-                                        "description": "Returns a message with the id and name",
-                                        "content": {
-                                            "application/json": {
-                                                "schema": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "message": {"type": "string"}
-                                                    },
-                                                }
-                                            }
-                                        },
-                                    }
-                                }
-                            },
-                        },
-                        "/foo/args": {
-                            "get": {
-                                "parameters": [
-                                    {
-                                        "name": "name",
-                                        "in": "query",
-                                        "required": True,
-                                        "schema": {"type": "string"},
-                                    }
-                                ],
-                                "responses": {
-                                    "200": {
-                                        "description": "Returns a hello message with the name",
-                                        "content": {
-                                            "application/json": {
-                                                "schema": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "message": {"type": "string"}
-                                                    },
-                                                }
-                                            }
-                                        },
-                                    }
-                                },
-                                "post": {
-                                    "requestBody": {
-                                        "content": {
-                                            "application/json": {
-                                                "schema": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "nickname": {"type": "string"}
-                                                    },
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "responses": {
-                                        "200": {
-                                            "description": "Returns a hey message with the nickname",
-                                            "content": {
-                                                "application/json": {
-                                                    "schema": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "message": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                    }
-                                                }
+                        "responses": {
+                            "200": {
+                                "description": "Returns a hello message with the name",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
                                             },
                                         }
-                                    },
+                                    }
                                 },
-                            },
-                            "/foo/params-and-args/{the_id}/{the_name}": {
-                                "parameters": [
-                                    {
-                                        "name": "the_id",
-                                        "in": "path",
-                                        "required": True,
-                                        "schema": {"type": "string"},
-                                    },
-                                    {
-                                        "name": "the_name",
-                                        "in": "path",
-                                        "required": True,
-                                        "schema": {"type": "string"},
-                                    },
-                                ],
-                                "get": {
-                                    "parameters": [
-                                        {
-                                            "name": "why",
-                                            "in": "query",
-                                            "required": True,
-                                            "schema": {"type": "string"},
-                                        }
-                                    ],
-                                    "responses": {
-                                        "200": {
-                                            "description": "Returns a message with the id, name and why",
-                                            "content": {
-                                                "application/json": {
-                                                    "schema": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "message": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                    }
-                                                }
-                                            },
-                                        }
-                                    },
-                                    "post": {
-                                        "requestBody": {
-                                            "content": {
-                                                "application/json": {
-                                                    "schema": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "why": {"type": "string"}
-                                                        },
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "responses": {
-                                            "200": {
-                                                "description": "Returns a message with the id, name and why",
-                                                "content": {
-                                                    "application/json": {
-                                                        "schema": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "message": {
-                                                                    "type": "string"
-                                                                }
-                                                            },
-                                                        }
-                                                    }
-                                                },
-                                            }
-                                        },
-                                    },
-                                },
-                            },
+                            }
                         },
                     },
-                }
+                    "post": {
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {"nickname": {"type": "string"}},
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Returns a hey message with the nickname",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
+                                            },
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    },
+                },
+                "/foo/params-and-args/{the_id}/{the_name}": {
+                    "parameters": [
+                        {
+                            "name": "the_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "the_name",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        },
+                    ],
+                    "get": {
+                        "parameters": [
+                            {
+                                "name": "why",
+                                "in": "query",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Returns a message with the id, name and why",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
+                                            },
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    },
+                    "post": {
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {"why": {"type": "string"}},
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Returns a message with the id, name and why",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {"type": "string"}
+                                            },
+                                        }
+                                    }
+                                },
+                            }
+                        },
+                    },
+                },
             },
-        }
+        },
     )
 )
 
