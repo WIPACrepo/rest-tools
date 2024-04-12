@@ -26,7 +26,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         async def post(self) -> None:
             if self.get_argument("raise", None):
                 raise tornado.web.HTTPError(self.get_argument("raise"), "it's an error")
-            self.write(self.get_argument("echo", {}))
+            self.write({"echo-echo": self.get_argument("echo", {})})
 
     rs.add_route(TestHandler.ROUTE, TestHandler)
     rs.startup(address="localhost", port=port)
@@ -80,7 +80,12 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "$ref": "#/components/schemas/EchoObject"
+                                            "type": "object",
+                                            "properties": {
+                                                "echo-echo": {
+                                                    "$ref": "#/components/schemas/EchoObject"
+                                                },
+                                            },
                                         }
                                     }
                                 },
@@ -124,7 +129,7 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     res = await request_and_validate(
         rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": 123}}
     )
-    assert res == {"foo": 123}
+    assert res == {"echo-echo": {"foo": 123}}
 
     # validate response error
     with pytest.raises(requests.HTTPError) as e:
