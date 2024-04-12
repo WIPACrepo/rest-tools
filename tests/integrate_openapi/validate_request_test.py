@@ -286,7 +286,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
-            f"Missing required query parameter: name for url: {rc.address}/foo/args"
+            f"Missing required query parameter: rank for url: {rc.address}/foo/args"
         ),
     ) as e:
         # missing arg(s)
