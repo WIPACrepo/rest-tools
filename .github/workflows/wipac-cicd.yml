@@ -97,7 +97,7 @@ jobs:
           pip install .[tests,openapi]
       - name: Run Tests
         run: |
-          python -m pytest tests/integrate_openapi --tb=short --log-level=DEBUG -vvv --exitfirst
+          python -m pytest tests/integrate_openapi --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
   tests-with-telemetry:

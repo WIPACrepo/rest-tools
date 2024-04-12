@@ -116,6 +116,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
             },
             "paths": {
                 "/foo/no-args": {
+                    "parameters": [],
                     "get": {
                         "responses": {
                             "200": {
