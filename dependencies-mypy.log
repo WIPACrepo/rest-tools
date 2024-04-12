@@ -191,7 +191,7 @@ rpds-py==0.18.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.3.6
+ruff==0.3.7
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
