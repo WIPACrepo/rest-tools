@@ -169,6 +169,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                             },
                                         },
                                         "required": ["rank"],
+                                        "additionalProperties": False,
                                     }
                                 }
                             }
@@ -295,23 +296,35 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     # with pytest.raises(requests.HTTPError) as e:
     #     # extra arg(s) -- NOTE: THESE ARE ACTUALLY OK
     #     await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
-    with pytest.raises(requests.HTTPError) as e:
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Query parameter error: rank for url: {rc.address}/foo/args?rank=abc"
+        ),
+    ) as e:
         # bad type
         await rc.request("GET", "/foo/args", {"rank": "abc"})
-    print(e.value)
+    assert e.value.response.status_code == 400
     #
-    with pytest.raises(requests.HTTPError) as e:
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"'rank' is a required property for url: {rc.address}/foo/args"
+        ),
+    ) as e:
         # missing arg(s)
         await rc.request("POST", "/foo/args")
-    print(e.value)
+    assert e.value.response.status_code == 400
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
         await rc.request("POST", "/foo/args", {"rank": 123, "suv": "gas"})
     print(e.value)
+    assert e.value.response.status_code == 400
     with pytest.raises(requests.HTTPError) as e:
         # bad type
         await rc.request("POST", "/foo/args", {"rank": "abc"})
     print(e.value)
+    assert e.value.response.status_code == 400
 
     # args + url params
     # NOTE: not testing the compound cases, since that's exponentially more tests for
