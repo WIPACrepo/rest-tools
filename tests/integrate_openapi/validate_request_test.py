@@ -297,7 +297,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     #     await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
     with pytest.raises(requests.HTTPError) as e:
         # bad type
-        await rc.request("GET", "/foo/args", {"rank": 123})
+        await rc.request("GET", "/foo/args", {"rank": "abc"})
     print(e.value)
     #
     with pytest.raises(requests.HTTPError) as e:
