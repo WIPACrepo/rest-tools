@@ -21,9 +21,10 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     class FooNoArgsHandler(RestHandler):
         ROUTE = "/foo/no-args"
 
-        @validate_request(OPENAPI_SPEC)
-        async def get(self) -> None:
-            self.write({"message": "hello world"})
+        # NOTE: there is no way in openapi v3.1 to explicitly forbid extra query params
+        # @validate_request(OPENAPI_SPEC)
+        # async def get(self) -> None:
+        #     self.write({"message": "hello world"})
 
         @validate_request(OPENAPI_SPEC)
         async def post(self) -> None:
@@ -116,24 +117,6 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
             },
             "paths": {
                 "/foo/no-args": {
-                    "parameters": [],
-                    "get": {
-                        "responses": {
-                            "200": {
-                                "description": "Returns a hello world message",
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {"type": "string"}
-                                            },
-                                        }
-                                    }
-                                },
-                            }
-                        },
-                    },
                     "post": {
                         "responses": {
                             "200": {
@@ -312,8 +295,6 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     rc = server()
 
     # no args allowed
-    res = await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/no-args")
-    assert res == {"message": "hello world"}
     res = await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/no-args")
     assert res == {"message": "hello world"}
 
@@ -349,13 +330,6 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     rc = server()
 
     # no args allowed
-    with pytest.raises(requests.HTTPError) as e:
-        # extra arg(s)
-        await request_and_validate(
-            rc, OPENAPI_SPEC, "GET", "/foo/no-args", {"have": "some args"}
-        )
-    print(e.value)
-    #
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
         await request_and_validate(
