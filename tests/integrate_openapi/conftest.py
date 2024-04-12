@@ -34,10 +34,10 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         def post(self) -> None:
             if self.get_argument("raise", None):
                 raise tornado.web.HTTPError(400, self.get_argument("raise"))
-            self.write(self.get_argument("echo"))
+            self.write(self.get_argument("echo",None))
 
     rs = RestServer(debug=True)
-    rs.add_route(TestHandler.ROUTE, TestHandler, {})
+    rs.add_route(TestHandler.ROUTE, TestHandler)
     rs.startup(address="localhost", port=port)
 
     def client() -> RestClient:
@@ -46,4 +46,4 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     try:
         yield client
     finally:
-        await rs.stop()  # type: ignore[no-untyped-call]
+        await rs.stop()
