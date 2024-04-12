@@ -151,21 +151,26 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
 
     # validate response data
 
-    with pytest.raises(DataValidationError):
+    with pytest.raises(DataValidationError) as e:
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123}
         )
+    print(e.value)
 
-    with pytest.raises(DataValidationError):
+    with pytest.raises(DataValidationError) as e:
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "string"}}
         )
+    print(e.value)
 
-    with pytest.raises(DataValidationError):
+    with pytest.raises(DataValidationError) as e:
         await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
+    print(e.value)
 
     # validate response error
-    with pytest.raises(ResponseNotFound, match=re.escape("Unknown response http status: 401")) as e:
+    with pytest.raises(
+        ResponseNotFound, match=re.escape("Unknown response http status: 401")
+    ) as e:
         await request_and_validate(
             rc,
             OPENAPI_SPEC,
@@ -173,3 +178,5 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
             "/echo/this",
             {"raise": 401},
         )
+
+    assert 0
