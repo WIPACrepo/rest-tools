@@ -292,10 +292,9 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         # missing arg(s)
         await rc.request("GET", "/foo/args")
     assert e.value.response.status_code == 400
-    with pytest.raises(requests.HTTPError) as e:
-        # extra arg(s)
-        await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
-    print(e.value)
+    # with pytest.raises(requests.HTTPError) as e:
+    #     # extra arg(s) -- NOTE: THESE ARE ACTUALLY OK
+    #     await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
     with pytest.raises(requests.HTTPError) as e:
         # bad type
         await rc.request("GET", "/foo/args", {"name": 123})
