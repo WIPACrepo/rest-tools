@@ -251,7 +251,11 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     """Test server handler methods with invalid data."""
     rc = server()
 
+    #
     # no args allowed
+    #
+
+    # POST
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
@@ -262,7 +266,11 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         await rc.request("POST", "/foo/no-args", {"have": "some args"})
     assert e.value.response.status_code == 400
 
+    #
     # url params
+    #
+
+    # GET
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
@@ -272,7 +280,8 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         # bad type
         await rc.request("GET", "/foo/params/abc/888")
     assert e.value.response.status_code == 400
-    #
+
+    # POST
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
@@ -283,7 +292,11 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         await rc.request("POST", "/foo/params/xyz/999")
     assert e.value.response.status_code == 400
 
+    #
     # args
+    #
+
+    # GET
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
@@ -305,7 +318,8 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         # bad type
         await rc.request("GET", "/foo/args", {"rank": "abc"})
     assert e.value.response.status_code == 400
-    #
+
+    # POST
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
@@ -315,20 +329,31 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         # missing arg(s)
         await rc.request("POST", "/foo/args")
     assert e.value.response.status_code == 400
-    with pytest.raises(requests.HTTPError) as e:
+    #
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Additional properties are not allowed ('suv' was unexpected) for url: {rc.address}/foo/args"
+        ),
+    ) as e:
         # extra arg(s)
         await rc.request("POST", "/foo/args", {"rank": 123, "suv": "gas"})
-    print(e.value)
     assert e.value.response.status_code == 400
-    with pytest.raises(requests.HTTPError) as e:
+    #
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Request body validation error for url: {rc.address}/foo/args"
+        ),
+    ) as e:
         # bad type
         await rc.request("POST", "/foo/args", {"rank": "abc"})
-    print(e.value)
     assert e.value.response.status_code == 400
 
+    #
     # args + url params
+    #
+
     # NOTE: not testing the compound cases, since that's exponentially more tests for
     #    little work. By now, we can safely assume that those cases are good since their
     #    components are *independent* (url params and args handling logics are independent)
-
-    assert 0
