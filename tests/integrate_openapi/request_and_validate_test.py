@@ -151,26 +151,34 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
 
     # validate response data
 
-    with pytest.raises(DataValidationError) as e:
+    with pytest.raises(
+        DataValidationError,
+        match=re.escape("Failed to cast value to object type: 123"),
+    ):
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123}
         )
-    print(e.value)
 
-    with pytest.raises(DataValidationError) as e:
+    with pytest.raises(
+        DataValidationError,
+        match=re.escape("Failed to cast value to integer type: hello"),
+    ):
         await request_and_validate(
-            rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "string"}}
+            rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "hello"}}
         )
-    print(e.value)
 
-    with pytest.raises(DataValidationError) as e:
+    with pytest.raises(
+        DataValidationError,
+        match=re.escape(
+            "Value {'echo-echo': {}} not valid for schema of type object: (<ValidationError: \"'foo' is a required property\">,)"
+        ),
+    ):
         await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
-    print(e.value)
 
     # validate response error
     with pytest.raises(
         ResponseNotFound, match=re.escape("Unknown response http status: 401")
-    ) as e:
+    ):
         await request_and_validate(
             rc,
             OPENAPI_SPEC,
