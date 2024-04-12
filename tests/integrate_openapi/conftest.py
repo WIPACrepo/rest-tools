@@ -9,7 +9,7 @@ import tornado
 from tornado.web import RequestHandler
 
 from rest_tools.client import RestClient
-from rest_tools.server import RestServer
+from rest_tools.server import RestServer, RestHandler
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def port() -> int:
 async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     """Start up REST server and attach handlers."""
 
-    class TestHandler(RequestHandler):
+    class TestHandler(RestHandler):
         ROUTE = "/echo/this"
 
         def post(self) -> None:
