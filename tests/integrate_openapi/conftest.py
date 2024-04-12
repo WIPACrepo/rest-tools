@@ -2,6 +2,7 @@
 
 import logging
 import socket
+import time
 from typing import AsyncIterator, Callable
 
 import pytest
@@ -27,7 +28,7 @@ class TestHandler(RestHandler):
     ROUTE = "/echo/this"
 
     async def post(self) -> None:
-        logging.critical("HERE IS THE POST")
+        logging.critical(f"{time.time()} - HERE IS THE POST")
         self.write({})
         # if self.get_argument("raise", None):
         #     raise tornado.web.HTTPError(400, self.get_argument("raise"))

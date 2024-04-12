@@ -1,6 +1,7 @@
 """Utility functions for RestClient."""
 
 import logging
+import time
 from typing import Any, Optional, Dict
 
 import requests
@@ -32,9 +33,9 @@ def request_and_validate(
     Useful for testing and debugging.
     """
     url, kwargs = rc._prepare(method, path, args=args)
-    logging.critical(f"{method} {path} {args} {url} {kwargs}")
+    logging.critical(f"{time.time()} - {method} {path} {args} {url} {kwargs}")
     response = requests.request(method, url, **kwargs)
-    logging.critical(f"response: {response}")
+    logging.critical(f"{time.time()} - response: {response}")
 
     # duck typing magic
     class _DuckResponse(openapi_core.protocols.Response):
