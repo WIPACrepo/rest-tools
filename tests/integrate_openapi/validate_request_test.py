@@ -317,7 +317,7 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     res = await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/params/123/hank")
     assert res == {"message": "got 123 hank"}
     res = await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/params/456/tilly")
-    assert res == {"message": "got 456 tilly"}
+    assert res == {"message": "posted 456 tilly"}
 
     # args
     res = await request_and_validate(
