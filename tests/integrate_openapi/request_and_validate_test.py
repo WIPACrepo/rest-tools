@@ -92,14 +92,14 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     rc = server()
 
     # validate response data
-    res = request_and_validate(
+    res = await request_and_validate(
         rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": 123}}
     )
     assert res == {"foo": 123}
 
     # validate response error
     with pytest.raises(requests.HTTPError) as e:
-        request_and_validate(
+        await request_and_validate(
             rc,
             OPENAPI_SPEC,
             "POST",
@@ -116,19 +116,21 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     # validate response data
 
     with pytest.raises(exceptions.DataValidationError):
-        request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123})
+        await request_and_validate(
+            rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123}
+        )
 
     with pytest.raises(exceptions.DataValidationError):
-        request_and_validate(
+        await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "string"}}
         )
 
     with pytest.raises(exceptions.DataValidationError):
-        request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
+        await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
 
     # validate response error
     with pytest.raises(exceptions.DataValidationError):
-        request_and_validate(
+        await request_and_validate(
             rc,
             OPENAPI_SPEC,
             "POST",
