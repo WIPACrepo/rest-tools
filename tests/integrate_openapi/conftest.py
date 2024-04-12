@@ -9,7 +9,7 @@ import tornado
 from tornado.web import RequestHandler
 
 from rest_tools.client import RestClient
-from rest_tools.server import RestServer, RestHandlerSetup
+from rest_tools.server import RestServer
 
 
 @pytest.fixture
@@ -36,9 +36,8 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
                 raise tornado.web.HTTPError(400, self.get_argument("raise"))
             self.write(self.get_argument("echo"))
 
-    args = RestHandlerSetup({"debug": True})
     rs = RestServer(debug=True)
-    rs.add_route(TestHandler.ROUTE, TestHandler, args)
+    rs.add_route(TestHandler.ROUTE, TestHandler, {})
     rs.startup(address="localhost", port=port)
 
     def client() -> RestClient:
