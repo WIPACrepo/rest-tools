@@ -262,21 +262,36 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     assert e.value.response.status_code == 400
 
     # url params
-    with pytest.raises(requests.HTTPError) as e:
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Path parameter error: the_id for url: {rc.address}/foo/params/abc/888"
+        ),
+    ) as e:
         # bad type
         await rc.request("GET", "/foo/params/abc/888")
-    print(e.value)
+    assert e.value.response.status_code == 400
     #
-    with pytest.raises(requests.HTTPError) as e:
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Path parameter error: the_id for url: {rc.address}/foo/params/xyz/999"
+        ),
+    ) as e:
         # bad type
         await rc.request("POST", "/foo/params/xyz/999")
-    print(e.value)
+    assert e.value.response.status_code == 400
 
     # args
-    with pytest.raises(requests.HTTPError) as e:
+    with pytest.raises(
+        requests.HTTPError,
+        match=re.escape(
+            f"Missing required query parameter: name for url: {rc.address}/foo/args"
+        ),
+    ) as e:
         # missing arg(s)
         await rc.request("GET", "/foo/args")
-    print(e.value)
+    assert e.value.response.status_code == 400
     with pytest.raises(requests.HTTPError) as e:
         # extra arg(s)
         await rc.request("GET", "/foo/args", {"name": "dwayne", "car": "vroom"})
