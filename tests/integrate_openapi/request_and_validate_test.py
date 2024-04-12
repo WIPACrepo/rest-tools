@@ -1,5 +1,6 @@
 """Test client.utils.request_and_validate module."""
 
+import re
 from typing import AsyncIterator, Callable
 
 import openapi_core
@@ -8,8 +9,9 @@ import pytest_asyncio
 import requests
 import tornado
 from jsonschema_path import SchemaPath
-from openapi_core.validation.response.exceptions import DataValidationError
 from openapi_core.templating.responses.exceptions import ResponseNotFound
+from openapi_core.validation.response.exceptions import DataValidationError
+
 from rest_tools.client import RestClient
 from rest_tools.client.utils import request_and_validate
 from rest_tools.server import RestServer, RestHandler
@@ -163,7 +165,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})
 
     # validate response error
-    with pytest.raises(ResponseNotFound) as e:
+    with pytest.raises(ResponseNotFound, match=re.escape("Unknown response http status: 401")) as e:
         await request_and_validate(
             rc,
             OPENAPI_SPEC,
@@ -171,5 +173,3 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
             "/echo/this",
             {"raise": 401},
         )
-    print(e.value)
-    assert 0
