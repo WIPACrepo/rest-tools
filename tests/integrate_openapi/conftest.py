@@ -31,7 +31,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     class TestHandler(RestHandler):
         ROUTE = "/echo/this"
 
-        def post(self) -> None:
+        async def post(self) -> None:
             self.write({})
             # if self.get_argument("raise", None):
             #     raise tornado.web.HTTPError(400, self.get_argument("raise"))
