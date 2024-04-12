@@ -9,6 +9,7 @@ import pytest_asyncio
 import requests
 import tornado
 from jsonschema_path import SchemaPath
+from openapi_core.templating.paths.exceptions import PathNotFound
 from openapi_core.templating.responses.exceptions import ResponseNotFound
 from openapi_core.validation.response.exceptions import DataValidationError
 
@@ -149,7 +150,9 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     """Test invalid request data."""
     rc = server()
 
-    with pytest.raises(requests.HTTPError, match=re.escape("")):
+    with pytest.raises(
+        PathNotFound, match=re.escape(f"Path not found for {rc.address}/foo/bar/baz")
+    ):
         await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/bar/baz")
 
     # validate response data
