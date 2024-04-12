@@ -3,7 +3,9 @@
 from typing import AsyncIterator, Callable
 
 import openapi_core
+import pytest
 import pytest_asyncio
+import requests
 from jsonschema_path import SchemaPath
 
 from rest_tools.client import RestClient
@@ -343,5 +345,70 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
 
 async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     """Test server handler methods with invalid data."""
+    rc = server()
 
-    # also add request to nonexistent path
+    # no args allowed
+    with pytest.raises(requests.HTTPError) as e:
+        # extra arg(s)
+        await request_and_validate(
+            rc, OPENAPI_SPEC, "GET", "/foo/no-args", {"have": "some args"}
+        )
+    print(e.value)
+    #
+    with pytest.raises(requests.HTTPError) as e:
+        # extra arg(s)
+        await request_and_validate(
+            rc, OPENAPI_SPEC, "POST", "/foo/no-args", {"have": "some args"}
+        )
+    print(e.value)
+
+    # url params
+    with pytest.raises(requests.HTTPError) as e:
+        # bad type
+        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/params/abc/888")
+    print(e.value)
+    #
+    with pytest.raises(requests.HTTPError) as e:
+        # bad type
+        await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/params/xyz/999")
+    print(e.value)
+
+    # args
+    with pytest.raises(requests.HTTPError) as e:
+        # missing arg(s)
+        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/args")
+    print(e.value)
+    with pytest.raises(requests.HTTPError) as e:
+        # extra arg(s)
+        await request_and_validate(
+            rc, OPENAPI_SPEC, "GET", "/foo/args", {"name": "dwayne", "car": "vroom"}
+        )
+    print(e.value)
+    with pytest.raises(requests.HTTPError) as e:
+        # bad type
+        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/args", {"name": 123})
+    print(e.value)
+    #
+    with pytest.raises(requests.HTTPError) as e:
+        # missing arg(s)
+        await request_and_validate(rc, OPENAPI_SPEC, "POST", "/foo/args")
+    print(e.value)
+    with pytest.raises(requests.HTTPError) as e:
+        # extra arg(s)
+        await request_and_validate(
+            rc, OPENAPI_SPEC, "POST", "/foo/args", {"nickname": "rock", "suv": "gas"}
+        )
+    print(e.value)
+    with pytest.raises(requests.HTTPError) as e:
+        # bad type
+        await request_and_validate(
+            rc, OPENAPI_SPEC, "POST", "/foo/args", {"nickname": 123}
+        )
+    print(e.value)
+
+    # args + url params
+    # NOTE: not testing the compound cases, since that's exponentially more tests for
+    #    little work. By now, we can safely assume that those cases are good since their
+    #    components are *independent* (url params and args handling logics are independent)
+
+    assert 0

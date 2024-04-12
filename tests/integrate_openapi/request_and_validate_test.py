@@ -149,6 +149,9 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     """Test invalid request data."""
     rc = server()
 
+    with pytest.raises(requests.HTTPError, match=re.escape("")):
+        await request_and_validate(rc, OPENAPI_SPEC, "GET", "/foo/bar/baz")
+
     # validate response data
 
     with pytest.raises(
