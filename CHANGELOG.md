@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.1 (2024-04-15)
+
+### Other
+
+* Remove Extra Logging ([#141](https://github.com/WIPACrepo/rest-tools/issues/141)) ([`c409ca2`](https://github.com/WIPACrepo/rest-tools/commit/c409ca23b876f00c03198f78c492d1615478b91a))
+
 ## v1.7.0 (2024-04-15)
 
 
