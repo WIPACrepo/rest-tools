@@ -66,7 +66,6 @@ async def request_and_validate(
     )
 
     out = rc._decode(response.content)
-    logging.critical(f"out: {out}: {response}")
     response.raise_for_status()
     return out
 
