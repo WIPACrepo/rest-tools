@@ -1,9 +1,9 @@
 """decorators.py."""
 
-
 # fmt:off
 
 import logging
+import os
 import re
 from functools import wraps
 from inspect import isawaitable
@@ -14,6 +14,9 @@ import tornado.web
 from .. import telemetry as wtt
 
 LOGGER = logging.getLogger(__name__)
+
+
+########################################################################################################################
 
 
 def authenticated(method):
@@ -37,6 +40,9 @@ def authenticated(method):
         else:
             return ret
     return wrapper
+
+
+########################################################################################################################
 
 
 def catch_error(method):
@@ -81,6 +87,9 @@ def catch_error(method):
     return wrapper
 
 
+########################################################################################################################
+
+
 def role_authorization(**_auth):
     """Handle RBAC authorization.
 
@@ -118,6 +127,9 @@ def role_authorization(**_auth):
                 return ret
         return wrapper
     return make_wrapper
+
+
+########################################################################################################################
 
 
 def scope_role_auth(**_auth):
@@ -169,6 +181,9 @@ def scope_role_auth(**_auth):
     return make_wrapper
 
 
+########################################################################################################################
+
+
 def keycloak_role_auth(**_auth):
     """Handle RBAC authorization using keycloak realm roles.
     Like :py:func:`authenticated`, this requires the Authorization header
@@ -212,6 +227,9 @@ def keycloak_role_auth(**_auth):
                 return ret
         return wrapper
     return make_wrapper
+
+
+########################################################################################################################
 
 
 def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
@@ -357,3 +375,87 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
             return wrapper
         return make_wrapper
     return make_decorator
+
+
+########################################################################################################################
+# fmt:on
+
+try:
+    import openapi_core
+    from openapi_core import OpenAPI
+    from openapi_core.contrib import requests as openapi_core_requests
+    from openapi_core.validation.exceptions import ValidationError
+except ImportError:
+    pass  # if client code wants to use these features, then let the built-in errors raise
+
+
+def validate_request(openapi_spec: "OpenAPI"):
+    """Validate request obj against the given OpenAPI spec."""
+
+    def make_wrapper(method):  # type: ignore[no-untyped-def]
+        async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
+            LOGGER.info("validating with openapi spec")
+            # NOTE - don't change data (unmarshal) b/c we are downstream of data separation
+            try:
+                # https://openapi-core.readthedocs.io/en/latest/validation.html
+                openapi_spec.validate_request(
+                    _http_server_request_to_openapi_request(zelf.request),
+                )
+            except ValidationError as e:
+                LOGGER.error(f"invalid request: {e.__class__.__name__} - {e}")
+                if isinstance(  # look at the ORIGINAL exception that caused this error
+                    e.__context__,
+                    openapi_core.validation.schemas.exceptions.InvalidSchemaValue,
+                ):
+                    reason = "; ".join(  # to client
+                        # verbose details after newline
+                        str(x).split("\n", maxsplit=1)[0]
+                        for x in e.__context__.schema_errors
+                    )
+                else:
+                    reason = str(e)  # to client
+                if os.getenv("CI"):
+                    # in prod, don't fill up logs w/ traces from invalid data
+                    LOGGER.exception(e)
+                raise tornado.web.HTTPError(
+                    status_code=400,
+                    log_message=f"{e.__class__.__name__}: {e}",  # to stderr
+                    reason=reason,  # to client
+                )
+            except Exception as e:
+                LOGGER.error(f"unexpected exception: {e.__class__.__name__} - {e}")
+                LOGGER.exception(e)
+                raise tornado.web.HTTPError(
+                    status_code=400,
+                    log_message=f"{e.__class__.__name__}: {e}",  # to stderr
+                    reason=None,  # to client (don't send possibly sensitive info)
+                )
+
+            return await method(zelf, *args, **kwargs)
+
+        return wrapper
+
+    return make_wrapper
+
+
+def _http_server_request_to_openapi_request(
+    req: tornado.httputil.HTTPServerRequest,
+) -> "openapi_core_requests.RequestsOpenAPIRequest":
+    """Convert a `tornado.httputil.HTTPServerRequest` to openapi's type."""
+    return openapi_core_requests.RequestsOpenAPIRequest(
+        requests.Request(
+            method=req.method.lower() if req.method else "get",
+            url=f"{req.protocol}://{req.host}{req.uri}",
+            headers=req.headers,
+            files=req.files,
+            data=req.body if not req.body_arguments else None,  # see below
+            params=req.query_arguments,
+            # auth=None,
+            cookies=req.cookies,
+            # hooks=None,
+            json=req.body_arguments if req.body_arguments else None,  # see above
+        )
+    )
+
+
+########################################################################################################################
