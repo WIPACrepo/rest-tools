@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.2 (2024-04-22)
+
+### Other
+
+* Auth token leeway time ([#142](https://github.com/WIPACrepo/rest-tools/issues/142)) ([`3e75757`](https://github.com/WIPACrepo/rest-tools/commit/3e75757d2f78d53072b1a8e916fe65285e3c9c3c))
+
 ## v1.7.1 (2024-04-15)
 
 ### Other
