@@ -44,7 +44,7 @@ mccabe==0.7.0
     # via flake8
 packaging==24.0
     # via pytest
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
 pycodestyle==2.11.1
     # via flake8
@@ -83,7 +83,7 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.3.7
+ruff==0.4.1
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion

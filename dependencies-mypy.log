@@ -46,7 +46,7 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.62.1
+grpcio==1.62.2
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -132,7 +132,7 @@ parse==1.20.1
     # via openapi-core
 pathable==0.4.3
     # via jsonschema-path
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
 protobuf==4.25.3
     # via
@@ -191,7 +191,7 @@ rpds-py==0.18.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.3.7
+ruff==0.4.1
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
