@@ -15,10 +15,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 class _AuthValidate:
-    def __init__(self, audience=None, issuers=None, algorithms=None):
+    def __init__(self, audience=None, issuers=None, algorithms=None, leeway=60):
         self.audience = audience
         self.issuers = issuers
         self.algorithms = algorithms if algorithms else ['RS256','RS512']
+        self.leeway = leeway
 
     def _validate(self, token, key, **kwargs):
         options = {}
@@ -27,6 +28,11 @@ class _AuthValidate:
         claims = ['exp', 'iat', 'iss']
         claims.extend(kwargs.pop('required', []))
         options['require'] = claims
+
+        leeway = kwargs.pop('leeway', None)
+        if leeway is None:
+            leeway = self.leeway
+        leeway = float(leeway)
 
         # configure the audience to validate
         audience = kwargs.pop('audience', None)
@@ -48,7 +54,7 @@ class _AuthValidate:
             else:
                 issuers = self.issuers
 
-        token = jwt.decode(token, key, algorithms=self.algorithms, options=options, **kwargs)
+        token = jwt.decode(token, key, leeway=leeway, algorithms=self.algorithms, options=options, **kwargs)
         if issuers and token['iss'] not in issuers:
             raise jwt.exceptions.InvalidIssuerError()
 
