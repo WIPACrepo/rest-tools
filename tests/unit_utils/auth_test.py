@@ -35,9 +35,18 @@ def test_auth_validate():
     assert data['sub'] == 'subj'
     assert data['type'] == 'foo'
 
+
+def test_auth_validate_leeway():
+    a = auth.Auth('secret', leeway=0)
     tok = a.create_token('subj', expiration=-1, type='foo')
     with pytest.raises(jwt.exceptions.ExpiredSignatureError):
         a.validate(tok)
+
+    a = auth.Auth('secret', leeway=10)
+    tok = a.create_token('subj', expiration=-1, type='foo')
+    data = a.validate(tok)
+    assert data['sub'] == 'subj'
+    assert data['type'] == 'foo'
 
 
 def test_auth_validate_aud():

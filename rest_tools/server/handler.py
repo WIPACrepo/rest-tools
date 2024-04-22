@@ -50,6 +50,8 @@ def RestHandlerSetup(config={}):
     module_auth_key = ''
     if 'auth' in config:
         kwargs = {}
+        if 'leeway' in config['auth']:
+            kwargs['leeway'] = config['auth']['leeway']
         if 'audience' in config['auth']:
             kwargs['audience'] = config['auth']['audience']
         if 'issuers' in config['auth']:
