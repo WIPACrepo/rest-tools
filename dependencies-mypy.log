@@ -26,7 +26,7 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.4.4
+coverage[toml]==7.5.0
     # via
     #   pytest-cov
     #   wipac-rest-tools (setup.py)
@@ -46,7 +46,7 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.62.2
+grpcio==1.63.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -62,7 +62,7 @@ isodate==0.6.1
     # via openapi-core
 jinja2==3.1.3
     # via click-completion
-jsonschema==4.21.1
+jsonschema==4.22.0
     # via
     #   openapi-core
     #   openapi-schema-validator
@@ -85,7 +85,7 @@ mccabe==0.7.0
     # via flake8
 more-itertools==10.2.0
     # via openapi-core
-mypy==1.9.0
+mypy==1.10.0
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
@@ -151,7 +151,7 @@ pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.1.1
+pytest==8.2.0
     # via
     #   pycycle
     #   pytest-asyncio
@@ -191,7 +191,7 @@ rpds-py==0.18.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.4.1
+ruff==0.4.2
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
