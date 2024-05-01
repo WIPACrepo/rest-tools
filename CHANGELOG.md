@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.3 (2024-05-01)
+
+### Other
+
+* Accept User's Logger: `RestClient`-Derived Objects & Factories ([#144](https://github.com/WIPACrepo/rest-tools/issues/144)) ([`89c4bb8`](https://github.com/WIPACrepo/rest-tools/commit/89c4bb8b78e55f21a85a56e49b48a4582b0974ee))
+
 ## v1.7.2 (2024-04-22)
 
 ### Other
