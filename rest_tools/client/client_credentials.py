@@ -1,4 +1,3 @@
-# fmt:off
 import logging
 from typing import Any
 
@@ -20,19 +19,24 @@ class ClientCredentialsAuth(RestClient):
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
     """
+
     def __init__(
         self,
         address: str,
         token_url: str,
         client_id: str,
         client_secret: str,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         self.auth = OpenIDAuth(token_url)
         self.client_id = client_id
         self.client_secret = client_secret
-        super().__init__(address=address, token=self.make_access_token, logger=logging.getLogger('ClientCredentialsAuth'),
-                         **kwargs)
+        super().__init__(
+            address=address,
+            token=self.make_access_token,
+            logger=kwargs.pop('logger', logging.getLogger('ClientCredentialsAuth')),
+            **kwargs,
+        )
 
     def make_access_token(self) -> str:
         if not self.auth.token_url:
