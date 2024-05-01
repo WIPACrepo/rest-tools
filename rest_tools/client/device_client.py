@@ -1,17 +1,18 @@
-# fmt:off
 import io
-from itertools import zip_longest
 import logging
-from pathlib import Path
 import time
+from itertools import zip_longest
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import qrcode  # type: ignore[import]
 import requests
 
-from ..utils.auth import OpenIDAuth
 from .openid_client import OpenIDRestClient
+from ..utils.auth import OpenIDAuth
 
+
+# fmt:off
 
 def _print_qrcode(req: Dict[str, str]) -> None:
     if 'verification_uri_complete' not in req:
@@ -51,6 +52,8 @@ And enter the code:
         for qrdata in code:
             print('|', f'{qrdata:<{box_width}}', '|', sep='')
         print('+', '-' * box_width, '+', sep='')
+
+# fmt:on
 
 
 def _perform_device_grant(
@@ -123,7 +126,9 @@ def _perform_device_grant(
 
 
 def DeviceGrantAuth(
-    address: str, token_url: str, client_id: str,
+    address: str,
+    token_url: str,
+    client_id: str,
     client_secret: Optional[str] = None,
     scopes: Optional[List[str]] = None,
     **kwargs: Any,
@@ -139,17 +144,26 @@ def DeviceGrantAuth(
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
     """
-    logger = logging.getLogger('DeviceGrantAuth')
+    logger = kwargs.pop('logger', logging.getLogger('DeviceGrantAuth'))
 
     auth = OpenIDAuth(token_url)
     if 'device_authorization_endpoint' not in auth.provider_info:
         raise RuntimeError('Device grant not supported by server')
     endpoint = auth.provider_info['device_authorization_endpoint']
 
-    refresh_token = _perform_device_grant(logger, endpoint, auth.token_url, client_id, client_secret, scopes)
+    refresh_token = _perform_device_grant(
+        logger, endpoint, auth.token_url, client_id, client_secret, scopes
+    )
 
-    return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
-                            client_secret=client_secret, refresh_token=refresh_token, **kwargs)
+    return OpenIDRestClient(
+        address=address,
+        token_url=token_url,
+        client_id=client_id,
+        client_secret=client_secret,
+        refresh_token=refresh_token,
+        logger=logger,
+        **kwargs,
+    )
 
 
 def _load_token_from_file(filepath: Path) -> Optional[str]:
@@ -163,7 +177,8 @@ def _save_token_to_file(filepath: Path, token: str) -> None:
 
 
 def SavedDeviceGrantAuth(
-    address: str, token_url: str,
+    address: str,
+    token_url: str,
     filename: str,
     client_id: str,
     client_secret: Optional[str] = None,
@@ -184,7 +199,7 @@ def SavedDeviceGrantAuth(
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
     """
-    logger = logging.getLogger('SavedDeviceGrantAuth')
+    logger = kwargs.pop('logger', logging.getLogger('SavedDeviceGrantAuth'))
     filepath = Path(filename)
 
     def update_func(access, refresh):
@@ -194,9 +209,16 @@ def SavedDeviceGrantAuth(
     if refresh_token:
         try:
             # this will try to refresh, and raise if it fails
-            return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
-                                    client_secret=client_secret, refresh_token=refresh_token,
-                                    update_func=update_func, **kwargs)
+            return OpenIDRestClient(
+                address=address,
+                token_url=token_url,
+                client_id=client_id,
+                client_secret=client_secret,
+                refresh_token=refresh_token,
+                update_func=update_func,
+                logger=logger,
+                **kwargs,
+            )
         except Exception:
             pass
 
@@ -207,8 +229,17 @@ def SavedDeviceGrantAuth(
         raise RuntimeError('Device grant not supported by server')
     endpoint = auth.provider_info['device_authorization_endpoint']
 
-    refresh_token = _perform_device_grant(logger, endpoint, auth.token_url, client_id, client_secret, scopes)
+    refresh_token = _perform_device_grant(
+        logger, endpoint, auth.token_url, client_id, client_secret, scopes
+    )
 
-    return OpenIDRestClient(address=address, token_url=token_url, client_id=client_id,
-                            client_secret=client_secret, refresh_token=refresh_token,
-                            update_func=update_func, **kwargs)
+    return OpenIDRestClient(
+        address=address,
+        token_url=token_url,
+        client_id=client_id,
+        client_secret=client_secret,
+        refresh_token=refresh_token,
+        update_func=update_func,
+        logger=logger,
+        **kwargs,
+    )

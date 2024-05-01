@@ -6,14 +6,13 @@ The REST protocol is built on http(s), with the body containing
 a json-encoded dictionary as necessary.
 """
 
-# fmt:off
 import logging
 from typing import Any, Callable, Optional, Union
 
 import requests
 
-from ..utils.auth import OpenIDAuth
 from .client import RestClient
+from ..utils.auth import OpenIDAuth
 
 
 class OpenIDRestClient(RestClient):
@@ -30,6 +29,7 @@ class OpenIDRestClient(RestClient):
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
     """
+
     def __init__(
         self,
         address: str,
@@ -37,8 +37,10 @@ class OpenIDRestClient(RestClient):
         refresh_token: Union[str, bytes],
         client_id: str,
         client_secret: Optional[str] = None,
-        update_func: Optional[Callable[[Union[str, bytes], Optional[Union[str, bytes]]], None]] = None,
-        **kwargs: Any
+        update_func: Optional[
+            Callable[[Union[str, bytes], Optional[Union[str, bytes]]], None]
+        ] = None,
+        **kwargs: Any,
     ) -> None:
         self.auth = OpenIDAuth(token_url)
         self.refresh_token = refresh_token
@@ -46,8 +48,12 @@ class OpenIDRestClient(RestClient):
         self.client_secret = client_secret
         self.update_func = update_func
 
-        super().__init__(address, logger=logging.getLogger('OpenIDRestClient'),
-                         token=self._openid_token, **kwargs)
+        super().__init__(
+            address,
+            logger=kwargs.pop('logger', logging.getLogger('OpenIDRestClient')),
+            token=self._openid_token,
+            **kwargs,
+        )
 
         # initial call to verify things work
         self._openid_token()

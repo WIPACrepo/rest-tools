@@ -22,7 +22,7 @@ idna==3.7
     # via requests
 isodate==0.6.1
     # via openapi-core
-jsonschema==4.21.1
+jsonschema==4.22.0
     # via
     #   openapi-core
     #   openapi-schema-validator
