@@ -344,12 +344,15 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
         self._OAUTH_USERINFO_URL = self.auth.provider_info['userinfo_endpoint']
         self.oauth_client_id = oauth_client_id
         self.oauth_client_secret = oauth_client_secret
+
+        scopes = {'openid', 'profile'}
         if oauth_client_scope:
-            self.oauth_client_scope = oauth_client_scope.split()
+            scopes.update(oauth_client_scope.split())
         else:
-            self.oauth_client_scope = ['openid', 'profile', 'groups']
-            if oauth_client_secret:
-                self.oauth_client_scope.append('offline_access')
+            scopes.add('groups')
+        if oauth_client_secret:
+            scopes.add('offline_access')
+        self.oauth_client_scope = list(scopes)
 
     @classmethod
     def create_pkce_challenge(cls) -> str:
