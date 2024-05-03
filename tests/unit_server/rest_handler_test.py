@@ -167,11 +167,12 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
     ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
     handler.initialize('foo', 'bar', **ret)
 
-    token = auth.create_token('sub', headers={'kid': '123'})
+    access_token = auth.create_token('sub', headers={'kid': '123'})
+    id_token = auth.create_token('sub', headers={'kid': '123'})
 
     user_info = {
-        'id_token': '{"id": "foo"}',
-        'access_token': token,
+        'id_token': id_token,
+        'access_token': access_token,
         'expires_in': 3600,
     }
 
@@ -184,7 +185,9 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
     handler.get_auth_http_client.return_value.fetch = MagicMock(side_effect=fn)
     state = {}
     ret = await handler.get_authenticated_user('redirect', 'code', state)
-    assert ret == user_info
+    user_info_ret = user_info.copy()
+    user_info_ret['id_token'] = auth.validate(id_token)
+    assert ret == user_info_ret
 
 
 def test_openid_login_handler_encode_decode_state(requests_mock):
