@@ -347,7 +347,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
         if oauth_client_scope:
             self.oauth_client_scope = oauth_client_scope.split()
         else:
-            self.oauth_client_scope = ['profile', 'groups']
+            self.oauth_client_scope = ['openid', 'profile', 'groups']
             if oauth_client_secret:
                 self.oauth_client_scope.append('offline_access')
 
@@ -397,6 +397,9 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
                 headers={'Authorization': f'Bearer {ret["access_token"]}'},
             )
             ret['id_token'] = tornado.escape.json_decode(response.body)
+
+        if ret.get('id_token') and isinstance(ret['id_token'], str):
+            ret['id_token'] = self.auth.validate(ret['id_token'])
 
         try:
             self.auth.validate(ret['access_token'])
