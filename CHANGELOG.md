@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.4 (2024-05-03)
+
+### Other
+
+* Fix openid handler for newer keycloak ([#146](https://github.com/WIPACrepo/rest-tools/issues/146)) ([`33234ef`](https://github.com/WIPACrepo/rest-tools/commit/33234ef15586261915ba42123eb292f2aa3f2fa0))
+
 ## v1.7.3 (2024-05-01)
 
 ### Other
