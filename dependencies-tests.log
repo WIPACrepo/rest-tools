@@ -20,13 +20,13 @@ click-completion==0.5.2
     # via pycycle
 colorama==0.4.6
     # via crayons
-coverage[toml]==7.5.0
+coverage[toml]==7.5.1
     # via
     #   pytest-cov
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==42.0.5
+cryptography==42.0.7
     # via pyjwt
 flake8==7.0.0
     # via wipac-rest-tools (setup.py)
@@ -36,7 +36,7 @@ idna==3.7
     # via requests
 iniconfig==2.0.0
     # via pytest
-jinja2==3.1.3
+jinja2==3.1.4
     # via click-completion
 markupsafe==2.1.5
     # via jinja2
@@ -58,14 +58,14 @@ pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.2.0
+pytest==8.2.1
     # via
     #   pycycle
     #   pytest-asyncio
     #   pytest-cov
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.23.6
+pytest-asyncio==0.23.7
     # via wipac-rest-tools (setup.py)
 pytest-cov==5.0.0
     # via wipac-rest-tools (setup.py)
@@ -73,7 +73,7 @@ pytest-mock==3.14.0
     # via wipac-rest-tools (setup.py)
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
-requests==2.31.0
+requests==2.32.2
     # via
     #   requests-futures
     #   requests-mock
@@ -83,7 +83,7 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.4.2
+ruff==0.4.4
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
@@ -91,7 +91,7 @@ six==1.16.0
     # via click-completion
 tornado==6.4
     # via wipac-rest-tools (setup.py)
-types-requests==2.31.0.20240406
+types-requests==2.32.0.20240521
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.11.0
     # via
