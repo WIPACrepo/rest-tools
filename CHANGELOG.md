@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.5 (2024-05-22)
+
+### Other
+
+* Use openapi's `RequestsOpenAPIResponse` and Log on Error ([#147](https://github.com/WIPACrepo/rest-tools/issues/147)) ([`a0ce13a`](https://github.com/WIPACrepo/rest-tools/commit/a0ce13a4cc3af1fb0b64f60622f90d38a81d99f7))
+
 ## v1.7.4 (2024-05-03)
 
 ### Other
