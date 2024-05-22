@@ -14,7 +14,7 @@ charset-normalizer==3.3.2
     # via requests
 coloredlogs==15.0.1
     # via wipac-telemetry
-cryptography==42.0.5
+cryptography==42.0.7
     # via pyjwt
 deprecated==1.2.14
     # via
@@ -24,7 +24,7 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.63.0
+grpcio==1.64.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 humanfriendly==10.0
     # via coloredlogs
@@ -74,7 +74,7 @@ pypng==0.20220715.0
     # via qrcode
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
-requests==2.31.0
+requests==2.32.2
     # via
     #   opentelemetry-exporter-otlp-proto-http
     #   requests-futures
@@ -106,5 +106,5 @@ wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
-zipp==3.18.1
+zipp==3.18.2
     # via importlib-metadata

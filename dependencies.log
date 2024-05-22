@@ -12,7 +12,7 @@ cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==42.0.5
+cryptography==42.0.7
     # via pyjwt
 idna==3.7
     # via requests
@@ -24,7 +24,7 @@ pypng==0.20220715.0
     # via qrcode
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
-requests==2.31.0
+requests==2.32.2
     # via
     #   requests-futures
     #   wipac-dev-tools
