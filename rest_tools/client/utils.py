@@ -49,7 +49,6 @@ async def request_and_validate(
         )
         LOGGER.info(f"request: {vars(response.request)}")
         LOGGER.info(f"response: {vars(response)}")
-        LOGGER.info(f"response.content: {rc._decode(response.content)}")
         assert 0
         raise
 
