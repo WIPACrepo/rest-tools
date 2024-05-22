@@ -47,9 +47,9 @@ async def request_and_validate(
         LOGGER.error(
             f"OpenAPI response validator encountered an error: '{e}'; more info below."
         )
-        LOGGER.info(vars(response.request))
-        LOGGER.info(vars(response))
-        LOGGER.info(rc._decode(response.content))
+        LOGGER.info(f"request: {vars(response.request)}")
+        LOGGER.info(f"response: {vars(response)}")
+        LOGGER.info(f"response.content: {rc._decode(response.content)}")
         assert 0
         raise
 
