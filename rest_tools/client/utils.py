@@ -44,9 +44,11 @@ async def request_and_validate(
             openapi_core_requests.RequestsOpenAPIResponse(response),
         )
     except OpenAPIError as e:
-        LOGGER.error(f"encountered an error: {e}; more info below.")
-        LOGGER.info(response.request)
-        LOGGER.info(response)
+        LOGGER.error(
+            f"OpenAPI response validator encountered an error: '{e}'; more info below."
+        )
+        LOGGER.info(vars(response.request))
+        LOGGER.info(vars(response))
         LOGGER.info(rc._decode(response.content))
         assert 0
         raise
