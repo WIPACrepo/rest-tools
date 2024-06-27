@@ -139,7 +139,7 @@ class OpenIDAuth(_AuthValidate):
         self.url = url if url.endswith("/") else url + "/"
         self.public_keys: Dict[str, RSAPublicKey] = {}
         self.provider_info = provider_info if provider_info else {}
-        self.token_url: Optional[str] = None
+        self.token_url = ""
 
         self._refresh_keys()
 
