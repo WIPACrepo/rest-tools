@@ -2,14 +2,15 @@
 
 
 # fmt:off
-# pylint: skip-file
 
 import json
 import logging
 import time
+from typing import Dict, Optional
 
 import jwt
 import requests
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 LOGGER = logging.getLogger(__name__)
 
@@ -127,14 +128,21 @@ class Auth(_AuthValidate):
 
 class OpenIDAuth(_AuthValidate):
     """Handle validation of JWT tokens using OpenID .well-known auto-discovery."""
-    def __init__(self, url, **kwargs):
+
+    def __init__(
+        self,
+        url: str,
+        provider_info: Optional[Dict[str, str | list[str]]] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
-        self.url = url if url.endswith('/') else url+'/'
-        self.public_keys = {}
-        self.provider_info = {}
-        self.token_url = None
+        self.url = url if url.endswith("/") else url + "/"
+        self.public_keys: Dict[str, RSAPublicKey] = {}
+        self.provider_info = provider_info if provider_info else {}
+        self.token_url: Optional[str] = None
 
         self._refresh_keys()
+
 
     def _refresh_keys(self):
         try:
