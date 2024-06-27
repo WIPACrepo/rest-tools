@@ -143,7 +143,6 @@ class OpenIDAuth(_AuthValidate):
 
         self._refresh_keys()
 
-
     def _refresh_keys(self):
         try:
             if not self.provider_info:
