@@ -135,7 +135,7 @@ class OpenIDAuth(_AuthValidate):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.url = url if url.endswith("/") else url + "/"
+        self.url = url if url.endswith('/') else url+'/'
         self.public_keys: Dict[str, RSAPublicKey] = {}
         self.provider_info = provider_info if provider_info else {}
         self.token_url = ""
