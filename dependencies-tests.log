@@ -6,7 +6,7 @@
 #
 cachetools==5.3.3
     # via wipac-rest-tools (setup.py)
-certifi==2024.2.2
+certifi==2024.6.2
     # via requests
 cffi==1.16.0
     # via cryptography
@@ -20,15 +20,15 @@ click-completion==0.5.2
     # via pycycle
 colorama==0.4.6
     # via crayons
-coverage[toml]==7.5.1
+coverage[toml]==7.5.4
     # via
     #   pytest-cov
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==42.0.7
+cryptography==42.0.8
     # via pyjwt
-flake8==7.0.0
+flake8==7.1.0
     # via wipac-rest-tools (setup.py)
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -42,11 +42,11 @@ markupsafe==2.1.5
     # via jinja2
 mccabe==0.7.0
     # via flake8
-packaging==24.0
+packaging==24.1
     # via pytest
 pluggy==1.5.0
     # via pytest
-pycodestyle==2.11.1
+pycodestyle==2.12.0
     # via flake8
 pycparser==2.22
     # via cffi
@@ -58,7 +58,7 @@ pyjwt[crypto]==2.8.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.2.1
+pytest==8.2.2
     # via
     #   pycycle
     #   pytest-asyncio
@@ -73,7 +73,7 @@ pytest-mock==3.14.0
     # via wipac-rest-tools (setup.py)
 qrcode==7.4.2
     # via wipac-rest-tools (setup.py)
-requests==2.32.2
+requests==2.32.3
     # via
     #   requests-futures
     #   requests-mock
@@ -83,24 +83,24 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.4.4
+ruff==0.5.0
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
 six==1.16.0
     # via click-completion
-tornado==6.4
+tornado==6.4.1
     # via wipac-rest-tools (setup.py)
-types-requests==2.32.0.20240521
+types-requests==2.32.0.20240622
     # via wipac-rest-tools (setup.py)
-typing-extensions==4.11.0
+typing-extensions==4.12.2
     # via
     #   qrcode
     #   wipac-dev-tools
-urllib3==2.2.1
+urllib3==2.2.2
     # via
     #   requests
     #   types-requests
     #   wipac-rest-tools (setup.py)
-wipac-dev-tools==1.9.1
+wipac-dev-tools==1.10.6
     # via wipac-rest-tools (setup.py)
