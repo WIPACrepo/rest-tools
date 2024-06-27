@@ -1,12 +1,11 @@
 """auth.py."""
 
-
 # fmt:off
 
 import json
 import logging
 import time
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import jwt
 import requests
@@ -132,7 +131,7 @@ class OpenIDAuth(_AuthValidate):
     def __init__(
         self,
         url: str,
-        provider_info: Optional[Dict[str, Union[str, list[str]]]] = None,
+        provider_info: Optional[Dict[str, Union[str, List[str]]]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
