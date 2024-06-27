@@ -1,3 +1,7 @@
+"""device_client.py"""
+
+# fmt:off
+
 import io
 import logging
 import time
@@ -11,8 +15,6 @@ import requests
 from .openid_client import OpenIDRestClient
 from ..utils.auth import OpenIDAuth
 
-
-# fmt:off
 
 def _print_qrcode(req: Dict[str, str]) -> None:
     if 'verification_uri_complete' not in req:
@@ -149,7 +151,7 @@ def DeviceGrantAuth(
     auth = OpenIDAuth(token_url)
     if 'device_authorization_endpoint' not in auth.provider_info:
         raise RuntimeError('Device grant not supported by server')
-    endpoint = auth.provider_info['device_authorization_endpoint']
+    endpoint: str = auth.provider_info['device_authorization_endpoint']  # type: ignore
 
     refresh_token = _perform_device_grant(
         logger, endpoint, auth.token_url, client_id, client_secret, scopes
@@ -227,7 +229,7 @@ def SavedDeviceGrantAuth(
         raise RuntimeError('Token service does not support .well-known discovery')
     if 'device_authorization_endpoint' not in auth.provider_info:
         raise RuntimeError('Device grant not supported by server')
-    endpoint = auth.provider_info['device_authorization_endpoint']
+    endpoint: str = auth.provider_info['device_authorization_endpoint']  # type: ignore
 
     refresh_token = _perform_device_grant(
         logger, endpoint, auth.token_url, client_id, client_secret, scopes
