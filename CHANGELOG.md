@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.6 (2024-06-27)
+
+### Other
+
+* Add Ability to Provide `provider_info` to `OpenIDAuth` ([#148](https://github.com/WIPACrepo/rest-tools/issues/148)) ([`63f37d0`](https://github.com/WIPACrepo/rest-tools/commit/63f37d0ea8380832b0fe850244502e7b6f51fae9))
+
 ## v1.7.5 (2024-05-22)
 
 ### Other
