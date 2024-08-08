@@ -14,6 +14,7 @@ import requests
 
 from .openid_client import OpenIDRestClient
 from ..utils.auth import OpenIDAuth
+from ..utils.pkce import PKCEMixin
 
 
 def _print_qrcode(req: Dict[str, str]) -> None:
@@ -58,53 +59,29 @@ And enter the code:
 # fmt:on
 
 
-def _perform_device_grant(
-    logger: logging.Logger,
-    device_url: str,
-    token_url: str,
-    client_id: str,
-    client_secret: Optional[str] = None,
-    scopes: Optional[List[str]] = None,
-) -> str:
-    args = {
-        'client_id': client_id,
-        'scope': 'offline_access ' + (' '.join(scopes) if scopes else ''),
-    }
-    if client_secret:
-        args['client_secret'] = client_secret
+class CommonDeviceGrant(PKCEMixin):
+    def perform_device_grant(
+        self,
+        logger: logging.Logger,
+        device_url: str,
+        token_url: str,
+        client_id: str,
+        client_secret: Optional[str] = None,
+        scopes: Optional[List[str]] = None,
+    ) -> str:
+        args = {
+            'client_id': client_id,
+            'scope': 'offline_access ' + (' '.join(scopes) if scopes else ''),
+        }
+        if client_secret:
+            args['client_secret'] = client_secret
+        else:
+            code_challenge = self.create_pkce_challenge()
+            args['code_challenge'] = code_challenge
+            args['code_challenge_method'] = 'S256'
 
-    try:
-        r = requests.post(device_url, data=args)
-        r.raise_for_status()
-        req = r.json()
-    except requests.exceptions.HTTPError as exc:
-        logger.debug('%r', exc.response.text)
         try:
-            req = exc.response.json()
-        except Exception:
-            req = {}
-        error = req.get('error', '')
-        raise RuntimeError(f'Device authorization failed: {error}') from exc
-    except Exception as exc:
-        raise RuntimeError('Device authorization failed') from exc
-
-    logger.debug('Device auth in progress')
-
-    _print_qrcode(req)
-
-    args = {
-        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
-        'device_code': req['device_code'],
-        'client_id': client_id,
-    }
-    if client_secret:
-        args['client_secret'] = client_secret
-
-    sleep_time = int(req.get('interval', 5))
-    while True:
-        time.sleep(sleep_time)
-        try:
-            r = requests.post(token_url, data=args)
+            r = requests.post(device_url, data=args)
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -114,17 +91,49 @@ def _perform_device_grant(
             except Exception:
                 req = {}
             error = req.get('error', '')
-            if error == 'authorization_pending':
-                continue
-            elif error == 'slow_down':
-                sleep_time += 5
-                continue
             raise RuntimeError(f'Device authorization failed: {error}') from exc
         except Exception as exc:
             raise RuntimeError('Device authorization failed') from exc
-        break
 
-    return req['refresh_token']
+        logger.debug('Device auth in progress')
+
+        _print_qrcode(req)
+
+        args = {
+            'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+            'device_code': req['device_code'],
+            'client_id': client_id,
+        }
+        if client_secret:
+            args['client_secret'] = client_secret
+        else:
+            args['code_verifier'] = self.get_pkce_verifier(code_challenge)
+
+        sleep_time = int(req.get('interval', 5))
+        while True:
+            time.sleep(sleep_time)
+            try:
+                r = requests.post(token_url, data=args)
+                r.raise_for_status()
+                req = r.json()
+            except requests.exceptions.HTTPError as exc:
+                logger.debug('%r', exc.response.text)
+                try:
+                    req = exc.response.json()
+                except Exception:
+                    req = {}
+                error = req.get('error', '')
+                if error == 'authorization_pending':
+                    continue
+                elif error == 'slow_down':
+                    sleep_time += 5
+                    continue
+                raise RuntimeError(f'Device authorization failed: {error}') from exc
+            except Exception as exc:
+                raise RuntimeError('Device authorization failed') from exc
+            break
+
+        return req['refresh_token']
 
 
 def DeviceGrantAuth(
@@ -153,7 +162,8 @@ def DeviceGrantAuth(
         raise RuntimeError('Device grant not supported by server')
     endpoint: str = auth.provider_info['device_authorization_endpoint']  # type: ignore
 
-    refresh_token = _perform_device_grant(
+    device = CommonDeviceGrant()
+    refresh_token = device.perform_device_grant(
         logger, endpoint, auth.token_url, client_id, client_secret, scopes
     )
 
@@ -231,7 +241,8 @@ def SavedDeviceGrantAuth(
         raise RuntimeError('Device grant not supported by server')
     endpoint: str = auth.provider_info['device_authorization_endpoint']  # type: ignore
 
-    refresh_token = _perform_device_grant(
+    device = CommonDeviceGrant()
+    refresh_token = device.perform_device_grant(
         logger, endpoint, auth.token_url, client_id, client_secret, scopes
     )
 
