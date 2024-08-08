@@ -102,5 +102,5 @@ urllib3==2.2.2
     #   requests
     #   types-requests
     #   wipac-rest-tools (setup.py)
-wipac-dev-tools==1.10.7
+wipac-dev-tools==1.12.0
     # via wipac-rest-tools (setup.py)

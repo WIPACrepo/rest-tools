@@ -98,5 +98,5 @@ urllib3==2.2.2
     #   wipac-rest-tools (setup.py)
 werkzeug==3.0.3
     # via openapi-core
-wipac-dev-tools==1.10.7
+wipac-dev-tools==1.12.0
     # via wipac-rest-tools (setup.py)
