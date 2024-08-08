@@ -4,35 +4,36 @@
 #
 #    pip-compile --extra=telemetry --output-file=dependencies-telemetry.log
 #
-cachetools==5.3.3
+cachetools==5.4.0
     # via wipac-rest-tools (setup.py)
-certifi==2024.6.2
+certifi==2024.7.4
     # via requests
-cffi==1.16.0
+cffi==1.17.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
 coloredlogs==15.0.1
     # via wipac-telemetry
-cryptography==42.0.8
+cryptography==43.0.0
     # via pyjwt
 deprecated==1.2.14
     # via
     #   opentelemetry-api
     #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-semantic-conventions
 googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.64.1
+grpcio==1.65.4
     # via opentelemetry-exporter-jaeger-proto-grpc
 humanfriendly==10.0
     # via coloredlogs
 idna==3.7
     # via requests
-importlib-metadata==7.1.0
+importlib-metadata==8.0.0
     # via opentelemetry-api
-opentelemetry-api==1.25.0
+opentelemetry-api==1.26.0
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-jaeger-thrift
@@ -46,30 +47,30 @@ opentelemetry-exporter-jaeger-proto-grpc==1.21.0
     # via opentelemetry-exporter-jaeger
 opentelemetry-exporter-jaeger-thrift==1.21.0
     # via opentelemetry-exporter-jaeger
-opentelemetry-exporter-otlp-proto-common==1.25.0
+opentelemetry-exporter-otlp-proto-common==1.26.0
     # via opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-http==1.25.0
+opentelemetry-exporter-otlp-proto-http==1.26.0
     # via wipac-telemetry
-opentelemetry-proto==1.25.0
+opentelemetry-proto==1.26.0
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.25.0
+opentelemetry-sdk==1.26.0
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-jaeger-thrift
     #   opentelemetry-exporter-otlp-proto-http
     #   wipac-telemetry
-opentelemetry-semantic-conventions==0.46b0
+opentelemetry-semantic-conventions==0.47b0
     # via opentelemetry-sdk
-protobuf==4.25.3
+protobuf==4.25.4
     # via
     #   googleapis-common-protos
     #   opentelemetry-proto
     #   wipac-telemetry
 pycparser==2.22
     # via cffi
-pyjwt[crypto]==2.8.0
+pyjwt[crypto]==2.9.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
@@ -99,7 +100,7 @@ urllib3==2.2.2
     # via
     #   requests
     #   wipac-rest-tools (setup.py)
-wipac-dev-tools==1.10.6
+wipac-dev-tools==1.10.7
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
