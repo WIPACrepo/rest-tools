@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.7 (2024-08-08)
+
+### Other
+
+* Add pkce to public device grants ([#149](https://github.com/WIPACrepo/rest-tools/issues/149)) ([`f8bc697`](https://github.com/WIPACrepo/rest-tools/commit/f8bc697022563ed63ca47a2613d179b989e74932))
+
 ## v1.7.6 (2024-06-27)
 
 ### Other
