@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from rest_tools.client import SavedDeviceGrantAuth
 
@@ -13,6 +14,8 @@ def main():
     parser = argparse.ArgumentParser(description='Get an OAuth2 token via client credentials')
     parser.add_argument('--address', default='https://keycloak.icecube.wisc.edu/auth/realms/IceCube', help='OAuth2 server address')
     parser.add_argument('client_id', help='client id')
+
+    logging.basicConfig(level=logging.DEBUG)
 
     args = parser.parse_args()
     kwargs = vars(args)

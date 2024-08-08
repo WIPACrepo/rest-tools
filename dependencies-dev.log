@@ -4,19 +4,19 @@
 #
 #    pip-compile --extra=dev --output-file=dependencies-dev.log
 #
-cachetools==5.3.3
+cachetools==5.4.0
     # via wipac-rest-tools (setup.py)
-certifi==2024.6.2
+certifi==2024.7.4
     # via requests
-cffi==1.16.0
+cffi==1.17.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==42.0.8
+cryptography==43.0.0
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
-flake8==7.1.0
+flake8==7.1.1
     # via wipac-rest-tools (setup.py)
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -26,7 +26,7 @@ iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
-mypy==1.10.1
+mypy==1.11.1
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
@@ -34,22 +34,22 @@ packaging==24.1
     # via pytest
 pluggy==1.5.0
     # via pytest
-pycodestyle==2.12.0
+pycodestyle==2.12.1
     # via flake8
 pycparser==2.22
     # via cffi
 pyflakes==3.2.0
     # via flake8
-pyjwt[crypto]==2.8.0
+pyjwt[crypto]==2.9.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.2.2
+pytest==8.3.2
     # via
     #   pytest-asyncio
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.23.7
+pytest-asyncio==0.23.8
     # via wipac-rest-tools (setup.py)
 pytest-mock==3.14.0
     # via wipac-rest-tools (setup.py)
@@ -65,11 +65,11 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.5.0
+ruff==0.5.7
     # via wipac-rest-tools (setup.py)
 tornado==6.4.1
     # via wipac-rest-tools (setup.py)
-types-requests==2.32.0.20240622
+types-requests==2.32.0.20240712
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.12.2
     # via
@@ -81,7 +81,7 @@ urllib3==2.2.2
     #   requests
     #   types-requests
     #   wipac-rest-tools (setup.py)
-wheel==0.43.0
+wheel==0.44.0
     # via wipac-rest-tools (setup.py)
-wipac-dev-tools==1.10.6
+wipac-dev-tools==1.12.0
     # via wipac-rest-tools (setup.py)

@@ -6,15 +6,13 @@
 
 import base64
 import functools
-import hashlib
 import hmac
 import json
 import logging
-import secrets
 import time
 import urllib.parse
 from collections import defaultdict
-from typing import Any, Dict, MutableMapping, Union
+from typing import Any, Dict, Union
 
 import rest_tools
 import tornado.escape
@@ -22,12 +20,12 @@ import tornado.gen
 import tornado.httpclient
 import tornado.httputil
 import tornado.web
-from cachetools import TTLCache
 from tornado.auth import OAuth2Mixin
 
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
 from ..utils.json_util import json_decode
+from ..utils.pkce import PKCEMixin
 from .decorators import catch_error
 from .stats import RouteStats
 
@@ -324,7 +322,7 @@ class OpenIDCookieHandlerMixin:
         self.clear_cookie('user_info')
 
 
-class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
+class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestHandler):
     """Handle OpenID Connect logins.
 
     Should be combined with an appropriate mixin to store the token(s).
@@ -332,7 +330,6 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
 
     Requires the `login_url` application setting to be a full url.
     """
-    _pkcs_challenges: MutableMapping[str, str] = TTLCache(maxsize=10000, ttl=3600)
 
     def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
         super().initialize(**kwargs)
@@ -353,19 +350,6 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, RestHandler):
         if oauth_client_secret:
             scopes.add('offline_access')
         self.oauth_client_scope = list(scopes)
-
-    @classmethod
-    def create_pkce_challenge(cls) -> str:
-        code_verifier = secrets.token_urlsafe(64)
-        code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode('utf-8')).digest()).decode('utf-8').split('=')[0]
-        cls._pkcs_challenges[code_challenge] = code_verifier
-        return code_challenge
-
-    @classmethod
-    def get_pkce_verifier(cls, challenge: str) -> str:
-        if challenge in cls._pkcs_challenges:
-            return cls._pkcs_challenges[challenge]
-        raise KeyError('invalid pkce challenge')
 
     async def get_authenticated_user(
         self, redirect_uri: str, code: str, state: Dict[str, Any]
