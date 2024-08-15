@@ -41,7 +41,7 @@ markupsafe==2.1.5
     # via werkzeug
 more-itertools==10.4.0
     # via openapi-core
-openapi-core==0.19.2
+openapi-core==0.19.3
     # via wipac-rest-tools (setup.py)
 openapi-schema-validator==0.6.2
     # via

@@ -90,7 +90,7 @@ mypy==1.11.1
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
-openapi-core==0.19.2
+openapi-core==0.19.3
     # via wipac-rest-tools (setup.py)
 openapi-schema-validator==0.6.2
     # via
@@ -193,7 +193,7 @@ rpds-py==0.20.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.5.7
+ruff==0.6.0
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
@@ -233,5 +233,5 @@ wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
-zipp==3.19.2
+zipp==3.20.0
     # via importlib-metadata
