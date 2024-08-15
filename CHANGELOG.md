@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.8 (2024-08-15)
+
+### Other
+
+* Add scopes and secret to device client example ([#150](https://github.com/WIPACrepo/rest-tools/issues/150)) ([`669ea3d`](https://github.com/WIPACrepo/rest-tools/commit/669ea3d7715708a98a51de42a4f45278ee00071b))
+
 ## v1.7.7 (2024-08-08)
 
 ### Other
