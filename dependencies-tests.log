@@ -83,7 +83,7 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.5.7
+ruff==0.6.0
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion

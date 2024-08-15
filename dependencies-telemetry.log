@@ -108,5 +108,5 @@ wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
-zipp==3.19.2
+zipp==3.20.0
     # via importlib-metadata
