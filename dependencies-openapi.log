@@ -8,17 +8,17 @@ attrs==24.2.0
     # via
     #   jsonschema
     #   referencing
-cachetools==5.4.0
+cachetools==5.5.0
     # via wipac-rest-tools (setup.py)
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
-cffi==1.17.0
+cffi==1.17.1
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==43.0.0
+cryptography==43.0.1
     # via pyjwt
-idna==3.7
+idna==3.8
     # via requests
 isodate==0.6.1
     # via openapi-core
@@ -39,9 +39,9 @@ lazy-object-proxy==1.10.0
     # via openapi-spec-validator
 markupsafe==2.1.5
     # via werkzeug
-more-itertools==10.4.0
+more-itertools==10.5.0
     # via openapi-core
-openapi-core==0.19.3
+openapi-core==0.19.4
     # via wipac-rest-tools (setup.py)
 openapi-schema-validator==0.6.2
     # via
@@ -92,11 +92,11 @@ typing-extensions==4.12.2
     # via
     #   qrcode
     #   wipac-dev-tools
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   requests
     #   wipac-rest-tools (setup.py)
-werkzeug==3.0.3
+werkzeug==3.0.4
     # via openapi-core
 wipac-dev-tools==1.12.0
     # via wipac-rest-tools (setup.py)
