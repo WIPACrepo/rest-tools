@@ -21,15 +21,11 @@ click-completion==0.5.2
 colorama==0.4.6
     # via crayons
 coverage[toml]==7.6.1
-    # via
-    #   pytest-cov
-    #   wipac-rest-tools (setup.py)
+    # via pytest-cov
 crayons==0.4.0
     # via pycycle
 cryptography==43.0.1
     # via pyjwt
-flake8==7.1.1
-    # via wipac-rest-tools (setup.py)
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
 idna==3.8
@@ -40,20 +36,14 @@ jinja2==3.1.4
     # via click-completion
 markupsafe==2.1.5
     # via jinja2
-mccabe==0.7.0
-    # via flake8
 packaging==24.1
     # via pytest
 pluggy==1.5.0
     # via pytest
-pycodestyle==2.12.1
-    # via flake8
 pycparser==2.22
     # via cffi
 pycycle==0.0.8
     # via wipac-rest-tools (setup.py)
-pyflakes==3.2.0
-    # via flake8
 pyjwt[crypto]==2.9.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
@@ -82,8 +72,6 @@ requests==2.32.3
 requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
-    # via wipac-rest-tools (setup.py)
-ruff==0.6.4
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
