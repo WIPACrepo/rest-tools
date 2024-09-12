@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.9 (2024-09-12)
+
+### Other
+
+* Add Top-Level Exports: `client`, `server`, `utils` ([#151](https://github.com/WIPACrepo/rest-tools/issues/151)) ([`da2c730`](https://github.com/WIPACrepo/rest-tools/commit/da2c73088db4623ef1ef9e7672138b9f024aa4c8))
+
 ## v1.7.8 (2024-08-15)
 
 ### Other
