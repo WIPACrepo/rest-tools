@@ -4,11 +4,11 @@
 #
 #    pip-compile --extra=tests --output-file=dependencies-tests.log
 #
-cachetools==5.4.0
+cachetools==5.5.0
     # via wipac-rest-tools (setup.py)
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
-cffi==1.17.0
+cffi==1.17.1
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
@@ -26,13 +26,13 @@ coverage[toml]==7.6.1
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==43.0.0
+cryptography==43.0.1
     # via pyjwt
 flake8==7.1.1
     # via wipac-rest-tools (setup.py)
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
-idna==3.7
+idna==3.8
     # via requests
 iniconfig==2.0.0
     # via pytest
@@ -58,14 +58,14 @@ pyjwt[crypto]==2.9.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   pycycle
     #   pytest-asyncio
     #   pytest-cov
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.23.8
+pytest-asyncio==0.24.0
     # via wipac-rest-tools (setup.py)
 pytest-cov==5.0.0
     # via wipac-rest-tools (setup.py)
@@ -83,7 +83,7 @@ requests-futures==1.0.1
     # via wipac-rest-tools (setup.py)
 requests-mock==1.12.1
     # via wipac-rest-tools (setup.py)
-ruff==0.6.0
+ruff==0.6.4
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
@@ -91,13 +91,13 @@ six==1.16.0
     # via click-completion
 tornado==6.4.1
     # via wipac-rest-tools (setup.py)
-types-requests==2.32.0.20240712
+types-requests==2.32.0.20240907
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.12.2
     # via
     #   qrcode
     #   wipac-dev-tools
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   requests
     #   types-requests

@@ -8,11 +8,11 @@ attrs==24.2.0
     # via
     #   jsonschema
     #   referencing
-cachetools==5.4.0
+cachetools==5.5.0
     # via wipac-rest-tools (setup.py)
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
-cffi==1.17.0
+cffi==1.17.1
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
@@ -32,7 +32,7 @@ coverage[toml]==7.6.1
     #   wipac-rest-tools (setup.py)
 crayons==0.4.0
     # via pycycle
-cryptography==43.0.0
+cryptography==43.0.1
     # via
     #   pyjwt
     #   wipac-rest-tools (setup.py)
@@ -47,15 +47,15 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.65.4
+grpcio==1.66.1
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
 humanfriendly==10.0
     # via coloredlogs
-idna==3.7
+idna==3.8
     # via requests
-importlib-metadata==8.0.0
+importlib-metadata==8.4.0
     # via opentelemetry-api
 iniconfig==2.0.0
     # via pytest
@@ -84,13 +84,13 @@ markupsafe==2.1.5
     #   werkzeug
 mccabe==0.7.0
     # via flake8
-more-itertools==10.4.0
+more-itertools==10.5.0
     # via openapi-core
-mypy==1.11.1
+mypy==1.11.2
     # via wipac-rest-tools (setup.py)
 mypy-extensions==1.0.0
     # via mypy
-openapi-core==0.19.3
+openapi-core==0.19.4
     # via wipac-rest-tools (setup.py)
 openapi-schema-validator==0.6.2
     # via
@@ -98,7 +98,7 @@ openapi-schema-validator==0.6.2
     #   openapi-spec-validator
 openapi-spec-validator==0.7.1
     # via openapi-core
-opentelemetry-api==1.26.0
+opentelemetry-api==1.27.0
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-jaeger-thrift
@@ -112,21 +112,21 @@ opentelemetry-exporter-jaeger-proto-grpc==1.21.0
     # via opentelemetry-exporter-jaeger
 opentelemetry-exporter-jaeger-thrift==1.21.0
     # via opentelemetry-exporter-jaeger
-opentelemetry-exporter-otlp-proto-common==1.26.0
+opentelemetry-exporter-otlp-proto-common==1.27.0
     # via opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-http==1.26.0
+opentelemetry-exporter-otlp-proto-http==1.27.0
     # via wipac-telemetry
-opentelemetry-proto==1.26.0
+opentelemetry-proto==1.27.0
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.26.0
+opentelemetry-sdk==1.27.0
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-jaeger-thrift
     #   opentelemetry-exporter-otlp-proto-http
     #   wipac-telemetry
-opentelemetry-semantic-conventions==0.47b0
+opentelemetry-semantic-conventions==0.48b0
     # via opentelemetry-sdk
 packaging==24.1
     # via pytest
@@ -153,14 +153,14 @@ pyjwt[crypto]==2.9.0
     # via wipac-rest-tools (setup.py)
 pypng==0.20220715.0
     # via qrcode
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   pycycle
     #   pytest-asyncio
     #   pytest-cov
     #   pytest-mock
     #   wipac-rest-tools (setup.py)
-pytest-asyncio==0.23.8
+pytest-asyncio==0.24.0
     # via wipac-rest-tools (setup.py)
 pytest-cov==5.0.0
     # via wipac-rest-tools (setup.py)
@@ -193,7 +193,7 @@ rpds-py==0.20.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.6.0
+ruff==0.6.4
     # via wipac-rest-tools (setup.py)
 shellingham==1.5.4
     # via click-completion
@@ -207,7 +207,7 @@ thrift==0.20.0
     # via opentelemetry-exporter-jaeger-thrift
 tornado==6.4.1
     # via wipac-rest-tools (setup.py)
-types-requests==2.32.0.20240712
+types-requests==2.32.0.20240907
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.12.2
     # via
@@ -216,12 +216,12 @@ typing-extensions==4.12.2
     #   qrcode
     #   wipac-dev-tools
     #   wipac-telemetry
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   requests
     #   types-requests
     #   wipac-rest-tools (setup.py)
-werkzeug==3.0.3
+werkzeug==3.0.4
     # via openapi-core
 wheel==0.44.0
     # via wipac-rest-tools (setup.py)
@@ -233,5 +233,5 @@ wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
-zipp==3.20.0
+zipp==3.20.1
     # via importlib-metadata
