@@ -38,12 +38,10 @@ class ArgumentSource(enum.Enum):
 # Error Patterns
 
 # __main__.py: error: the following arguments are required: --reqd, --bar
-ARGUMENTS_REQUIRED_PATTERN = re.compile(
-    r".+: error: (the following arguments are required: .+)"
-)
+ARGUMENTS_REQUIRED_PATTERN = re.compile(r".*(the following arguments are required: .+)")
 
 # __main__.py: error: unrecognized arguments: --xtra 1 --another True False who knows
-UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".+ error: (unrecognized arguments:) (.+)")
+UNRECOGNIZED_ARGUMENTS_PATTERN = re.compile(r".*(unrecognized arguments:) (.+)")
 
 # argument --foo: invalid int value: 'hank'
 INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
@@ -139,7 +137,12 @@ class ArgumentHandler:
         """Translate argparse-style error to a message str for HTTPError."""
 
         # errors not covered by 'exit_on_error=False' (in __init__)
-        if isinstance(exc, SystemExit):
+        if isinstance(exc, (SystemExit, argparse.ArgumentError)):
+            if isinstance(exc, SystemExit):
+                err_msg = captured_stderr
+            else:
+                err_msg = str(exc)
+
             # MISSING ARG
             # ex:
             #   b'foo=val'
@@ -148,7 +151,7 @@ class ArgumentHandler:
             # stderr:
             #   usage: __main__.py [---h] --reqd REQD --foo FOO --bar BAR
             #   __main__.py: error: the following arguments are required: --reqd, --bar
-            if match := ARGUMENTS_REQUIRED_PATTERN.search(captured_stderr):
+            if match := ARGUMENTS_REQUIRED_PATTERN.search(err_msg):
                 return match.group(1).replace(" --", " ")
 
             # EXTRA ARG
@@ -159,7 +162,7 @@ class ArgumentHandler:
             # stderr:
             #   usage: __main__.py [---h] --reqd REQD --foo FOO
             #   __main__.py: error: unrecognized arguments: --xtra 1 --another True False who knows
-            elif match := UNRECOGNIZED_ARGUMENTS_PATTERN.search(captured_stderr):
+            elif match := UNRECOGNIZED_ARGUMENTS_PATTERN.search(err_msg):
                 args = (
                     k.replace("--", "")
                     for k in match.group(2).split()
@@ -167,15 +170,14 @@ class ArgumentHandler:
                 )
                 return f"{match.group(1)} {', '.join(args)}"
 
-        # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
-        elif isinstance(exc, argparse.ArgumentError):
+            # INVALID VALUE -- not a system error bc 'exit_on_error=False' (in __init__)
             # ex:
             #   argument --foo: invalid int value: 'hank'
-            if match := INVALID_VALUE_PATTERN.search(str(exc)):
+            elif match := INVALID_VALUE_PATTERN.search(err_msg):
                 return f"{match.group(1).replace('--', '')} type"
             # ex:
             #   argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
-            elif match := INVALID_CHOICE_PATTERN.search(str(exc)):
+            elif match := INVALID_CHOICE_PATTERN.search(err_msg):
                 return match.group(1).replace("--", "")
 
         # FALL-THROUGH -- log unknown exception
