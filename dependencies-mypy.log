@@ -14,7 +14,7 @@ certifi==2024.8.30
     # via requests
 cffi==1.17.1
     # via cryptography
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via
@@ -26,7 +26,7 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.6.1
+coverage[toml]==7.6.2
     # via pytest-cov
 crayons==0.4.0
     # via pycycle
@@ -41,19 +41,19 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.66.1
+grpcio==1.66.2
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
 humanfriendly==10.0
     # via coloredlogs
-idna==3.8
+idna==3.10
     # via requests
 importlib-metadata==8.4.0
     # via opentelemetry-api
 iniconfig==2.0.0
     # via pytest
-isodate==0.6.1
+isodate==0.7.2
     # via openapi-core
 jinja2==3.1.4
     # via click-completion
@@ -72,7 +72,7 @@ jsonschema-specifications==2023.12.1
     #   openapi-schema-validator
 lazy-object-proxy==1.10.0
     # via openapi-spec-validator
-markupsafe==2.1.5
+markupsafe==3.0.1
     # via
     #   jinja2
     #   werkzeug
@@ -124,7 +124,7 @@ pathable==0.4.3
     # via jsonschema-path
 pluggy==1.5.0
     # via pytest
-protobuf==4.25.4
+protobuf==4.25.5
     # via
     #   googleapis-common-protos
     #   opentelemetry-proto
@@ -135,8 +135,6 @@ pycycle==0.0.8
     # via wipac-rest-tools (setup.py)
 pyjwt[crypto]==2.9.0
     # via wipac-rest-tools (setup.py)
-pypng==0.20220715.0
-    # via qrcode
 pytest==8.3.3
     # via
     #   pycycle
@@ -152,7 +150,7 @@ pytest-mock==3.14.0
     # via wipac-rest-tools (setup.py)
 pyyaml==6.0.2
     # via jsonschema-path
-qrcode==7.4.2
+qrcode==8.0
     # via wipac-rest-tools (setup.py)
 referencing==0.35.1
     # via
@@ -182,19 +180,17 @@ shellingham==1.5.4
 six==1.16.0
     # via
     #   click-completion
-    #   isodate
     #   rfc3339-validator
     #   thrift
-thrift==0.20.0
+thrift==0.21.0
     # via opentelemetry-exporter-jaeger-thrift
 tornado==6.4.1
     # via wipac-rest-tools (setup.py)
-types-requests==2.32.0.20240907
+types-requests==2.32.0.20240914
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.12.2
     # via
     #   opentelemetry-sdk
-    #   qrcode
     #   wipac-dev-tools
     #   wipac-telemetry
 urllib3==2.2.3
@@ -204,7 +200,7 @@ urllib3==2.2.3
     #   wipac-rest-tools (setup.py)
 werkzeug==3.0.4
     # via openapi-core
-wipac-dev-tools==1.12.0
+wipac-dev-tools==1.13.0
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
@@ -212,5 +208,5 @@ wipac-telemetry==0.3.0
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
-zipp==3.20.1
+zipp==3.20.2
     # via importlib-metadata
