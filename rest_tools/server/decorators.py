@@ -16,6 +16,11 @@ from .. import telemetry as wtt
 LOGGER = logging.getLogger(__name__)
 
 
+def _get_logger() -> logging.Logger:
+    """'LOGGER' is a common name, so it can get overridden during decorator magic."""
+    return LOGGER
+
+
 ########################################################################################################################
 
 
@@ -63,7 +68,7 @@ def catch_error(method):
         except tornado.httpclient.HTTPError:
             raise  # tornado can handle this
         except requests.exceptions.HTTPError as e:
-            LOGGER.warning('Error in website handler', exc_info=True)
+            _get_logger().warning('Error in website handler', exc_info=True)
             try:
                 self.statsd.incr(self.__class__.__name__+'.error')
             except Exception:
@@ -76,7 +81,7 @@ def catch_error(method):
                 message = 'Error contacting backend in '+self.__class__.__name__
             self.send_error(code, reason=message)
         except Exception:
-            LOGGER.warning('Error in website handler', exc_info=True)
+            _get_logger().warning('Error in website handler', exc_info=True)
             try:
                 self.statsd.incr(self.__class__.__name__+'.error')
             except Exception:
@@ -115,9 +120,9 @@ def role_authorization(**_auth):
             if roles and auth_role in roles:
                 wtt.set_current_span_attribute('self.auth_data.roles', auth_role)
             else:
-                LOGGER.info('roles: %r', roles)
-                LOGGER.info('token_role: %r', auth_role)
-                LOGGER.info('role mismatch')
+                _get_logger().info('roles: %r', roles)
+                _get_logger().info('token_role: %r', auth_role)
+                _get_logger().info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
             ret = method(self, *args, **kwargs)
@@ -165,9 +170,9 @@ def scope_role_auth(**_auth):
             authorized = set(roles).intersection(auth_roles)
 
             if not authorized:
-                LOGGER.info('roles: %r', roles)
-                LOGGER.info('token_roles: %r', auth_roles)
-                LOGGER.info('role mismatch')
+                _get_logger().info('roles: %r', roles)
+                _get_logger().info('token_roles: %r', auth_roles)
+                _get_logger().info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
             wtt.set_current_span_attribute('self.auth_data.roles', ','.join(sorted(authorized)))
@@ -213,9 +218,9 @@ def keycloak_role_auth(**_auth):
             authorized = set(roles).intersection(auth_roles)
 
             if not authorized:
-                LOGGER.info('roles: %r', roles)
-                LOGGER.info('token_roles: %r', auth_roles)
-                LOGGER.info('role mismatch')
+                _get_logger().info('roles: %r', roles)
+                _get_logger().info('token_roles: %r', auth_roles)
+                _get_logger().info('role mismatch')
                 raise tornado.web.HTTPError(403, reason="authorization failed")
 
             wtt.set_current_span_attribute('self.auth_data.roles', ','.join(sorted(authorized)))
@@ -306,7 +311,7 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                 prefix = prefix[1:]
             token_val = token.get(name.split('.')[-1], None)
 
-        LOGGER.debug('token_val = %r', token_val)
+        _get_logger().debug('token_val = %r', token_val)
         if token_val is None:
             return []
 
@@ -337,17 +342,17 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                             rolenames = [match.expand(name) for match in ret]
                             authorized_roles.update(role for role in roles if role in rolenames)
                 except Exception as exc:
-                    LOGGER.warning('exception in role auth', exc_info=True)
+                    _get_logger().warning('exception in role auth', exc_info=True)
                     raise tornado.web.HTTPError(500, reason="internal server error") from exc
 
                 if not authorized_roles:
-                    LOGGER.debug('roles requested: %r', roles)
-                    LOGGER.debug('role mismatch')
+                    _get_logger().debug('roles requested: %r', roles)
+                    _get_logger().debug('role mismatch')
                     raise tornado.web.HTTPError(403, reason="authorization failed")
 
-                LOGGER.debug('roles requested: %r', roles)
+                _get_logger().debug('roles requested: %r', roles)
                 authorized_roles = sorted(authorized_roles)
-                LOGGER.debug('roles authorized: %r', authorized_roles)
+                _get_logger().debug('roles authorized: %r', authorized_roles)
                 wtt.set_current_span_attribute('self.auth_data.roles', ','.join(authorized_roles))
                 self.auth_roles = authorized_roles
 
@@ -358,12 +363,12 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):
                             ret = eval_expression(self.auth_data, expression)
                             authorized_groups.update(match.expand(name) for match in ret)
                 except Exception as exc:
-                    LOGGER.warning('exception in group auth', exc_info=True)
+                    _get_logger().warning('exception in group auth', exc_info=True)
                     raise tornado.web.HTTPError(500, reason="internal server error") from exc
 
                 if authorized_groups:
                     authorized_groups = sorted(authorized_groups)
-                    LOGGER.debug('groups authorized: %r', authorized_groups)
+                    _get_logger().debug('groups authorized: %r', authorized_groups)
                     wtt.set_current_span_attribute('self.auth_data.groups', ','.join(authorized_groups))
                     self.auth_groups = authorized_groups
 
@@ -394,7 +399,7 @@ def validate_request(openapi_spec: "OpenAPI"):
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
         async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
-            LOGGER.info("validating with openapi spec")
+            _get_logger().info("validating with openapi spec")
             # NOTE - don't change data (unmarshal) b/c we are downstream of data separation
             try:
                 # https://openapi-core.readthedocs.io/en/latest/validation.html
@@ -402,7 +407,7 @@ def validate_request(openapi_spec: "OpenAPI"):
                     _http_server_request_to_openapi_request(zelf.request),
                 )
             except ValidationError as e:
-                LOGGER.error(f"invalid request: {e.__class__.__name__} - {e}")
+                _get_logger().error(f"invalid request: {e.__class__.__name__} - {e}")
                 if isinstance(  # look at the ORIGINAL exception that caused this error
                     e.__context__,
                     openapi_core.validation.schemas.exceptions.InvalidSchemaValue,
@@ -416,15 +421,15 @@ def validate_request(openapi_spec: "OpenAPI"):
                     reason = str(e)  # to client
                 if os.getenv("CI"):
                     # in prod, don't fill up logs w/ traces from invalid data
-                    LOGGER.exception(e)
+                    _get_logger().exception(e)
                 raise tornado.web.HTTPError(
                     status_code=400,
                     log_message=f"{e.__class__.__name__}: {e}",  # to stderr
                     reason=reason,  # to client
                 )
             except Exception as e:
-                LOGGER.error(f"unexpected exception: {e.__class__.__name__} - {e}")
-                LOGGER.exception(e)
+                _get_logger().error(f"unexpected exception: {e.__class__.__name__} - {e}")
+                _get_logger().exception(e)
                 raise tornado.web.HTTPError(
                     status_code=400,
                     log_message=f"{e.__class__.__name__}: {e}",  # to stderr
