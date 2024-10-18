@@ -26,11 +26,11 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.6.2
+coverage[toml]==7.6.3
     # via pytest-cov
 crayons==0.4.0
     # via pycycle
-cryptography==43.0.1
+cryptography==43.0.3
     # via pyjwt
 deprecated==1.2.14
     # via
@@ -41,7 +41,7 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.66.2
+grpcio==1.67.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 httpretty==1.1.4
     # via wipac-rest-tools (setup.py)
@@ -72,7 +72,7 @@ jsonschema-specifications==2023.12.1
     #   openapi-schema-validator
 lazy-object-proxy==1.10.0
     # via openapi-spec-validator
-markupsafe==3.0.1
+markupsafe==3.0.2
     # via
     #   jinja2
     #   werkzeug
@@ -186,7 +186,7 @@ thrift==0.21.0
     # via opentelemetry-exporter-jaeger-thrift
 tornado==6.4.1
     # via wipac-rest-tools (setup.py)
-types-requests==2.32.0.20240914
+types-requests==2.32.0.20241016
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.12.2
     # via
@@ -204,7 +204,7 @@ wipac-dev-tools==1.13.0
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
-wipac-telemetry==0.3.0
+wipac-telemetry==0.3.1
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated

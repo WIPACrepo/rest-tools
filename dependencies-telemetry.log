@@ -14,7 +14,7 @@ charset-normalizer==3.4.0
     # via requests
 coloredlogs==15.0.1
     # via wipac-telemetry
-cryptography==43.0.1
+cryptography==43.0.3
     # via pyjwt
 deprecated==1.2.14
     # via
@@ -25,7 +25,7 @@ googleapis-common-protos==1.59.1
     # via
     #   opentelemetry-exporter-jaeger-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.66.2
+grpcio==1.67.0
     # via opentelemetry-exporter-jaeger-proto-grpc
 humanfriendly==10.0
     # via coloredlogs
@@ -101,7 +101,7 @@ wipac-dev-tools==1.13.0
     # via
     #   wipac-rest-tools (setup.py)
     #   wipac-telemetry
-wipac-telemetry==0.3.0
+wipac-telemetry==0.3.1
     # via wipac-rest-tools (setup.py)
 wrapt==1.16.0
     # via deprecated
