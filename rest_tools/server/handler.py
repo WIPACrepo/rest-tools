@@ -31,7 +31,7 @@ LOGGER = logging.getLogger('rest')
 
 
 def _log_auth_failed(e: Exception):
-    LOGGER.warning('failed auth')
+    LOGGER.info('failed auth')
     if LOGGER.isEnabledFor(logging.DEBUG):
         LOGGER.exception(e)
 
