@@ -3,7 +3,6 @@ Helpers for setting up `Tornado <http://tornado.readthedocs.io>`_ servers.
 """
 
 # fmt:off
-# pylint: skip-file
 
 import binascii
 import logging
@@ -14,15 +13,17 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 
 AsyncIOMainLoop().install()
 
+LOGGER = logging.getLogger()  # this stuff always needs to be logged -> use the 'root' logger
+
 
 def tornado_logger(handler):
     """Log tornado messages to root logger."""
     if handler.get_status() < 400:
-        log_method = logging.debug
+        log_method = LOGGER.info
     elif handler.get_status() < 500:
-        log_method = logging.warning
+        log_method = LOGGER.warning
     else:
-        log_method = logging.error
+        log_method = LOGGER.error
     request_time = 1000.0 * handler.request.request_time()
     log_method("%d %s %.2fms", handler.get_status(), handler._request_summary(), request_time)
 
@@ -58,7 +59,7 @@ class RestServer:
             address (str): bind address
             port (int): bind port
         """
-        logging.warning('tornado bound to %s:%d', address, port)
+        LOGGER.warning('tornado bound to %s:%d', address, port)
 
         app = tornado.web.Application(self.routes, **self.app_args)
 

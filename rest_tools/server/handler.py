@@ -27,7 +27,7 @@ from ..utils.auth import Auth, OpenIDAuth
 from ..utils.json_util import json_decode
 from ..utils.pkce import PKCEMixin
 
-LOGGER = logging.getLogger('rest')
+LOGGER = logging.getLogger(__name__)
 
 
 def _log_auth_failed(e: Exception):
@@ -162,13 +162,19 @@ class RestHandler(tornado.web.RequestHandler):
     @wtt.evented()
     def prepare(self):
         """Prepare before http-method request handlers."""
-        LOGGER.debug(f"{self.request.method} [{self.__class__.__name__}]")
+
+        # log at the very start of every new request
+        logging.info(">>> %s", self._request_summary())  # use the root logger
+        # ^^^ this mimics the log line that tornado provides at the end of a request:
+        #       see rest_tools.server.tornado_logger().
+        #       ">>>" makes logs line-up (end-of-request log line uses http code: 200, 400, etc.)
+        LOGGER.debug(f"[{self.__class__.__name__}]")
 
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
             if stat.is_overloaded():
                 backoff = stat.get_backoff_time()
-                LOGGER.warn('Server is overloaded, backoff %r', backoff)
+                LOGGER.warning('Server is overloaded, backoff %r', backoff)
                 self.set_header('Retry-After', backoff)
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
