@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.1 (2024-10-18)
+
+### Other
+
+* Turn Down Logging for Auth Failures ([#153](https://github.com/WIPACrepo/rest-tools/issues/153)) ([`29aebc7`](https://github.com/WIPACrepo/rest-tools/commit/29aebc77f36305d2f5cd682492adbfa1dbac3ae7))
+
 ## v1.8.0 (2024-10-09)
 
 
