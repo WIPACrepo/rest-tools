@@ -1,8 +1,6 @@
 """RestHandler and related classes."""
 
-
 # fmt:off
-# pylint: skip-file
 
 import base64
 import functools
@@ -14,7 +12,6 @@ import urllib.parse
 from collections import defaultdict
 from typing import Any, Dict, Union
 
-import rest_tools
 import tornado.escape
 import tornado.gen
 import tornado.httpclient
@@ -22,14 +19,21 @@ import tornado.httputil
 import tornado.web
 from tornado.auth import OAuth2Mixin
 
+import rest_tools
+from .decorators import catch_error
+from .stats import RouteStats
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
 from ..utils.json_util import json_decode
 from ..utils.pkce import PKCEMixin
-from .decorators import catch_error
-from .stats import RouteStats
 
 LOGGER = logging.getLogger('rest')
+
+
+def _log_auth_failed(e: Exception):
+    LOGGER.info('failed auth')
+    if LOGGER.isEnabledFor(logging.DEBUG):
+        LOGGER.exception(e)
 
 
 def RestHandlerSetup(config={}):
@@ -148,10 +152,10 @@ class RestHandler(tornado.web.RequestHandler):
             self.auth_key = token
             return data['sub']
         # Auth Failed
-        except Exception:
+        except Exception as e:
             if self.debug and 'Authorization' in self.request.headers:
                 LOGGER.info('Authorization: %r', self.request.headers['Authorization'])
-            LOGGER.info('failed auth', exc_info=True)
+            _log_auth_failed(e)
 
         return None
 
@@ -282,8 +286,8 @@ class OpenIDCookieHandlerMixin:
             self.auth_refresh_token = refresh_token
             return data['sub']
         # Auth Failed
-        except Exception:
-            LOGGER.debug('failed auth', exc_info=True)
+        except Exception as e:
+            _log_auth_failed(e)
 
         return None
 
