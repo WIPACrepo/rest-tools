@@ -27,7 +27,7 @@ from ..utils.auth import Auth, OpenIDAuth
 from ..utils.json_util import json_decode
 from ..utils.pkce import PKCEMixin
 
-LOGGER = logging.getLogger('rest')
+LOGGER = logging.getLogger(__name__)
 
 
 def _log_auth_failed(e: Exception):
