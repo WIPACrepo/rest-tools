@@ -162,7 +162,13 @@ class RestHandler(tornado.web.RequestHandler):
     @wtt.evented()
     def prepare(self):
         """Prepare before http-method request handlers."""
-        LOGGER.debug(f"{self.request.method} [{self.__class__.__name__}]")
+
+        # log at the very start of every new request
+        logging.info(">>> %s", self._request_summary())  # use the root logger
+        # ^^^ this mimics the log line that tornado provides at the end of a request:
+        #       see rest_tools.server.tornado_logger().
+        #       ">>>" makes logs line-up (end-of-request log line uses http code: 200, 400, etc.)
+        LOGGER.debug(f"[{self.__class__.__name__}]")
 
         if self.route_stats is not None:
             stat = self.route_stats[self.request.path]
