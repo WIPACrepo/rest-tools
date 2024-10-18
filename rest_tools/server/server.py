@@ -18,7 +18,7 @@ LOGGER = logging.getLogger()  # this stuff always needs to be logged -> use the 
 def tornado_logger(handler):
     """Log tornado messages to root logger."""
     if handler.get_status() < 400:
-        log_method = LOGGER.debug
+        log_method = LOGGER.info
     elif handler.get_status() < 500:
         log_method = LOGGER.warning
     else:
