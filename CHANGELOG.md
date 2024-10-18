@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.2 (2024-10-18)
+
+### Other
+
+* Update the Server Loggers ([#154](https://github.com/WIPACrepo/rest-tools/issues/154)) ([`ad011a4`](https://github.com/WIPACrepo/rest-tools/commit/ad011a434f72c547b7294834b3a5f9a194b3ea94))
+
 ## v1.8.1 (2024-10-18)
 
 ### Other
