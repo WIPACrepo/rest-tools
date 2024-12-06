@@ -26,7 +26,7 @@ colorama==0.4.6
     # via crayons
 coloredlogs==15.0.1
     # via wipac-telemetry
-coverage[toml]==7.6.8
+coverage[toml]==7.6.9
     # via pytest-cov
 crayons==0.4.0
     # via pycycle
