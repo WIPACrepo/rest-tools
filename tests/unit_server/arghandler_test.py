@@ -515,12 +515,12 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
     if sys.version_info >= (3, 13):
         expected_message = (
             f"HTTP 400: argument pick_it: invalid choice: 'hank' "
-            f"(choose from {', '.join(choices)})"
+            f"(choose from {', '.join(str(c) for c in choices)})"
         )
     else:
         expected_message = (
             f"HTTP 400: argument pick_it: invalid choice: 'hank' "
-            f"(choose from {', '.join(repr(c) for c in choices)})"
+            f"(choose from {', '.join(repr(str(c)) for c in choices)})"
         )
     assert str(e.value) == expected_message
 
