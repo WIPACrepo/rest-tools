@@ -114,6 +114,8 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
             {
                 "dicto": {"abc": 123},
                 "listo": [1, 2, 3],
+                "falso": False,
+                "truo": True,
                 "compoundo": [{"apple": True}, {"banana": 951}, {"cucumber": False}],
             }
         )
@@ -168,6 +170,8 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
                 "dicto": ({"abc": 123}, dict),
                 "dicto-as-list": ({"def": 456}, list),
                 "listo": ([1, 2, 3], list),
+                "falso": (False, bool),
+                "truo": (True, bool),
                 "compoundo": (
                     [{"apple": True}, {"banana": 951}, {"cucumber": False}],
                     list,
@@ -195,7 +199,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         print(arg)
         print(val)
         print(typ)
-        if typ == bool:
+        if typ == bool and isinstance(val, str):
             assert getattr(outargs, arg.replace("-", "_")) == strtobool(val)
         else:
             assert getattr(outargs, arg.replace("-", "_")) == typ(val)
@@ -508,10 +512,20 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
 
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
-    assert (
-        str(e.value)
-        == f"HTTP 400: argument pick_it: invalid choice: 'hank' (choose from {', '.join(repr(c) for c in choices)})"
-    )
+
+    if sys.version_info >= (3, 13):
+        # For Python 3.13 and later: join stringified representations directly
+        expected_message = (
+            f"HTTP 400: argument pick_it: invalid choice: 'hank' "
+            f"(choose from {', '.join(str(c) for c in choices)})"
+        )
+    else:
+        # For Python 3.9–3.12: join repr representations directly
+        expected_message = (
+            f"HTTP 400: argument pick_it: invalid choice: 'hank' "
+            f"(choose from {', '.join(repr(c) for c in choices)})"
+        )
+    assert str(e.value) == expected_message, f"Error does not match expected value for Python {sys.version_info}"
 
 
 @pytest.mark.parametrize(

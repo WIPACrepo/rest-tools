@@ -35,6 +35,18 @@ class ArgumentSource(enum.Enum):
 
 
 ###############################################################################
+# Utils
+
+def _universal_to_bool(val: Any) -> bool:
+    if isinstance(val, bool):
+        return val
+    elif isinstance(val, str):
+        return strtobool(val)
+    else:
+        return bool(val)
+
+
+###############################################################################
 # Error Patterns
 
 # __main__.py: error: the following arguments are required: --reqd, --bar
@@ -108,7 +120,7 @@ class ArgumentHandler:
 
         # TYPE
         if kwargs.get("type") == bool:
-            kwargs["type"] = strtobool
+            kwargs["type"] = _universal_to_bool
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
             if "type" in kwargs:
                 typ = kwargs["type"]  # put in var to avoid unintended recursion
