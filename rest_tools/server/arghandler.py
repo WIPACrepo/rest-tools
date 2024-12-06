@@ -102,6 +102,17 @@ class ArgumentHandler:
 
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
 
+        Note: Built-in validation errors, like using the `choices` param and others,
+              is forwarded as 400 response from the argparse validation message.
+
+        Note: Many types of validation exceptions are parsed and relayed as
+              400 responses, if the `type` param is a callable that raises
+              an exception.
+                > HOWEVER, if you want the 400 response to include
+                  a custom validation message, raise `argparse.ArgumentTypeError(...)`.
+                  Otherwise, the 400 will have a generic message, for
+                  example, 'argument foo: invalid type'.
+
         Note: Not all of `argparse.add_argument`'s parameters make sense
               for key-value based arguments, such as flag-oriented
               options. Nevertheless, no given parameters are excluded,
@@ -197,6 +208,7 @@ class ArgumentHandler:
                 return match.group(1).replace("--", "")
 
             # CATCH MOST (not quite 'catch all') -- covers errors in this known format
+            # -> this is matched when the server code raises argparse.ArgumentTypeError
             elif match := CATCH_MOST_PATTERN.search(err_msg):
                 return match.group(1).replace("--", "")
 
