@@ -114,6 +114,8 @@ def test_110__no_default_no_typing(argument_source: str) -> None:
             {
                 "dicto": {"abc": 123},
                 "listo": [1, 2, 3],
+                "falso": False,
+                "truo": True,
                 "compoundo": [{"apple": True}, {"banana": 951}, {"cucumber": False}],
             }
         )
@@ -168,6 +170,8 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
                 "dicto": ({"abc": 123}, dict),
                 "dicto-as-list": ({"def": 456}, list),
                 "listo": ([1, 2, 3], list),
+                "falso": (False, bool),
+                "truo": (True, bool),
                 "compoundo": (
                     [{"apple": True}, {"banana": 951}, {"cucumber": False}],
                     list,
@@ -195,7 +199,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         print(arg)
         print(val)
         print(typ)
-        if typ == bool:
+        if typ == bool and isinstance(val, str):
             assert getattr(outargs, arg.replace("-", "_")) == strtobool(val)
         else:
             assert getattr(outargs, arg.replace("-", "_")) == typ(val)
