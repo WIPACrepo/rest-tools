@@ -1,7 +1,6 @@
 """Test server/arghandler.py."""
 
-# pylint: disable=W0212,W0621
-
+import argparse
 import json
 import sys
 from typing import Any, Dict, List, Tuple, Union, cast
@@ -15,6 +14,8 @@ from wipac_dev_tools import strtobool
 
 from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
+
+# pylint: disable=W0212,W0621
 
 # these tests are only for 3.9+
 if sys.version_info < (3, 9):
@@ -543,7 +544,11 @@ def test_220__argparse_nargs(argument_source: str) -> None:
     "argument_source",
     [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
-def test_230__argparse_catch_most__error(argument_source: str) -> None:
+@pytest.mark.parametrize(
+    "exc",
+    [TypeError, ValueError, argparse.ArgumentTypeError, argparse.ArgumentError],
+)
+def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
     args: Dict[str, Any] = {
         "bar": "True",
@@ -560,7 +565,7 @@ def test_230__argparse_catch_most__error(argument_source: str) -> None:
     )
 
     def _error_now():
-        raise TypeError("it's a bad value")
+        raise exc("it's a bad value")
 
     for arg, _ in args.items():
         print()
