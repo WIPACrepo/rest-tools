@@ -549,7 +549,7 @@ def test_220__argparse_nargs(argument_source: str) -> None:
     "exc",
     [TypeError, ValueError, argparse.ArgumentError],
 )
-def test_230__argparse_custom_validation__error(
+def test_230__argparse_custom_validation__supported_builtins__error(
     argument_source: str, exc: Exception
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
@@ -599,7 +599,7 @@ class MyError(Exception):
     "exc",
     [RuntimeError, IndexError, MyError],
 )
-def test_231__argparse_custom_validation__unsupported_errors__error(
+def test_232__argparse_custom_validation__unsupported_errors__error(
     argument_source: str, exc: Exception
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
@@ -643,7 +643,7 @@ def test_231__argparse_custom_validation__unsupported_errors__error(
     "argument_source",
     [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
-def test_240__argparse_custom_validation__argumenttypeerror__error(
+def test_234__argparse_custom_validation__argumenttypeerror__error(
     argument_source: str,
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
@@ -685,8 +685,21 @@ def test_240__argparse_custom_validation__argumenttypeerror__error(
     "argument_source",
     [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
-def test_241__argparse_custom_validation__argumenttypeerror__error(
+@pytest.mark.parametrize(
+    "exc",
+    [  # all the exceptions!
+        TypeError,
+        ValueError,
+        argparse.ArgumentError,
+        argparse.ArgumentTypeError,
+        RuntimeError,
+        IndexError,
+        MyError,
+    ],
+)
+def test_236__argparse_custom_validation__validator_no_param__error(
     argument_source: str,
+    exc: Exception,
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
     args: Dict[str, Any] = {
@@ -703,16 +716,16 @@ def test_241__argparse_custom_validation__argumenttypeerror__error(
         args,
     )
 
-    def _error_it():
-        raise argparse.ArgumentTypeError("it's a bad value and you *will* see this!")
+    def _error_it__no_param():
+        raise exc("it's a bad value and you *will* see this!")  # type: ignore
 
     for arg, _ in args.items():
         print()
         print(arg)
         arghand.add_argument(
             arg,
-            type=_error_it,
-            # NOTE: ^^^ because this takes no arguments (isn't a lambda),
+            type=_error_it__no_param,
+            # NOTE: ^^^ because this takes no arguments (isn't a func/lambda),
             #       argparse treats it like any other error. why? idk :/
         )
 
