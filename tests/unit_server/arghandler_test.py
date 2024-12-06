@@ -564,11 +564,7 @@ def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -
         args,
     )
 
-    def _validate(val: Any, test: bool, exc: Exception):
-        if test:
-            return val
-        if not isinstance(exc, argparse.ArgumentTypeError):
-            raise argparse.ArgumentTypeError(f"{repr(exc)} [{val}]")
+    def _error_it(_: Any, exc: Exception):
         raise exc
 
     for arg, _ in args.items():
@@ -576,9 +572,8 @@ def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -
         print(arg)
         arghand.add_argument(
             arg,
-            type=lambda x: _validate(
+            type=lambda x: _error_it(
                 x,
-                False,  # always error
                 exc("it's a bad value"),  # type: ignore
             ),
         )
