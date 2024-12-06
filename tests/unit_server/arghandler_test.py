@@ -10,7 +10,7 @@ import pytest
 import requests
 import tornado.web
 from tornado import httputil
-from wipac_dev_tools import argparse_tools, strtobool
+from wipac_dev_tools import strtobool
 
 from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
@@ -551,11 +551,11 @@ def test_220__argparse_nargs(argument_source: str) -> None:
 def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
     args: Dict[str, Any] = {
-        "bar": "True",
+        "foo": "True",
     }
     if argument_source == JSON_BODY_ARGUMENTS:
         args = {
-            "listo": [1, 2, 3],
+            "foo": [1, 2, 3],
         }
 
     # set up ArgumentHandler
@@ -564,19 +564,26 @@ def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -
         args,
     )
 
+    def _validate(val: Any, test: bool, exc: Exception):
+        if test:
+            return val
+        if not isinstance(exc, argparse.ArgumentTypeError):
+            raise argparse.ArgumentTypeError(f"{repr(exc)} [{val}]")
+        raise exc
+
     for arg, _ in args.items():
         print()
         print(arg)
         arghand.add_argument(
             arg,
-            type=lambda x: argparse_tools.validate_arg(
+            type=lambda x: _validate(
                 x,
                 False,  # always error
-                exc("it's a bad value"),  # type: ignore=[operator]
+                exc("it's a bad value"),  # type: ignore
             ),
         )
 
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
 
-    assert str(e.value) == "todo"
+    assert str(e.value) == "HTTP 400: argument foo: it's a bad value"
