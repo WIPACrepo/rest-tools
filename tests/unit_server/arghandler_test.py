@@ -10,7 +10,7 @@ import pytest
 import requests
 import tornado.web
 from tornado import httputil
-from wipac_dev_tools import strtobool
+from wipac_dev_tools import argparse_tools, strtobool
 
 from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
@@ -564,13 +564,17 @@ def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -
         args,
     )
 
-    def _error_now():
-        raise exc("it's a bad value")
-
     for arg, _ in args.items():
         print()
         print(arg)
-        arghand.add_argument(arg, type=_error_now)
+        arghand.add_argument(
+            arg,
+            type=lambda x: argparse_tools.validate_arg(
+                x,
+                False,  # always error
+                exc("it's a bad value"),
+            ),
+        )
 
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
