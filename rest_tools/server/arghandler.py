@@ -62,7 +62,7 @@ INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 INVALID_CHOICE_PATTERN = re.compile(r"(argument .+: invalid choice: .+)")
 
 # argument --reco_algo: cannot be empty string / whitespace
-CATCH_MOST_PATTERN = re.compile(r"(argument .+: .+)")
+FROM_ARGUMENT_TYPE_ERROR_PATTERN = re.compile(r"(argument .+: .+)")
 
 
 ###############################################################################
@@ -213,9 +213,9 @@ class ArgumentHandler:
             elif match := INVALID_CHOICE_PATTERN.search(err_msg):
                 return match.group(1).replace("--", "")
 
-            # CATCH MOST (not quite 'catch all') -- covers errors in this known format
+            # argparse.ArgumentTypeError errors -- covers errors in this known format
             # -> this is matched when the server code raises argparse.ArgumentTypeError
-            elif match := CATCH_MOST_PATTERN.search(err_msg):
+            elif match := FROM_ARGUMENT_TYPE_ERROR_PATTERN.search(err_msg):
                 return match.group(1).replace("--", "")
 
         # FALL-THROUGH -- log unknown exception
