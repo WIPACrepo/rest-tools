@@ -98,25 +98,31 @@ class ArgumentHandler:
     ) -> None:
         """Add an argument -- `argparse.add_argument` with minimal additions.
 
-        No `--`-prefix is needed.
+        Do not include a `--`-prefix on the `name`.
 
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
 
-        Note: Built-in validation errors, like using the `choices` param and others,
-              is forwarded as 400 response from the argparse validation message.
+        ### Built-in Validation
+        Validation errors built into `argparse`, such as those triggered
+        by the `choices` parameter, are forwarded as `400 Bad Request`
+        responses. These responses include the corresponding validation
+        message from `argparse`.
 
-        Note: Many types of validation exceptions are parsed and relayed as
-              400 responses, if the `type` param is a callable that raises
-              an exception.
-                > HOWEVER, if you want the 400 response to include
-                  a custom validation message, raise `argparse.ArgumentTypeError(...)`.
-                  Otherwise, the 400 will have a generic message, for
-                  example, 'argument foo: invalid type'.
+        ### `type`-Validation
+        Many types of validation exceptions are also handled and returned
+        as `400 Bad Request` responses if the `type` parameter is a callable
+        that raises an exception.
+            > HOWEVER, to include a custom validation message in the
+              `400 Bad Request` response, you must raise an
+              `argparse.ArgumentTypeError(...)`. Otherwise, the
+              `400 Bad Request` response will contain a generic
+              message, such as 'argument myarg: invalid type'.
 
-        Note: Not all of `argparse.add_argument`'s parameters make sense
-              for key-value based arguments, such as flag-oriented
-              options. Nevertheless, no given parameters are excluded,
-              just make sure to test it first :)
+        ### Note
+        Not all of `argparse.add_argument`'s parameters make sense
+        for key-value based arguments, such as flag-oriented
+        options. Nevertheless, no given parameters are excluded,
+        just make sure to test it first :)
         """
 
         def retrieve_json_body_arg(parsed_val: Any) -> Any:
