@@ -525,7 +525,9 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
             f"HTTP 400: argument pick_it: invalid choice: 'hank' "
             f"(choose from {', '.join(repr(c) for c in choices)})"
         )
-    assert str(e.value) == expected_message, f"Error does not match expected value for Python {sys.version_info}"
+    assert (
+        str(e.value) == expected_message
+    ), f"Error does not match expected value for Python {sys.version_info}"
 
 
 @pytest.mark.parametrize(
@@ -535,3 +537,37 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
 def test_220__argparse_nargs(argument_source: str) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
     test_130__duplicates(argument_source)
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_230__argparse_catch_most__error(argument_source: str) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "bar": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args = {
+            "listo": [1, 2, 3],
+        }
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        args,
+    )
+
+    def _error_now():
+        raise TypeError("it's a bad value")
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(arg, type=_error_now)
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+
+    assert str(e.value) == "todo"
