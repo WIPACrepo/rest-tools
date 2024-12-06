@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.4 (2024-12-06)
+
+### Other
+
+* `ArgumentHandler`: Support Custom Validation Errors ([#156](https://github.com/WIPACrepo/rest-tools/issues/156)) ([`b4b1210`](https://github.com/WIPACrepo/rest-tools/commit/b4b121034cc04d9ea326b5435b0ff718e7d953e7))
+
 ## v1.8.3 (2024-12-06)
 
 ### Other
