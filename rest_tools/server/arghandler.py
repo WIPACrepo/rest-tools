@@ -147,7 +147,7 @@ class ArgumentHandler:
         captured_stderr: str,
     ) -> str:
         """Translate argparse-style error to a message str for HTTPError."""
-        LOGGER.error(f"Intercepted error and translating to requestor: {exc}")
+        LOGGER.error(f"Intercepted error to translate for requestor: {exc}")
 
         # errors not covered by 'exit_on_error=False' (in __init__)
         if isinstance(exc, (SystemExit, argparse.ArgumentError)):
