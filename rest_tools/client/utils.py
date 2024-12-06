@@ -41,7 +41,7 @@ async def request_and_validate(
     try:
         openapi_spec.validate_response(
             openapi_core_requests.RequestsOpenAPIRequest(response.request),
-            openapi_core_requests.RequestsOpenAPIResponse(response),  # type: ignore=[arg-type] # openapi uses protocols
+            openapi_core_requests.RequestsOpenAPIResponse(response),  # type: ignore[arg-type] # openapi uses protocols
         )
     except OpenAPIError as e:
         LOGGER.error(
