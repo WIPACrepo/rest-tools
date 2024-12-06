@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import re
 import sys
 from typing import Any, Dict, List, Tuple, Union, cast
 from unittest.mock import Mock
@@ -540,17 +541,13 @@ def test_220__argparse_nargs(argument_source: str) -> None:
     test_130__duplicates(argument_source)
 
 
-class MyError(Exception):
-    """Used below."""
-
-
 @pytest.mark.parametrize(
     "argument_source",
     [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
 )
 @pytest.mark.parametrize(
     "exc",
-    [TypeError, ValueError, argparse.ArgumentError, RuntimeError, IndexError, MyError],
+    [TypeError, ValueError, argparse.ArgumentError],
 )
 def test_230__argparse_custom_validation__error(
     argument_source: str, exc: Exception
@@ -588,6 +585,58 @@ def test_230__argparse_custom_validation__error(
         arghand.parse_args()
 
     assert str(e.value) == "HTTP 400: argument foo: invalid type"
+
+
+class MyError(Exception):
+    """Used below."""
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+@pytest.mark.parametrize(
+    "exc",
+    [RuntimeError, IndexError, MyError],
+)
+def test_231__argparse_custom_validation__unsupported_errors__error(
+    argument_source: str, exc: Exception
+) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "foo": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args = {
+            "foo": [1, 2, 3],
+        }
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        args,
+    )
+
+    def _error_it(_: Any, exc: Exception):
+        raise exc
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(
+            arg,
+            type=lambda x: _error_it(
+                x,
+                exc("something went wrong but not in an unexpected way, not-validation"),  # type: ignore
+            ),
+        )
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+
+    assert re.fullmatch(
+        r"HTTP 400: Unknown argument-handling error \(\d+\.\d+\)", str(e.value)
+    )
 
 
 @pytest.mark.parametrize(
