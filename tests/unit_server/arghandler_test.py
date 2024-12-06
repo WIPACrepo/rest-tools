@@ -1,8 +1,8 @@
 """Test server/arghandler.py."""
 
-# pylint: disable=W0212,W0621
-
+import argparse
 import json
+import re
 import sys
 from typing import Any, Dict, List, Tuple, Union, cast
 from unittest.mock import Mock
@@ -15,6 +15,8 @@ from wipac_dev_tools import strtobool
 
 from rest_tools.server.arghandler import ArgumentHandler, ArgumentSource
 from rest_tools.server.handler import RestHandler
+
+# pylint: disable=W0212,W0621
 
 # these tests are only for 3.9+
 if sys.version_info < (3, 9):
@@ -525,7 +527,9 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
             f"HTTP 400: argument pick_it: invalid choice: 'hank' "
             f"(choose from {', '.join(repr(c) for c in choices)})"
         )
-    assert str(e.value) == expected_message, f"Error does not match expected value for Python {sys.version_info}"
+    assert (
+        str(e.value) == expected_message
+    ), f"Error does not match expected value for Python {sys.version_info}"
 
 
 @pytest.mark.parametrize(
@@ -535,3 +539,197 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
 def test_220__argparse_nargs(argument_source: str) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
     test_130__duplicates(argument_source)
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+@pytest.mark.parametrize(
+    "exc",
+    [TypeError, ValueError, argparse.ArgumentError],
+)
+def test_230__argparse_custom_validation__supported_builtins__error(
+    argument_source: str, exc: Exception
+) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "foo": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args = {
+            "foo": [1, 2, 3],
+        }
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        args,
+    )
+
+    def _error_it(_: Any, exc: Exception):
+        raise exc
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(
+            arg,
+            type=lambda x: _error_it(
+                x,
+                exc("it's a bad value but you won't see this message anyway..."),  # type: ignore
+            ),
+        )
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+
+    assert str(e.value) == "HTTP 400: argument foo: invalid type"
+
+
+class MyError(Exception):
+    """Used below."""
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+@pytest.mark.parametrize(
+    "exc",
+    [RuntimeError, IndexError, MyError],
+)
+def test_232__argparse_custom_validation__unsupported_errors__error(
+    argument_source: str, exc: Exception
+) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "foo": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args = {
+            "foo": [1, 2, 3],
+        }
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        args,
+    )
+
+    def _error_it(_: Any, exc: Exception):
+        raise exc
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(
+            arg,
+            type=lambda x: _error_it(
+                x,
+                exc("something went wrong but not in an unexpected way, not-validation"),  # type: ignore
+            ),
+        )
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+
+    assert re.fullmatch(
+        r"HTTP 400: Unknown argument-handling error \(\d+\.\d+\)", str(e.value)
+    )
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+def test_234__argparse_custom_validation__argumenttypeerror__error(
+    argument_source: str,
+) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "foo": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args = {
+            "foo": [1, 2, 3],
+        }
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        args,
+    )
+
+    def _error_it(_: Any):
+        raise argparse.ArgumentTypeError("it's a bad value and you *will* see this!")
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(
+            arg,
+            type=_error_it,
+        )
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+
+    assert (
+        str(e.value)
+        == "HTTP 400: argument foo: it's a bad value and you *will* see this!"
+    )
+
+
+@pytest.mark.parametrize(
+    "argument_source",
+    [QUERY_ARGUMENTS, JSON_BODY_ARGUMENTS],
+)
+@pytest.mark.parametrize(
+    "exc",
+    [  # all the exceptions!
+        TypeError,
+        ValueError,
+        argparse.ArgumentError,
+        argparse.ArgumentTypeError,
+        RuntimeError,
+        IndexError,
+        MyError,
+    ],
+)
+def test_236__argparse_custom_validation__validator_no_param__error(
+    argument_source: str,
+    exc: Exception,
+) -> None:
+    """Test `argument_source` arguments using argparse's advanced options."""
+    args: Dict[str, Any] = {
+        "foo": "True",
+    }
+    if argument_source == JSON_BODY_ARGUMENTS:
+        args = {
+            "foo": [1, 2, 3],
+        }
+
+    # set up ArgumentHandler
+    arghand = setup_argument_handler(
+        argument_source,
+        args,
+    )
+
+    def _error_it__no_param():
+        raise exc("it's a bad value and you *will* see this!")  # type: ignore
+
+    for arg, _ in args.items():
+        print()
+        print(arg)
+        arghand.add_argument(
+            arg,
+            type=_error_it__no_param,
+            # NOTE: ^^^ because this takes no arguments (isn't a func/lambda),
+            #       argparse treats it like any other error. why? idk :/
+        )
+
+    with pytest.raises(tornado.web.HTTPError) as e:
+        arghand.parse_args()
+
+    assert str(e.value) == "HTTP 400: argument foo: invalid type"

@@ -1,6 +1,5 @@
 """Handle argument parsing, defaulting, casting, and more."""
 
-
 import argparse
 import contextlib
 import enum
@@ -37,6 +36,7 @@ class ArgumentSource(enum.Enum):
 ###############################################################################
 # Utils
 
+
 def _universal_to_bool(val: Any) -> bool:
     if isinstance(val, bool):
         return val
@@ -60,6 +60,9 @@ INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 
 # argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
 INVALID_CHOICE_PATTERN = re.compile(r"(argument .+: invalid choice: .+)")
+
+# argument --reco_algo: cannot be empty string / whitespace
+FROM_ARGUMENT_TYPE_ERROR_PATTERN = re.compile(r"(argument .+: .+)")
 
 
 ###############################################################################
@@ -95,14 +98,31 @@ class ArgumentHandler:
     ) -> None:
         """Add an argument -- `argparse.add_argument` with minimal additions.
 
-        No `--`-prefix is needed.
+        Do not include a `--`-prefix on the `name`.
 
         See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
 
-        Note: Not all of `argparse.add_argument`'s parameters make sense
-              for key-value based arguments, such as flag-oriented
-              options. Nevertheless, no given parameters are excluded,
-              just make sure to test it first :)
+        ### Built-in Validation
+        Validation errors built into `argparse`, such as those triggered
+        by the `choices` parameter, are forwarded as `400 Bad Request`
+        responses. These responses include the corresponding validation
+        message from `argparse`.
+
+        ### `type`-Validation
+        Many types of validation exceptions are also handled and returned
+        as `400 Bad Request` responses if the `type` parameter is a callable
+        that raises an exception.
+            > HOWEVER, to include a custom validation message in the
+              `400 Bad Request` response, you must raise an
+              `argparse.ArgumentTypeError(...)`. Otherwise, the
+              `400 Bad Request` response will contain a generic
+              message, such as 'argument myarg: invalid type'.
+
+        ### Note
+        Not all of `argparse.add_argument`'s parameters make sense
+        for key-value based arguments, such as flag-oriented
+        options. Nevertheless, no given parameters are excluded,
+        just make sure to test it first :)
         """
 
         def retrieve_json_body_arg(parsed_val: Any) -> Any:
@@ -147,6 +167,7 @@ class ArgumentHandler:
         captured_stderr: str,
     ) -> str:
         """Translate argparse-style error to a message str for HTTPError."""
+        LOGGER.error(f"Intercepted error to translate for requestor -> {exc}")
 
         # errors not covered by 'exit_on_error=False' (in __init__)
         if isinstance(exc, (SystemExit, argparse.ArgumentError)):
@@ -192,13 +213,18 @@ class ArgumentHandler:
             elif match := INVALID_CHOICE_PATTERN.search(err_msg):
                 return match.group(1).replace("--", "")
 
+            # argparse.ArgumentTypeError errors -- covers errors in this known format
+            # -> this is matched when the server code raises argparse.ArgumentTypeError
+            elif match := FROM_ARGUMENT_TYPE_ERROR_PATTERN.search(err_msg):
+                return match.group(1).replace("--", "")
+
         # FALL-THROUGH -- log unknown exception
         ts = time.time()  # log timestamp to aid debugging
-        LOGGER.error(type(exc))
         traceback.print_exception(type(exc), exc, exc.__traceback__)
+        LOGGER.error(captured_stderr)
+        LOGGER.error(type(exc))
         LOGGER.exception(exc)
         LOGGER.error(f"error timestamp: {ts}")
-        LOGGER.error(captured_stderr)
         return f"Unknown argument-handling error ({ts})"
 
     def parse_args(self) -> argparse.Namespace:
