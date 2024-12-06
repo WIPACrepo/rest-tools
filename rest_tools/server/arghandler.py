@@ -45,6 +45,7 @@ def _universal_to_bool(val: Any) -> bool:
     else:
         return bool(val)
 
+
 ###############################################################################
 # Error Patterns
 
