@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.3 (2024-12-06)
+
+### Other
+
+* Fix `ArgumentHandler`'s `bool`-Parsing for JSON Arguments ([#155](https://github.com/WIPACrepo/rest-tools/issues/155)) ([`a9d0d72`](https://github.com/WIPACrepo/rest-tools/commit/a9d0d7224736dc945b5e3d09b4267efb49507ce6))
+
 ## v1.8.2 (2024-10-18)
 
 ### Other
