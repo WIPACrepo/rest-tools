@@ -712,12 +712,11 @@ def test_241__argparse_custom_validation__argumenttypeerror__error(
         arghand.add_argument(
             arg,
             type=_error_it,
+            # NOTE: ^^^ because this takes no arguments (isn't a lambda),
+            #       argparse treats it like any other error. why? idk :/
         )
 
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
 
-    assert (
-        str(e.value)
-        == "HTTP 400: argument foo: it's a bad value and you *will* see this!"
-    )
+    assert str(e.value) == "HTTP 400: argument foo: invalid type"
