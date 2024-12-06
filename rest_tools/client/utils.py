@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
 from .client import RestClient
 
@@ -41,7 +41,7 @@ async def request_and_validate(
     try:
         openapi_spec.validate_response(
             openapi_core_requests.RequestsOpenAPIRequest(response.request),
-            openapi_core_requests.RequestsOpenAPIResponse(response),
+            openapi_core_requests.RequestsOpenAPIResponse(response),  # type: ignore=arg-type
         )
     except OpenAPIError as e:
         LOGGER.error(
