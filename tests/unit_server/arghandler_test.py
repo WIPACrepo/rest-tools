@@ -512,10 +512,17 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
 
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
-    assert (
-        str(e.value)
-        == f"HTTP 400: argument pick_it: invalid choice: 'hank' (choose from {', '.join(repr(c) for c in choices)})"
-    )
+    if sys.version_info >= (3, 13):
+        expected_message = (
+            f"HTTP 400: argument pick_it: invalid choice: 'hank' "
+            f"(choose from {', '.join(choices)})"
+        )
+    else:
+        expected_message = (
+            f"HTTP 400: argument pick_it: invalid choice: 'hank' "
+            f"(choose from {', '.join(repr(c) for c in choices)})"
+        )
+    assert str(e.value) == expected_message
 
 
 @pytest.mark.parametrize(
