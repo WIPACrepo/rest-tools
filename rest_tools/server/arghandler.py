@@ -237,4 +237,4 @@ class ArgumentHandler:
                 captured_stderr = f.getvalue()
         # handle exception outside of context manager so *this* stderr is not intercepted
         msg = self._translate_error(exc, captured_stderr)
-        raise tornado.web.HTTPError(400, log_message=msg, reason=msg)
+        raise tornado.web.HTTPError(400, reason=msg)
