@@ -1,6 +1,5 @@
 """Handle argument parsing, defaulting, casting, and more."""
 
-
 import argparse
 import contextlib
 import enum
@@ -37,6 +36,7 @@ class ArgumentSource(enum.Enum):
 ###############################################################################
 # Utils
 
+
 def _universal_to_bool(val: Any) -> bool:
     if isinstance(val, bool):
         return val
@@ -60,6 +60,9 @@ INVALID_VALUE_PATTERN = re.compile(r"(argument .+: invalid) .+ value: '.+'")
 
 # argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
 INVALID_CHOICE_PATTERN = re.compile(r"(argument .+: invalid choice: .+)")
+
+# argument --reco_algo: cannot be empty string / whitespace
+CATCH_MOST_PATTERN = re.compile(r"(argument .+: .+)")
 
 
 ###############################################################################
@@ -193,13 +196,17 @@ class ArgumentHandler:
             elif match := INVALID_CHOICE_PATTERN.search(err_msg):
                 return match.group(1).replace("--", "")
 
+            # CATCH MOST (not quite 'catch all') -- covers errors in this known format
+            elif match := CATCH_MOST_PATTERN.search(err_msg):
+                return match.group(1).replace("--", "")
+
         # FALL-THROUGH -- log unknown exception
         ts = time.time()  # log timestamp to aid debugging
-        LOGGER.error(type(exc))
         traceback.print_exception(type(exc), exc, exc.__traceback__)
+        LOGGER.error(captured_stderr)
+        LOGGER.error(type(exc))
         LOGGER.exception(exc)
         LOGGER.error(f"error timestamp: {ts}")
-        LOGGER.error(captured_stderr)
         return f"Unknown argument-handling error ({ts})"
 
     def parse_args(self) -> argparse.Namespace:
@@ -230,4 +237,4 @@ class ArgumentHandler:
                 captured_stderr = f.getvalue()
         # handle exception outside of context manager so *this* stderr is not intercepted
         msg = self._translate_error(exc, captured_stderr)
-        raise tornado.web.HTTPError(400, reason=msg)
+        raise tornado.web.HTTPError(400, log_message=msg, reason=msg)
