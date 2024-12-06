@@ -669,7 +669,7 @@ def test_240__argparse_custom_validation__argumenttypeerror__error(
         print(arg)
         arghand.add_argument(
             arg,
-            type=lambda x: _error_it(x),
+            type=_error_it,
         )
 
     with pytest.raises(tornado.web.HTTPError) as e:
