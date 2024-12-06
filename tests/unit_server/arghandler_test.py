@@ -572,7 +572,7 @@ def test_230__argparse_catch_most__error(argument_source: str, exc: Exception) -
             type=lambda x: argparse_tools.validate_arg(
                 x,
                 False,  # always error
-                exc("it's a bad value"),
+                exc("it's a bad value"),  # type: ignore=[operator]
             ),
         )
 
