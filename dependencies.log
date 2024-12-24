@@ -6,7 +6,7 @@
 #
 cachetools==5.5.0
     # via wipac-rest-tools (setup.py)
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
 cffi==1.17.1
     # via cryptography
@@ -33,7 +33,7 @@ tornado==6.4.2
     # via wipac-rest-tools (setup.py)
 typing-extensions==4.12.2
     # via wipac-dev-tools
-urllib3==2.2.3
+urllib3==2.3.0
     # via
     #   requests
     #   wipac-rest-tools (setup.py)
