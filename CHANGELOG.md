@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.5 (2024-12-24)
+
+### Other
+
+* Add patch retries ([#157](https://github.com/WIPACrepo/rest-tools/issues/157)) ([`4073684`](https://github.com/WIPACrepo/rest-tools/commit/40736841c1e4a5beeed306083533b2239bc20eba))
+
 ## v1.8.4 (2024-12-06)
 
 ### Other
