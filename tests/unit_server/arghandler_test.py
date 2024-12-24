@@ -527,7 +527,7 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
     )
     assert (
         str(e.value) == expected_message1 or str(e.value) == expected_message2
-    ), f"Error does not match expected values"
+    ), "Error does not match expected values"
 
 
 @pytest.mark.parametrize(
