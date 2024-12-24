@@ -17,7 +17,7 @@ from urllib3.util.retry import Retry
 def AsyncSession(
     retries: int,
     backoff_factor: float,
-    allowed_methods: Collection[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'),
+    allowed_methods: Collection[str] = ('HEAD', 'TRACE', 'GET', 'POST', 'PATCH', 'PUT', 'OPTIONS', 'DELETE'),
     status_forcelist: Collection[int] = (408, 429, 500, 502, 503, 504),
 ) -> FuturesSession:
     """Return a Session object with full retry capabilities.
