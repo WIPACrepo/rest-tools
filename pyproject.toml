@@ -1,0 +1,12 @@
+# WIPACrepo/wipac-dev-py-setup-action@v4+ Migration Helper:
+
+# set these fields:
+[project]
+version = "0.0.0"
+dependencies = []  # leave empty if there are no dependencies
+
+# optional sections:
+
+# [project.optional-dependencies]
+# foo = []
+# bar = []
