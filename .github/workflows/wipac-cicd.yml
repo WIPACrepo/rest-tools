@@ -9,16 +9,30 @@ jobs:
     outputs:
       matrix: ${{ steps.versions.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: versions
-        uses: WIPACrepo/wipac-dev-py-versions-action@v2.1
+        uses: WIPACrepo/wipac-dev-py-versions-action@v2.5
+
+
+  #############################################################################
+  # LINTERS
+  #############################################################################
 
   flake8:
+    needs: [ py-versions ]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-      - uses: WIPACrepo/wipac-dev-flake8-action@v1.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py3 }}
+      - uses: WIPACrepo/wipac-dev-flake8-action@v1.2
+        with:
+          max-complexity: 10  # ideal is ~10-15
 
   mypy:
     needs: [ py-versions ]
@@ -28,35 +42,73 @@ jobs:
       matrix:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - uses: WIPACrepo/wipac-dev-mypy-action@v2.0
 
+
+  #############################################################################
+  # PACKAGING
+  #############################################################################
+
+  writable-branch-detect:
+    runs-on: ubuntu-latest
+    outputs:
+      OKAY: ${{ steps.detect.outputs.OKAY }}
+    steps:
+      - name: is this a bot-writable branch?
+        id: detect
+        # dependabot can't access normal secrets
+        #   & don't run non-branch triggers (like tags)
+        #   & we don't want to trigger an update on PR's merge to main/master/default (which is a branch)
+        run: |
+          set -euo pipefail
+          if [[ \
+              ${{github.actor}} != 'dependabot[bot]' && \
+              ${{github.ref_type}} == 'branch' && \
+              ${{format('refs/heads/{0}', github.event.repository.default_branch)}} != ${{github.ref}} \
+          ]]; then
+            echo "OKAY=true" >> "$GITHUB_OUTPUT"
+            echo "yes, this branch is compatible"
+          else
+            echo "OKAY=false" >> "$GITHUB_OUTPUT"
+            echo "no, this branch is incompatible"
+          fi
+
   py-setup:
+    needs: [ writable-branch-detect ]
     runs-on: ubuntu-latest
     steps:
-      # dependabot can't access normal secrets
-      #   & don't run non-branch triggers (like tags)
-      #   & we don't want to trigger an update on PR's merge to main/master/default (which is a branch)
-      # IOW: only for non-dependabot branches
-      - if: |
-          github.actor != 'dependabot[bot]' &&
-          github.ref_type == 'branch' &&
-          format('refs/heads/{0}', github.event.repository.default_branch) != github.ref
-        name: checkout (only for non-dependabot non-default branches)
-        uses: actions/checkout@v3
+      - if: needs.writable-branch-detect.outputs.OKAY == 'true'
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      - if: |
-          github.actor != 'dependabot[bot]' &&
-          github.ref_type == 'branch' &&
-          format('refs/heads/{0}', github.event.repository.default_branch) != github.ref
-        name: wipac-dev-py-setup-action (only for non-dependabot non-default branches)
-        uses: WIPACrepo/wipac-dev-py-setup-action@v2.6
+      - if: needs.writable-branch-detect.outputs.OKAY == 'true'
+        uses: WIPACrepo/wipac-dev-py-setup-action@v4.3
         with:
-          base-keywords: "WIPAC IceCube"
+          pypi_name: wipac-rest-tools
+          python_min: 3.8
+          author: WIPAC Developers
+          author_email: developers@icecube.wisc.edu
+          keywords: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
+
+  py-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.2
+        with:
+          use_directory: true
+
+
+  #############################################################################
+  # TESTS
+  #############################################################################
 
   unit-tests:
     needs: [ py-versions ]
@@ -66,16 +118,18 @@ jobs:
       matrix:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
+          set -euo pipefail
           pip install --upgrade pip wheel setuptools
           pip install .[tests]
       - name: Run Tests
         run: |
+          set -euo pipefail
           python -m pytest tests/unit_* --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
@@ -87,16 +141,18 @@ jobs:
       matrix:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
+          set -euo pipefail
           pip install --upgrade pip wheel setuptools
           pip install .[tests,openapi]
       - name: Run Tests
         run: |
+          set -euo pipefail
           python -m pytest tests/integrate_openapi --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
@@ -108,37 +164,75 @@ jobs:
       matrix:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
+          set -euo pipefail
           pip install --upgrade pip wheel setuptools
           pip install .[telemetry,tests]
       - name: Run Tests
         run: |
+          set -euo pipefail
           python -m pytest tests/unit_* --tb=short --log-level=DEBUG
           pycycle --here --verbose
       - name: Run Integration Test
         run: |
+          set -euo pipefail
           cd examples/
           python rest_server.py &
           python rest_client.py
 
+
+  #############################################################################
+  # RELEASE
+  #############################################################################
+
   release:
     # only run on main/master/default
     if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
-    needs: [ flake8, mypy, py-setup, unit-tests, tests-with-openapi, tests-with-telemetry ]
+    needs: [ flake8, mypy, py-setup, py-dependencies, unit-tests, tests-with-openapi, tests-with-telemetry ]
     runs-on: ubuntu-latest
     concurrency: release
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
     steps:
-      - uses: actions/checkout@v3
+      # Note: we need to checkout the repository at the workflow sha in case during the workflow
+      # the branch was updated. To keep PSR working with the configured release branches,
+      # we force a checkout of the desired release branch but at the workflow sha HEAD.
+      - name: Setup | Checkout Repository at workflow sha
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Python Semantic Release
-        uses: python-semantic-release/python-semantic-release@v7.34.6
+          ref: ${{ github.sha }}
+
+      - name: Setup | Force correct release branch on workflow sha
+        run: |
+          set -euo pipefail
+          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
+
+      - name: Action | Semantic Version Release
+        id: release
+        # Adjust tag with desired version if applicable.
+        uses: python-semantic-release/python-semantic-release@v9.8.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          repository_username: __token__
-          repository_password: ${{ secrets.PYPI_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+
+      - name: PyPI Release
+        uses: pypa/gh-action-pypi-publish@v1.8.14
+        if: steps.release.outputs.released == 'true'
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9.8.1
+        if: steps.release.outputs.released == 'true'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
