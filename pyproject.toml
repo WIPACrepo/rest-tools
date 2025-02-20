@@ -1,41 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 version = "1.8.5"
-dependencies = [
-    "cachetools",
-    "pyjwt[crypto]!=2.6.0",
-    "qrcode",
-    "requests",
-    "requests-futures",
-    "tornado",
-    "urllib3>=2.0.4",
-    "wipac-dev-tools",
-]
+dependencies = ["cachetools", "pyjwt[crypto]!=2.6.0", "qrcode", "requests", "requests-futures", "tornado", "urllib3>=2.0.4", "wipac-dev-tools"]
+name = "wipac-rest-tools"
+description = "REST tools in python - common code for client and server"
+readme = "README.md"
+keywords = ["WIPAC", "IceCube", "REST", "tools", "utilities", "OpenTelemetry", "tracing", "telemetry"]
+classifiers = ["Development Status :: 5 - Production/Stable", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13"]
+requires-python = ">=3.8, <3.14"
 
+[[project.authors]]
+name = "WIPAC Developers"
+email = "developers@icecube.wisc.edu"
+
+[project.license]
+file = "LICENSE"
 
 [project.optional-dependencies]
-openapi = [
-    "openapi-core",
-]
-telemetry = [
-    "wipac-telemetry >= 0.2.4",
-]
-mypy = [
-    "httpretty",
-    "pycycle",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "pytest-mock",
-    "requests-mock",
-    "types-requests",
-    "openapi-core",
-    "wipac-telemetry >= 0.2.4",
-    "httpretty",
-    "pycycle",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "pytest-mock",
-    "requests-mock",
-    "types-requests",
-]
+openapi = ["openapi-core"]
+telemetry = ["wipac-telemetry >= 0.2.4"]
+mypy = ["httpretty", "pycycle", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock", "requests-mock", "types-requests", "openapi-core", "wipac-telemetry >= 0.2.4", "httpretty", "pycycle", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock", "requests-mock", "types-requests"]
+
+[project.urls]
+Homepage = "https://pypi.org/project/wipac-rest-tools/"
+Tracker = "https://github.com/WIPACrepo/rest-tools/issues"
+Source = "https://github.com/WIPACrepo/rest-tools"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["rest_tools/__init__.py:__version__"]
+commit_parser = "emoji"
+build_command = "pip install build && python -m build"
+
+[tool.semantic_release.commit_parser_options]
+major_tags = ["[major]"]
+minor_tags = ["[minor]", "[feature]"]
+patch_tags = ["[patch]", "[fix]", " ", "!", "#", "$", "%", "&", "'", "(", ")", "*", "+", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?", "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "]", "^", "_", "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[tool.setuptools.packages.find]
+namespaces = false
+exclude = ["test", "tests", "doc", "docs", "resource", "resources", "example", "examples"]
