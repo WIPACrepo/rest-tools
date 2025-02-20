@@ -22,6 +22,16 @@ file = "LICENSE"
 [project.optional-dependencies]
 openapi = ["openapi-core"]
 telemetry = ["wipac-telemetry >= 0.2.4"]
+tests = [
+    "httpretty",
+    "pycycle",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+    "requests-mock",
+    "types-requests",
+]
 mypy = ["httpretty", "pycycle", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock", "requests-mock", "types-requests", "openapi-core", "wipac-telemetry >= 0.2.4", "httpretty", "pycycle", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock", "requests-mock", "types-requests"]
 
 [project.urls]
