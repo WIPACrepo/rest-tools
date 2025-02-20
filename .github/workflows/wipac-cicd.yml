@@ -102,6 +102,8 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.2
+        with:
+          use_directory: true
 
 
   #############################################################################
