@@ -179,6 +179,14 @@ class RestHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(503, reason="server overloaded")
             self.start_time = time.time()
 
+    def write(self, chunk: Union[str, bytes, dict]) -> None:
+        """Logs, then writes the given chunk to the output buffer.
+
+        See super class for more documentation.
+        """
+        logging.info("<<< (writing) %s", self._request_summary())  # use the root logger
+        super().write(chunk)
+
     @wtt.evented()
     def on_finish(self):
         """Cleanup after http-method request handlers."""
