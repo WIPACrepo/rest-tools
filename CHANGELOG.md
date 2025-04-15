@@ -2,6 +2,15 @@
 
 
 
+## v1.8.7 (2025-04-15)
+
+###  
+
+* &lt;bot&gt; update dependencies*.log files(s) ([`43457c0`](https://github.com/WIPACrepo/rest-tools/commit/43457c0492df17e2cdfb2f073278db9702ceaeb8))
+
+* Use `pypa/gh-action-pypi-publish@v1.12.4` ([`a781c6a`](https://github.com/WIPACrepo/rest-tools/commit/a781c6ab16fce6265ee6713b49070d2af39b0e73))
+
+
 ## v1.8.6 (2025-02-20)
 
 ###  
