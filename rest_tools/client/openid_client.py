@@ -9,7 +9,9 @@ a json-encoded dictionary as necessary.
 import logging
 from typing import Any, Callable, Optional, Union
 
+import jwt
 import requests
+from requests.auth import HTTPBasicAuth
 
 from .client import RestClient
 from ..utils.auth import OpenIDAuth
@@ -58,21 +60,28 @@ class OpenIDRestClient(RestClient):
         # initial call to verify things work
         self._openid_token()
 
+    def _get_scopes(self) -> str:
+        return jwt.decode(self.refresh_token, options={'verify_signature': False}).get('scope', '')
+
     def _openid_token(self) -> str:
         if not self.auth.token_url:
             self.auth._refresh_keys()
 
         # try the refresh token
+        scopes = self._get_scopes()
+        self.logger.debug('refreshing the token. scopes: %s', scopes)
         args = {
             'grant_type': 'refresh_token',
             'refresh_token': self.refresh_token,
             'client_id': self.client_id,
+            'scope': scopes,
         }
+        kwargs = {}
         if self.client_secret:
-            args['client_secret'] = self.client_secret
+            kwargs['auth'] = HTTPBasicAuth(self.client_id, self.client_secret)
 
         try:
-            r = requests.post(self.auth.token_url, data=args)
+            r = requests.post(self.auth.token_url, data=args, **kwargs)
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
