@@ -17,6 +17,9 @@ from .client import RestClient
 from ..utils.auth import OpenIDAuth
 
 
+# fmt:off
+
+
 class OpenIDRestClient(RestClient):
     """A REST client that can handle token refresh using OpenID .well-known
     auto-discovery.
@@ -85,7 +88,11 @@ class OpenIDRestClient(RestClient):
             kwargs['auth'] = HTTPBasicAuth(self.client_id, self.client_secret)
 
         try:
-            r = requests.post(self.auth.token_url, data=args, **kwargs)
+            r = requests.post(
+                self.auth.token_url,
+                data=args,
+                **kwargs,   # type: ignore[arg-type]
+            )
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:

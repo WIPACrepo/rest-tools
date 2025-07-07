@@ -1,7 +1,5 @@
 """RestHandler and related classes."""
 
-# fmt:off
-
 import base64
 import functools
 import hmac
@@ -28,6 +26,9 @@ from ..utils.json_util import json_decode
 from ..utils.pkce import PKCEMixin
 
 LOGGER = logging.getLogger(__name__)
+
+
+# fmt:off
 
 
 def _log_auth_failed(e: Exception):

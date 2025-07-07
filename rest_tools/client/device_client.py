@@ -1,7 +1,5 @@
 """device_client.py"""
 
-# fmt:off
-
 import io
 import logging
 import time
@@ -16,6 +14,9 @@ from requests.auth import HTTPBasicAuth
 from .openid_client import OpenIDRestClient
 from ..utils.auth import OpenIDAuth
 from ..utils.pkce import PKCEMixin
+
+
+# fmt:off
 
 
 def _print_qrcode(req: Dict[str, str]) -> None:
@@ -57,7 +58,6 @@ And enter the code:
             print('|', f'{qrdata:<{box_width}}', '|', sep='')
         print('+', '-' * box_width, '+', sep='')
 
-# fmt:on
 
 
 class CommonDeviceGrant(PKCEMixin):
