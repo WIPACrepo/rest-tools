@@ -109,7 +109,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
-      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.2
+      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.3
         with:
           use_directory: true
 
