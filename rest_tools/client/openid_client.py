@@ -88,11 +88,7 @@ class OpenIDRestClient(RestClient):
             kwargs['auth'] = HTTPBasicAuth(self.client_id, self.client_secret)
 
         try:
-            r = requests.post(
-                self.auth.token_url,
-                data=args,
-                **kwargs,   # type: ignore[arg-type]
-            )
+            r = requests.post(self.auth.token_url, data=args, **kwargs)  # type: ignore[arg-type]
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:

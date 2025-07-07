@@ -59,7 +59,6 @@ And enter the code:
         print('+', '-' * box_width, '+', sep='')
 
 
-
 class CommonDeviceGrant(PKCEMixin):
     def perform_device_grant(
         self,
@@ -84,7 +83,7 @@ class CommonDeviceGrant(PKCEMixin):
             args['code_challenge_method'] = 'S256'
 
         try:
-            r = requests.post(device_url, data=args, **kwargs)
+            r = requests.post(device_url, data=args, **kwargs)  # type: ignore[arg-type]
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -117,7 +116,7 @@ class CommonDeviceGrant(PKCEMixin):
         while True:
             time.sleep(sleep_time)
             try:
-                r = requests.post(token_url, data=args, **kwargs)
+                r = requests.post(token_url, data=args, **kwargs)  # type: ignore[arg-type]
                 r.raise_for_status()
                 req = r.json()
             except requests.exceptions.HTTPError as exc:
