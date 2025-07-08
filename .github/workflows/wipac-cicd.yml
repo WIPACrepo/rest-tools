@@ -96,7 +96,7 @@ jobs:
         uses: WIPACrepo/wipac-dev-py-setup-action@v4.3
         with:
           pypi_name: wipac-rest-tools
-          python_min: 3.8
+          python_min: 3.9
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
           keywords: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
