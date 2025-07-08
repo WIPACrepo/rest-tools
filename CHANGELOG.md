@@ -2,6 +2,23 @@
 
 
 
+## v1.9.0 (2025-07-08)
+
+### [minor]
+
+* [minor] switch to using basic auth for client secret (#160)
+
+Switch to using basic auth for client secret, as this is more in line
+with the RFC and more secure.
+
+Also bump the Python minimum version to 3.9.
+
+---------
+
+Co-authored-by: ric-evans &lt;emejqz@gmail.com&gt;
+Co-authored-by: github-actions &lt;github-actions@github.com&gt; ([`1221028`](https://github.com/WIPACrepo/rest-tools/commit/1221028980bf1cadc504f5ee6647eae680fe7847))
+
+
 ## v1.8.7 (2025-04-15)
 
 ###  
