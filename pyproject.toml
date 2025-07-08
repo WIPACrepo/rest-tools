@@ -9,8 +9,8 @@ name = "wipac-rest-tools"
 description = "REST tools in python - common code for client and server"
 readme = "README.md"
 keywords = ["WIPAC", "IceCube", "REST", "tools", "utilities", "OpenTelemetry", "tracing", "telemetry"]
-classifiers = ["Development Status :: 5 - Production/Stable", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13"]
-requires-python = ">=3.8, <3.14"
+classifiers = ["Development Status :: 5 - Production/Stable", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13"]
+requires-python = ">=3.9, <3.14"
 
 [[project.authors]]
 name = "WIPAC Developers"
