@@ -10,6 +10,8 @@ jobs:
       matrix: ${{ steps.versions.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - id: versions
         uses: WIPACrepo/wipac-dev-py-versions-action@v2.5
 
@@ -27,6 +29,8 @@ jobs:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
@@ -43,6 +47,8 @@ jobs:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
@@ -64,7 +70,7 @@ jobs:
         #   & don't run non-branch triggers (like tags)
         #   & we don't want to trigger an update on PR's merge to main/master/default (which is a branch)
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           if [[ \
               ${{github.actor}} != 'dependabot[bot]' && \
               ${{github.ref_type}} == 'branch' && \
@@ -85,11 +91,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
       - if: needs.writable-branch-detect.outputs.OKAY == 'true'
         uses: WIPACrepo/wipac-dev-py-setup-action@v4.3
         with:
           pypi_name: wipac-rest-tools
-          python_min: 3.8
+          python_min: 3.9
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
           keywords: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
@@ -101,7 +108,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.2
+          ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
+      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.3
         with:
           use_directory: true
 
@@ -119,17 +127,19 @@ jobs:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           pip install --upgrade pip wheel setuptools
           pip install .[tests]
       - name: Run Tests
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           python -m pytest tests/unit_* --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
@@ -142,17 +152,19 @@ jobs:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           pip install --upgrade pip wheel setuptools
           pip install .[tests,openapi]
       - name: Run Tests
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           python -m pytest tests/integrate_openapi --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
@@ -165,22 +177,24 @@ jobs:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           pip install --upgrade pip wheel setuptools
           pip install .[telemetry,tests]
       - name: Run Tests
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           python -m pytest tests/unit_* --tb=short --log-level=DEBUG
           pycycle --here --verbose
       - name: Run Integration Test
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           cd examples/
           python rest_server.py &
           python rest_client.py
@@ -212,7 +226,7 @@ jobs:
 
       - name: Setup | Force correct release branch on workflow sha
         run: |
-          set -euo pipefail
+          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
 
       - name: Action | Semantic Version Release

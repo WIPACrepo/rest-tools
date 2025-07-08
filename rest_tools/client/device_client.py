@@ -1,7 +1,5 @@
 """device_client.py"""
 
-# fmt:off
-
 import io
 import logging
 import time
@@ -11,10 +9,14 @@ from typing import Any, Dict, List, Optional
 
 import qrcode  # type: ignore[import]
 import requests
+from requests.auth import HTTPBasicAuth
 
 from .openid_client import OpenIDRestClient
 from ..utils.auth import OpenIDAuth
 from ..utils.pkce import PKCEMixin
+
+
+# fmt:off
 
 
 def _print_qrcode(req: Dict[str, str]) -> None:
@@ -56,8 +58,6 @@ And enter the code:
             print('|', f'{qrdata:<{box_width}}', '|', sep='')
         print('+', '-' * box_width, '+', sep='')
 
-# fmt:on
-
 
 class CommonDeviceGrant(PKCEMixin):
     def perform_device_grant(
@@ -73,15 +73,17 @@ class CommonDeviceGrant(PKCEMixin):
             'client_id': client_id,
             'scope': 'offline_access ' + (' '.join(scopes) if scopes else ''),
         }
+        logger.debug('device grant args: %r', args)
+        kwargs = {}
         if client_secret:
-            args['client_secret'] = client_secret
+            kwargs['auth'] = HTTPBasicAuth(client_id, client_secret)
         else:
             code_challenge = self.create_pkce_challenge()
             args['code_challenge'] = code_challenge
             args['code_challenge_method'] = 'S256'
 
         try:
-            r = requests.post(device_url, data=args)
+            r = requests.post(device_url, data=args, **kwargs)  # type: ignore[arg-type]
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -104,8 +106,9 @@ class CommonDeviceGrant(PKCEMixin):
             'device_code': req['device_code'],
             'client_id': client_id,
         }
+        kwargs = {}
         if client_secret:
-            args['client_secret'] = client_secret
+            kwargs['auth'] = HTTPBasicAuth(client_id, client_secret)
         else:
             args['code_verifier'] = self.get_pkce_verifier(code_challenge)
 
@@ -113,7 +116,7 @@ class CommonDeviceGrant(PKCEMixin):
         while True:
             time.sleep(sleep_time)
             try:
-                r = requests.post(token_url, data=args)
+                r = requests.post(token_url, data=args, **kwargs)  # type: ignore[arg-type]
                 r.raise_for_status()
                 req = r.json()
             except requests.exceptions.HTTPError as exc:
@@ -133,6 +136,7 @@ class CommonDeviceGrant(PKCEMixin):
                 raise RuntimeError('Device authorization failed') from exc
             break
 
+        logger.debug('device grant response: %r', req)
         return req['refresh_token']
 
 

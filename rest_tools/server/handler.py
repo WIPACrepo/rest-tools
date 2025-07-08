@@ -1,7 +1,5 @@
 """RestHandler and related classes."""
 
-# fmt:off
-
 import base64
 import functools
 import hmac
@@ -28,6 +26,9 @@ from ..utils.json_util import json_decode
 from ..utils.pkce import PKCEMixin
 
 LOGGER = logging.getLogger(__name__)
+
+
+# fmt:off
 
 
 def _log_auth_failed(e: Exception):
@@ -371,8 +372,10 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             'client_id': self.oauth_client_id,
             'grant_type': 'authorization_code',
         }
+        kwargs = {}
         if self.oauth_client_secret:
-            body['client_secret'] = self.oauth_client_secret
+            kwargs['auth_username'] = self.oauth_client_id
+            kwargs['auth_password'] = self.oauth_client_secret
         else:
             # use PKCE
             code_challenge = state.get('code_challenge', None)
@@ -385,6 +388,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             method='POST',
             headers={'Content-Type': 'application/x-www-form-urlencoded'},
             body=urllib.parse.urlencode(body),
+            **kwargs,
         )
         ret = tornado.escape.json_decode(response.body)
         if not ret.get('id_token', ''):
