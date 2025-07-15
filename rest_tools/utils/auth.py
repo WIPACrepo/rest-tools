@@ -5,11 +5,10 @@
 import json
 import logging
 import time
-from typing import Dict, List, Optional, Union
+from typing import Any, Optional
 
 import jwt
 import requests
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 LOGGER = logging.getLogger(__name__)
 
@@ -131,18 +130,26 @@ class OpenIDAuth(_AuthValidate):
     def __init__(
         self,
         url: str,
-        provider_info: Optional[Dict[str, Union[str, List[str]]]] = None,
+        provider_info: Optional[dict[str, str | list[str]]] = None,
+        public_keys: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.url = url if url.endswith('/') else url+'/'
-        self.public_keys: Dict[str, RSAPublicKey] = {}
-        self.provider_info = provider_info if provider_info else {}
+        self.public_keys = public_keys if public_keys else {}
+        self.provider_info: dict[str, Any] = provider_info if provider_info else {}
         self.token_url = ""
 
-        self._refresh_keys()
+        if public_keys and provider_info:
+            self._allow_refresh = False
+        else:
+            self._allow_refresh = True
+            self._refresh_keys()
 
     def _refresh_keys(self):
+        if not self._allow_refresh:
+            LOGGER.warning('no refresh of keys is allowed')
+            return
         try:
             if not self.provider_info:
                 # discovery
@@ -154,13 +161,17 @@ class OpenIDAuth(_AuthValidate):
                 self.token_url = self.provider_info['token_endpoint']
 
             # get keys
-            r = requests.get(self.provider_info['jwks_uri'])
-            r.raise_for_status()
-            for jwk in r.json()['keys']:
-                LOGGER.debug(f'jwk: {jwk}')
-                kid = jwk['kid']
-                LOGGER.debug(f'loaded JWT key {kid}')
-                self.public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+            if self.provider_info['jwks_uri']:
+                LOGGER.debug('refreshing keys')
+                r = requests.get(self.provider_info['jwks_uri'])
+                r.raise_for_status()
+                LOGGER.debug('certs: %r', r.json())
+                self.public_keys = {
+                    k.key_id: k.key for k in jwt.PyJWKSet.from_dict(r.json()).keys
+                }
+                LOGGER.debug('keys: %r', self.public_keys)
+            else:
+                LOGGER.debug('not refreshing keys because provider_info incomplete')
         except Exception:
             LOGGER.warning('failed to refresh OpenID keys', exc_info=True)
 

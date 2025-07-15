@@ -1,8 +1,10 @@
 """RestHandler and related classes."""
 
 import base64
+from collections.abc import Callable, Awaitable
 import functools
 import hmac
+from inspect import isawaitable
 import json
 import logging
 import time
@@ -282,6 +284,11 @@ class KeycloakUsernameMixin:
 
 class OpenIDCookieHandlerMixin:
     """Store/load current user's `OpenIDLoginHandler` tokens in cookies."""
+    auth: OpenIDAuth
+    get_secure_cookie: Callable[[str], str]
+    set_secure_cookie: Callable[..., None]
+    clear_cookie: Callable[[str], None]
+
     def get_current_user(self):
         """Get the current user, and set auth-related attributes."""
         try:
@@ -306,7 +313,7 @@ class OpenIDCookieHandlerMixin:
         refresh_token_exp=None,
         user_info=None,
         user_info_exp=None,
-    ):
+    ) -> None | Awaitable[None]:
         """Store jwt tokens and user info from OpenID-compliant auth source.
 
         Args:
@@ -341,6 +348,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
 
     Requires the `login_url` application setting to be a full url.
     """
+    store_tokens: Callable[..., Awaitable[None]]
 
     def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
         super().initialize(**kwargs)
@@ -354,7 +362,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
         self.oauth_client_secret = oauth_client_secret
 
         scopes = {'openid', 'profile'}
-        if oauth_client_scope:
+        if oauth_client_scope is not None:
             scopes.update(oauth_client_scope.split())
         else:
             scopes.add('groups')
@@ -449,7 +457,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
                 refresh_expire = 86400
 
             # Save the user data
-            self.store_tokens(
+            ret = self.store_tokens(
                 access_token=user['access_token'],
                 access_token_exp=access_expire,
                 refresh_token=user.get('refresh_token'),
@@ -457,11 +465,13 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
                 user_info=user.get('id_token'),
                 user_info_exp=refresh_expire if user.get('refresh_token') else access_expire,
             )
+            if ret and isawaitable(ret):
+                await ret
 
             if data.get('redirect', None):
                 url = data['redirect']
                 if 'state' in data:
-                    url = tornado.httputil.url_concact(url, {'state': data['state']})
+                    url = tornado.httputil.url_concat(url, {'state': data['state']})
                 self.redirect(url)
             elif self.settings.get('debug', False):
                 self.write(user)
