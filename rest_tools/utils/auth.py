@@ -2,10 +2,9 @@
 
 # fmt:off
 
-import json
 import logging
 import time
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import jwt
 import requests
@@ -130,7 +129,7 @@ class OpenIDAuth(_AuthValidate):
     def __init__(
         self,
         url: str,
-        provider_info: Optional[dict[str, str | list[str]]] = None,
+        provider_info: Optional[dict[str, Union[str, list[str]]]] = None,
         public_keys: Optional[dict[str, Any]] = None,
         **kwargs,
     ):

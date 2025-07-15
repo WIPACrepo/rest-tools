@@ -10,7 +10,7 @@ import logging
 import time
 import urllib.parse
 from collections import defaultdict
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import tornado.escape
 import tornado.gen
@@ -285,11 +285,11 @@ class KeycloakUsernameMixin:
 class OpenIDCookieHandlerMixin:
     """Store/load current user's `OpenIDLoginHandler` tokens in cookies."""
     auth: OpenIDAuth
-    get_secure_cookie: Callable[[str], str]
+    get_secure_cookie: Callable[..., Optional[bytes]]
     set_secure_cookie: Callable[..., None]
-    clear_cookie: Callable[[str], None]
+    clear_cookie: Callable[..., None]
 
-    def get_current_user(self):
+    def get_current_user(self) -> Union[str, None]:
         """Get the current user, and set auth-related attributes."""
         try:
             access_token = self.get_secure_cookie('access_token')
@@ -302,7 +302,6 @@ class OpenIDCookieHandlerMixin:
         # Auth Failed
         except Exception as e:
             _log_auth_failed(e)
-
         return None
 
     def store_tokens(
@@ -313,7 +312,7 @@ class OpenIDCookieHandlerMixin:
         refresh_token_exp=None,
         user_info=None,
         user_info_exp=None,
-    ) -> None | Awaitable[None]:
+    ) -> Union[None, Awaitable[None]]:
         """Store jwt tokens and user info from OpenID-compliant auth source.
 
         Args:
@@ -332,6 +331,7 @@ class OpenIDCookieHandlerMixin:
         if user_info and user_info_exp:
             self.set_secure_cookie('user_info', tornado.escape.json_encode(user_info),
                                    expires_days=float(user_info_exp)/3600/24)
+        return None
 
     def clear_tokens(self):
         """Clear token data, usually on logout."""
@@ -350,7 +350,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
     """
     store_tokens: Callable[..., Awaitable[None]]
 
-    def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
+    def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):  # type: ignore
         super().initialize(**kwargs)
         if not isinstance(self.auth, OpenIDAuth):
             raise RuntimeError('OpenID Connect auth not set up')
