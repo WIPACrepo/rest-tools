@@ -7,7 +7,7 @@
 #  pip freeze
 ########################################################################
 cachetools==6.1.0
-certifi==2025.6.15
+certifi==2025.7.14
 cffi==1.17.1
 charset-normalizer==3.4.2
 click==8.2.1
@@ -50,7 +50,7 @@ cryptography==45.0.5
 └── cffi [required: >=1.14, installed: 1.17.1]
     └── pycparser [required: Any, installed: 2.22]
 httpretty==1.1.4
-pipdeptree==2.26.1
+pipdeptree==2.27.0
 ├── packaging [required: >=24.1, installed: 25.0]
 └── pip [required: >=24.2, installed: 25.1.1]
 pycycle==0.0.8
@@ -93,7 +93,7 @@ requests-mock==1.12.1
     ├── charset-normalizer [required: >=2,<4, installed: 3.4.2]
     ├── idna [required: >=2.5,<4, installed: 3.10]
     ├── urllib3 [required: >=1.21.1,<3, installed: 2.5.0]
-    └── certifi [required: >=2017.4.17, installed: 2025.6.15]
+    └── certifi [required: >=2017.4.17, installed: 2025.7.14]
 types-requests==2.32.4.20250611
 └── urllib3 [required: >=2, installed: 2.5.0]
 wipac-rest-tools
@@ -104,13 +104,13 @@ wipac-rest-tools
 │   ├── charset-normalizer [required: >=2,<4, installed: 3.4.2]
 │   ├── idna [required: >=2.5,<4, installed: 3.10]
 │   ├── urllib3 [required: >=1.21.1,<3, installed: 2.5.0]
-│   └── certifi [required: >=2017.4.17, installed: 2025.6.15]
+│   └── certifi [required: >=2017.4.17, installed: 2025.7.14]
 ├── requests-futures [required: Any, installed: 1.0.2]
 │   └── requests [required: >=1.2.0, installed: 2.32.4]
 │       ├── charset-normalizer [required: >=2,<4, installed: 3.4.2]
 │       ├── idna [required: >=2.5,<4, installed: 3.10]
 │       ├── urllib3 [required: >=1.21.1,<3, installed: 2.5.0]
-│       └── certifi [required: >=2017.4.17, installed: 2025.6.15]
+│       └── certifi [required: >=2017.4.17, installed: 2025.7.14]
 ├── tornado [required: Any, installed: 6.5.1]
 ├── urllib3 [required: >=2.0.4, installed: 2.5.0]
 └── wipac-dev-tools [required: Any, installed: 1.16.11]
@@ -120,5 +120,5 @@ wipac-rest-tools
     │   ├── charset-normalizer [required: >=2,<4, installed: 3.4.2]
     │   ├── idna [required: >=2.5,<4, installed: 3.10]
     │   ├── urllib3 [required: >=1.21.1,<3, installed: 2.5.0]
-    │   └── certifi [required: >=2017.4.17, installed: 2025.6.15]
+    │   └── certifi [required: >=2017.4.17, installed: 2025.7.14]
     └── typing_extensions [required: Any, installed: 4.14.1]
