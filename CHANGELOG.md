@@ -2,6 +2,25 @@
 
 
 
+## v1.10.0 (2025-07-16)
+
+###  
+
+* &lt;bot&gt; update dependencies*.log files(s) ([`e913ad5`](https://github.com/WIPACrepo/rest-tools/commit/e913ad5b6da20eae7b4d9ef32469e0e8e6c8a67d))
+
+### [minor]
+
+* [minor] allow EC algorithms, and add more typing (#161)
+
+Allow EllipticCurve cryptography, mostly in `utils.auth`.
+Allow `store_tokens` to be awaitable.
+Add more typing in several places to make pylance happy.
+
+---------
+
+Co-authored-by: github-actions &lt;github-actions@github.com&gt; ([`da30370`](https://github.com/WIPACrepo/rest-tools/commit/da3037023ee0efd6c16802a6d7d60f1c2140b352))
+
+
 ## v1.9.0 (2025-07-08)
 
 ### [minor]
