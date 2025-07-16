@@ -55,7 +55,7 @@ pycycle==0.0.8
 Pygments==2.19.2
 PyJWT==2.10.1
 pytest==8.4.1
-pytest-asyncio==1.0.0
+pytest-asyncio==1.1.0
 pytest-cov==6.2.1
 pytest-mock==3.14.1
 python-dateutil==2.9.0.post0
@@ -188,7 +188,7 @@ pycycle==0.0.8
     ├── packaging [required: >=20, installed: 25.0]
     ├── pluggy [required: >=1.5,<2, installed: 1.6.0]
     └── Pygments [required: >=2.7.2, installed: 2.19.2]
-pytest-asyncio==1.0.0
+pytest-asyncio==1.1.0
 └── pytest [required: >=8.2,<9, installed: 8.4.1]
     ├── iniconfig [required: >=1, installed: 2.1.0]
     ├── packaging [required: >=20, installed: 25.0]
