@@ -14,7 +14,7 @@ charset-normalizer==3.4.2
 cryptography==45.0.5
 idna==3.10
 isodate==0.7.2
-jsonschema==4.24.0
+jsonschema==4.25.0
 jsonschema-path==0.3.4
 jsonschema-specifications==2025.4.1
 lazy-object-proxy==1.11.0
@@ -49,7 +49,7 @@ cryptography==45.0.5
     └── pycparser [required: Any, installed: 2.22]
 openapi-core==0.19.5
 ├── isodate [required: Any, installed: 0.7.2]
-├── jsonschema [required: >=4.18.0,<5.0.0, installed: 4.24.0]
+├── jsonschema [required: >=4.18.0,<5.0.0, installed: 4.25.0]
 │   ├── attrs [required: >=22.2.0, installed: 25.3.0]
 │   ├── jsonschema-specifications [required: >=2023.03.6, installed: 2025.4.1]
 │   │   └── referencing [required: >=0.31.0, installed: 0.36.2]
@@ -72,7 +72,7 @@ openapi-core==0.19.5
 │       └── certifi [required: >=2017.4.17, installed: 2025.7.14]
 ├── more-itertools [required: Any, installed: 10.7.0]
 ├── openapi-schema-validator [required: >=0.6.0,<0.7.0, installed: 0.6.3]
-│   ├── jsonschema [required: >=4.19.1,<5.0.0, installed: 4.24.0]
+│   ├── jsonschema [required: >=4.19.1,<5.0.0, installed: 4.25.0]
 │   │   ├── attrs [required: >=22.2.0, installed: 25.3.0]
 │   │   ├── jsonschema-specifications [required: >=2023.03.6, installed: 2025.4.1]
 │   │   │   └── referencing [required: >=0.31.0, installed: 0.36.2]
@@ -89,7 +89,7 @@ openapi-core==0.19.5
 │   └── rfc3339-validator [required: Any, installed: 0.1.4]
 │       └── six [required: Any, installed: 1.17.0]
 ├── openapi-spec-validator [required: >=0.7.1,<0.8.0, installed: 0.7.2]
-│   ├── jsonschema [required: >=4.18.0,<5.0.0, installed: 4.24.0]
+│   ├── jsonschema [required: >=4.18.0,<5.0.0, installed: 4.25.0]
 │   │   ├── attrs [required: >=22.2.0, installed: 25.3.0]
 │   │   ├── jsonschema-specifications [required: >=2023.03.6, installed: 2025.4.1]
 │   │   │   └── referencing [required: >=0.31.0, installed: 0.36.2]
@@ -112,7 +112,7 @@ openapi-core==0.19.5
 │   │       └── certifi [required: >=2017.4.17, installed: 2025.7.14]
 │   ├── lazy-object-proxy [required: >=1.7.1,<2.0.0, installed: 1.11.0]
 │   └── openapi-schema-validator [required: >=0.6.0,<0.7.0, installed: 0.6.3]
-│       ├── jsonschema [required: >=4.19.1,<5.0.0, installed: 4.24.0]
+│       ├── jsonschema [required: >=4.19.1,<5.0.0, installed: 4.25.0]
 │       │   ├── attrs [required: >=22.2.0, installed: 25.3.0]
 │       │   ├── jsonschema-specifications [required: >=2023.03.6, installed: 2025.4.1]
 │       │   │   └── referencing [required: >=0.31.0, installed: 0.36.2]
