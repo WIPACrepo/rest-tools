@@ -107,3 +107,38 @@ class OpenIDRestClient(RestClient):
                 if access_token and self.update_func:
                     self.update_func(access_token, self.refresh_token)
             return access_token
+
+
+class RegisterOpenIDClient:
+    def __init__(self, address: str, client_name: str, scopes: Union[list[str], None] = None):
+        self.address = address
+        self.client_name = client_name
+        self.scopes = scopes if scopes else []
+        self._registration_path = None
+        self._registration_token = None
+
+    async def register_client(self):
+        rc = RestClient(self.address, retries=0)
+        meta = {
+            'grant_types': [
+                'authorization_code',
+                'urn:ietf:params:oauth:grant-type:device_code',
+            ],
+            'client_name': self.client_name,
+            'scope': ' '.join(self.scopes),
+        }
+        ret = await rc.request('POST', '/client', meta)
+        self._registration_path = ret['registration_client_uri'][len(self.address):]
+        self._registration_token = ret['registration_access_token']
+
+        client_id = ret['client_id']
+        client_secret = ret['client_secret']
+        return (client_id, client_secret)
+
+    async def delete_client(self, *args, **kwargs):
+        if self._registration_path and self._registration_token:
+            rc2 = RestClient(self.address, token=self._registration_token, retries=0)
+            await rc2.request('DELETE', self._registration_path)
+
+    __aenter__ = register_client
+    __aexit__ = delete_client
