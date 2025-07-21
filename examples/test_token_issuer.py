@@ -2,17 +2,17 @@ import argparse
 import asyncio
 import logging
 
-from rest_tools.client import DeviceGrantAuth
+from rest_tools.client import SavedDeviceGrantAuth
 from rest_tools.client.openid_client import RegisterOpenIDClient
 
 
 async def get_token(address, scope=None):
     scopes = scope if scope else []
     async with RegisterOpenIDClient(address, 'test') as (client_id, client_secret):
-        rest_client = DeviceGrantAuth(
+        rest_client = SavedDeviceGrantAuth(
             address='',
             token_url=address,
-            filename='device-refresh-token',
+            filename='token-issuer-refresh-token',
             client_id=client_id,
             client_secret=client_secret,
             scopes=scopes,
@@ -33,7 +33,7 @@ def main():
     level = kwargs.pop('log_level').upper()
     logging.basicConfig(level=getattr(logging, level))
 
-    print('access token:', asyncio.run(get_token(**kwargs)))
+    print(asyncio.run(get_token(**kwargs)))
 
 
 if __name__ == '__main__':

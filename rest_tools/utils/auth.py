@@ -64,7 +64,7 @@ class Auth(_AuthValidate):
     Handle authentication of JWT tokens.
     """
 
-    def __init__(self, secret, pub_secret=None, issuer='IceProd', algorithm='HS512', expiration=31622400, expiration_temp=86400, **kwargs):
+    def __init__(self, secret, pub_secret=None, issuer='IceProd', algorithm='HS512', expiration=31622400, integer_times=False, **kwargs):
         if 'algorithms' not in kwargs:
             kwargs['algorithms'] = [algorithm]
         super().__init__(**kwargs)
@@ -73,25 +73,27 @@ class Auth(_AuthValidate):
         self.issuer = issuer
         self.algorithm = algorithm
         self.max_exp = expiration
-        self.max_exp_temp = expiration_temp
+        self.integer_times = integer_times
 
-    def create_token(self, subject, expiration=None, type='temp', payload=None, headers=None):
+    def create_token(self, subject, expiration=None, payload=None, headers=None):
         """
         Create a token.
 
         Args:
             subject (str): the user or other owner
             expiration (int): duration in seconds for which the token is valid
-            type (str): type of token
             payload (dict): any other fields that should be included
 
         Returns:
             str: representation of JWT token
         """
-        exp = self.max_exp_temp if type == 'temp' else self.max_exp
+        exp = self.max_exp
         if expiration and exp > expiration:
             exp = expiration
         now = time.time()
+        if self.integer_times:
+            now = int(now)
+            exp = int(exp)
         if not payload:
             payload = {}
         payload.update({
@@ -100,7 +102,6 @@ class Auth(_AuthValidate):
             'exp': now+exp,
             'nbf': now,
             'iat': now,
-            'type': type,
         })
 
         token = jwt.encode(payload, self.secret, algorithm=self.algorithm, headers=headers)
