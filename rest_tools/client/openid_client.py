@@ -110,7 +110,7 @@ class OpenIDRestClient(RestClient):
 
 
 class RegisterOpenIDClient:
-    def __init__(self, address: str, client_name: str, scopes: list[str] | None = None):
+    def __init__(self, address: str, client_name: str, scopes: Union[list[str], None] = None):
         self.address = address
         self.client_name = client_name
         self.scopes = scopes if scopes else []
