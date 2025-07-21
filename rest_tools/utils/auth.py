@@ -121,7 +121,7 @@ class Auth(_AuthValidate):
         Raises:
             Exception on failure to validate.
         """
-        return self._validate(token, self.pub_secret, issuer=self.issuer, required=['type'], **kwargs)
+        return self._validate(token, self.pub_secret, issuer=self.issuer, **kwargs)
 
 
 class OpenIDAuth(_AuthValidate):
