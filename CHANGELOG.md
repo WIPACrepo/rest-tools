@@ -2,6 +2,21 @@
 
 
 
+## v1.11.0 (2025-07-21)
+
+### [minor]
+
+* [minor] jwt integer times (#163)
+
+* Add dynamic client registration example, mostly for token issuer.
+* Remove `type` field from jwt by default.
+* Add jwt option for integer times when creating tokens.
+
+---------
+
+Co-authored-by: github-actions &lt;github-actions@github.com&gt; ([`19ca071`](https://github.com/WIPACrepo/rest-tools/commit/19ca071a6c403adb283a5626592120209a29a727))
+
+
 ## v1.10.0 (2025-07-16)
 
 ###  
