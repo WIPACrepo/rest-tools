@@ -93,7 +93,7 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
       - if: needs.writable-branch-detect.outputs.OKAY == 'true'
-        uses: WIPACrepo/wipac-dev-py-setup-action@v4.3
+        uses: WIPACrepo/wipac-dev-py-setup-action@v5.2
         with:
           pypi_name: wipac-rest-tools
           python_min: 3.9
