@@ -1,6 +1,9 @@
 name: wipac ci/cd
 
-on: [ push ]
+on:
+  push:
+    branches: [ '**' ]
+    tags-ignore: [ '**' ]
 
 jobs:
 
@@ -13,7 +16,7 @@ jobs:
         with:
           ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
       - id: versions
-        uses: WIPACrepo/wipac-dev-py-versions-action@v2.5
+        uses: WIPACrepo/wipac-dev-py-versions-action@v2.7
 
 
   #############################################################################
@@ -34,7 +37,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py3 }}
-      - uses: WIPACrepo/wipac-dev-flake8-action@v1.2
+      - uses: WIPACrepo/wipac-dev-flake8-action@v1.3
         with:
           max-complexity: 16  # ideal is ~10-15
 
@@ -59,47 +62,22 @@ jobs:
   # PACKAGING
   #############################################################################
 
-  writable-branch-detect:
-    runs-on: ubuntu-latest
-    outputs:
-      OKAY: ${{ steps.detect.outputs.OKAY }}
-    steps:
-      - name: is this a bot-writable branch?
-        id: detect
-        # dependabot can't access normal secrets
-        #   & don't run non-branch triggers (like tags)
-        #   & we don't want to trigger an update on PR's merge to main/master/default (which is a branch)
-        run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
-          if [[ \
-              ${{github.actor}} != 'dependabot[bot]' && \
-              ${{github.ref_type}} == 'branch' && \
-              ${{format('refs/heads/{0}', github.event.repository.default_branch)}} != ${{github.ref}} \
-          ]]; then
-            echo "OKAY=true" >> "$GITHUB_OUTPUT"
-            echo "yes, this branch is compatible"
-          else
-            echo "OKAY=false" >> "$GITHUB_OUTPUT"
-            echo "no, this branch is incompatible"
-          fi
-
   py-setup:
-    needs: [ writable-branch-detect ]
     runs-on: ubuntu-latest
     steps:
-      - if: needs.writable-branch-detect.outputs.OKAY == 'true'
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
-      - if: needs.writable-branch-detect.outputs.OKAY == 'true'
-        uses: WIPACrepo/wipac-dev-py-setup-action@v4.3
+      - uses: WIPACrepo/wipac-dev-py-setup-action@v5.2
         with:
+          mode: PACKAGING_AND_PYPI
           pypi_name: wipac-rest-tools
           python_min: 3.9
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
-          keywords: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
+          keywords_comma: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
+          auto_mypy_option: True
 
   py-dependencies:
     runs-on: ubuntu-latest
@@ -109,9 +87,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
-      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v2.3
-        with:
-          use_directory: true
+      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v3.1
 
 
   #############################################################################
@@ -205,48 +181,25 @@ jobs:
   #############################################################################
 
   release:
-    # only run on main/master/default
+    # only run on main/default
     if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
-    needs: [ flake8, mypy, py-setup, py-dependencies, unit-tests, tests-with-openapi, tests-with-telemetry ]
-    runs-on: ubuntu-latest
-    concurrency: release
-    permissions:
-      id-token: write
+    needs: [
+      flake8,
+      mypy,
+      py-setup,
+      py-dependencies,
+      unit-tests,
+      tests-with-openapi,
+      tests-with-telemetry
+    ]
+    uses: WIPACrepo/wipac-dev-workflows/.github/workflows/tag-and-release.yml@v1.7
+    permissions: # for GITHUB_TOKEN
       contents: write
-      packages: write
-    steps:
-      # Note: we need to checkout the repository at the workflow sha in case during the workflow
-      # the branch was updated. To keep PSR working with the configured release branches,
-      # we force a checkout of the desired release branch but at the workflow sha HEAD.
-      - name: Setup | Checkout Repository at workflow sha
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
-
-      - name: Setup | Force correct release branch on workflow sha
-        run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
-          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
-
-      - name: Action | Semantic Version Release
-        id: release
-        # Adjust tag with desired version if applicable.
-        uses: python-semantic-release/python-semantic-release@v9.8.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
-
-      - name: PyPI Release
-        uses: pypa/gh-action-pypi-publish@v1.12.4
-        if: steps.release.outputs.released == 'true'
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}
-
-      - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v9.8.1
-        if: steps.release.outputs.released == 'true'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.release.outputs.tag }}
+    with:
+      project-type: python
+      python-version: "${{ fromJSON(needs.py-versions.outputs.matrix)[0] }}"
+      release-artifacts: |
+        py-dependencies-logs
+      publish-to-pypi: true
+    secrets:
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
