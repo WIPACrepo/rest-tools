@@ -113,7 +113,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.auth = auth
         self.auth_url = auth_url
         self.auth_data: Dict[str, Any] = {}
-        self.auth_key = None
+        self.auth_key = ''
         self.module_auth_key = module_auth_key
         self.server_header = server_header
         self.route_stats = route_stats
@@ -137,11 +137,6 @@ class RestHandler(tornado.web.RequestHandler):
 
     def set_default_headers(self):
         self._headers['Server'] = self.server_header
-
-    def get_template_namespace(self):
-        namespace = super().get_template_namespace()
-        namespace['version'] = rest_tools.__version__
-        return namespace
 
     def get_current_user(self):
         """Get the current user, and set auth-related attributes."""
@@ -288,7 +283,7 @@ class KeycloakUsernameMixin:
 
 class OpenIDCookieHandlerMixin:
     """Store/load current user's `OpenIDLoginHandler` tokens in cookies."""
-    auth: OpenIDAuth
+    auth: Union[Auth, None]
     get_secure_cookie: Callable[..., Optional[bytes]]
     set_secure_cookie: Callable[..., None]
     clear_cookie: Callable[..., None]
@@ -297,9 +292,13 @@ class OpenIDCookieHandlerMixin:
         """Get the current user, and set auth-related attributes."""
         try:
             access_token = self.get_secure_cookie('access_token')
+            if not access_token:
+                raise RuntimeError('missing access_token cookie')
+            if not self.auth:
+                raise RuntimeError('auth is not set!')
             data = self.auth.validate(access_token)
             self.auth_data = data
-            self.auth_key = access_token
+            self.auth_key = access_token.decode('utf-8')
             refresh_token = self.get_secure_cookie('refresh_token')
             self.auth_refresh_token = refresh_token
             return data['sub']
@@ -411,10 +410,11 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             )
             ret['id_token'] = tornado.escape.json_decode(response.body)
 
-        if ret.get('id_token') and isinstance(ret['id_token'], str):
-            ret['id_token'] = self.auth.validate(ret['id_token'])
-
         try:
+            if not self.auth:
+                raise RuntimeError('auth is not set!')
+            if ret.get('id_token') and isinstance(ret['id_token'], str):
+                ret['id_token'] = self.auth.validate(ret['id_token'])
             self.auth.validate(ret['access_token'])
         except Exception:
             if self.debug:

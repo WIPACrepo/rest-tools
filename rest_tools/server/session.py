@@ -17,6 +17,7 @@ from typing import Any, Iterator, Dict, Union
 SessionDataTypes = Union[bool, float, int, str]
 SessionData = Dict[str, SessionDataTypes]
 
+
 # Define the structure of the internal session representation
 @dc.dataclass(frozen=True)
 class SessionEntry:
@@ -31,7 +32,7 @@ SessionStorage = MutableMapping[str, SessionEntry]
 class MemorySessionStorage(dict[str, SessionEntry]):
     """
     In-memory session storage.
-    
+
     This is just a dict, and is designed for testing.
     """
     pass
@@ -73,14 +74,14 @@ else:
                     )
                     # Create the index
                     self._conn.ft('idx:key').create_index(
-                        schema, # type: ignore
+                        schema,  # type: ignore
                         definition=IndexDefinition(
                             prefix=['session:'], index_type=IndexType.HASH
                         )
                     )
 
         def __getitem__(self, key: str) -> SessionEntry:
-            ret: dict[Any, Any] = self._conn.hgetall('session:'+key) # type: ignore
+            ret: dict[Any, Any] = self._conn.hgetall('session:'+key)  # type: ignore
             if not ret:
                 raise KeyError()
             return SessionEntry(data=ret['data'], expiration=ret['expiration'])
@@ -93,12 +94,12 @@ else:
             self._conn.delete('session:'+key)
 
         def __iter__(self) -> Iterator:
-            for key in self._conn.keys('session:*'): # type: ignore
-                ret: dict[Any, Any] = self._conn.hgetall(key) # type: ignore
+            for key in self._conn.keys('session:*'):  # type: ignore
+                ret: dict[Any, Any] = self._conn.hgetall(key)  # type: ignore
                 yield SessionEntry(data=ret['data'], expiration=ret['expiration'])
 
         def __len__(self) -> int:
-            return self._conn.dbsize() # type: ignore
+            return self._conn.dbsize()  # type: ignore
 
 
 class StorageTypes(StrEnum):
@@ -112,12 +113,12 @@ class Session:
     """
     _sessions: SessionStorage
 
-    def __init__(self, storage_type : Union[str, StorageTypes] = 'memory', expiration: float = 1800):
+    def __init__(self, storage_type: Union[str, StorageTypes] = 'memory', expiration: float = 1800):
         """
         Initializes the session store.
 
         Args:
-            expiration: The time in seconds after which a session will expire 
+            expiration: The time in seconds after which a session will expire
                         due to inactivity. Defaults to 1800 (30 minutes).
         """
         st = StorageTypes(storage_type)
@@ -126,7 +127,7 @@ class Session:
         elif st == StorageTypes.REDIS:
             if not redis_available:
                 logging.error("You have asked to use the redis session storage backend, but "
-                                "`redis` is not installed. Install it with `pip install redis`.")
+                              "`redis` is not installed. Install it with `pip install redis`.")
                 raise RuntimeError('redis package not installed')
             self._sessions = RedisSessionStorage()
         else:
@@ -156,8 +157,7 @@ class Session:
             session_id (str): The ID of the session to retrieve.
 
         Returns:
-            SessionData: The session data if the session exists and is not 
-                         expired, otherwise None.
+            SessionData: The session data if the session exists and is not expired, otherwise None.
 
         Raises:
             KeyError: If the session does not exist.
@@ -180,7 +180,7 @@ class Session:
             session_id (str): The ID of the session to delete.
 
         Returns:
-            bool: True if the session was deleted, 
+            bool: True if the session was deleted,
                   False if the session did not exist.
         """
         if session_id in self._sessions:
@@ -222,7 +222,7 @@ class SessionWrapper(SessionData):
 
     def __iter__(self) -> Iterator:
         return iter(self._data)
-    
+
     def __len__(self) -> int:
         return len(self._data)
 
@@ -242,7 +242,7 @@ class SessionMixin:
             except KeyError:
                 data = {}
                 self._session_mgr.set(self.current_user, data)
-            
+
             return SessionWrapper(
                 self.current_user,
                 data,
