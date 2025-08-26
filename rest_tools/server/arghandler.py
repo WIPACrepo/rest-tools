@@ -139,7 +139,7 @@ class ArgumentHandler:
                 ) from e
 
         # TYPE
-        if kwargs.get("type") == bool:
+        if kwargs.get("type") is bool:
             kwargs["type"] = _universal_to_bool
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
             if "type" in kwargs:

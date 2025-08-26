@@ -11,7 +11,7 @@ import dataclasses as dc
 from enum import StrEnum
 import logging
 import time
-from typing import Iterator, Dict, Union
+from typing import Any, Iterator, Dict, Union
 
 
 SessionDataTypes = Union[bool, float, int, str]
