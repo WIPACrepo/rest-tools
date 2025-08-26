@@ -13,13 +13,10 @@ from collections import defaultdict
 from typing import Any, Dict, Optional, Union
 
 import tornado.escape
-import tornado.gen
-import tornado.httpclient
 import tornado.httputil
 import tornado.web
 from tornado.auth import OAuth2Mixin
 
-import rest_tools
 from .decorators import catch_error
 from .stats import RouteStats
 from .. import telemetry as wtt

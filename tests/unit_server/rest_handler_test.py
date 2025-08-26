@@ -122,7 +122,7 @@ def test_openid_cookie_handler_mixin():
 
     assert rh.get_current_user() == 'subject'
     assert rh.auth_data['foo'] == 'bar'
-    assert rh.auth_key == token
+    assert rh.auth_key == token.decode('utf-8')
 
 
 def test_openid_login_handler_initialize(requests_mock):
