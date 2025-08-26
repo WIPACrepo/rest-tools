@@ -110,6 +110,7 @@ class Session:
     """
     Session storage with expiration.
     """
+    _sessions: SessionStorage
 
     def __init__(self, storage_type : Union[str, StorageTypes] = 'memory', expiration: float = 1800):
         """
@@ -119,17 +120,17 @@ class Session:
             expiration: The time in seconds after which a session will expire 
                         due to inactivity. Defaults to 1800 (30 minutes).
         """
-        match StorageTypes(storage_type):
-            case StorageTypes.MEMORY:
-                self._sessions = MemorySessionStorage()
-            case StorageTypes.REDIS:
-                if not redis_available:
-                    logging.error("You have asked to use the redis session storage backend, but "
-                                  "`redis` is not installed. Install it with `pip install redis`.")
-                    raise RuntimeError('redis package not installed')
-                self._sessions = RedisSessionStorage()
-            case _:
-                raise RuntimeError("Invalid session storage type")
+        st = StorageTypes(storage_type)
+        if st == StorageTypes.MEMORY:
+            self._sessions = MemorySessionStorage()
+        elif st == StorageTypes.REDIS:
+            if not redis_available:
+                logging.error("You have asked to use the redis session storage backend, but "
+                                "`redis` is not installed. Install it with `pip install redis`.")
+                raise RuntimeError('redis package not installed')
+            self._sessions = RedisSessionStorage()
+        else:
+            raise RuntimeError("Invalid session storage type")
 
         self._expiration = expiration
 

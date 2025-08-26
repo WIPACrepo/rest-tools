@@ -46,6 +46,7 @@ def test_memory_session():
     with pytest.raises(KeyError):
         session_store.get_session('test_session')
 
+
 def test_session_wrapper():
     session_store = Session(storage_type='memory', expiration=0.1)
 
@@ -65,11 +66,7 @@ def test_session_wrapper():
 
     # should reset expiration
     del data_wrapper['foo']
-    
+
     time.sleep(.07)
     ret = session_store.get_session('user123')
     assert ret == {'username': 'Alice'}
-
-
-
-

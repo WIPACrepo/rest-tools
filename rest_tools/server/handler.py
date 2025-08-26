@@ -112,7 +112,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.debug = debug
         self.auth = auth
         self.auth_url = auth_url
-        self.auth_data = {}
+        self.auth_data: Dict[str, Any] = {}
         self.auth_key = None
         self.module_auth_key = module_auth_key
         self.server_header = server_header
@@ -276,7 +276,7 @@ class KeycloakUsernameMixin:
     auth_data: dict
 
     def get_current_user(self):
-        if not super().get_current_user(): # type: ignore
+        if not super().get_current_user():  # type: ignore
             return None
         username = self.auth_data.get('preferred_username', None)
         if not username:
