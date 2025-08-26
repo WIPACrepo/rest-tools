@@ -51,6 +51,9 @@ email = "developers@icecube.wisc.edu"
 openapi = [
     'openapi-core',
 ]
+redis = [
+    'redis[hiredis]',
+]
 telemetry = [
     'wipac-telemetry >= 0.2.4',
 ]
@@ -61,6 +64,7 @@ tests = [
     'pytest-asyncio',
     'pytest-cov',
     'pytest-mock',
+    'redis[hiredis]',
     'requests-mock',
     'types-requests',
 ]
@@ -72,6 +76,7 @@ mypy = [
     'pytest-asyncio',
     'pytest-cov',
     'pytest-mock',
+    'redis[hiredis]',
     'requests-mock',
     'types-requests',
     'wipac-telemetry >= 0.2.4',

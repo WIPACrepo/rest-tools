@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from rest_tools.client import ClientCredentialsAuth
 
@@ -14,6 +15,8 @@ def main():
     parser.add_argument('--address', default='https://keycloak.icecube.wisc.edu/auth/realms/IceCube', help='OAuth2 server address')
     parser.add_argument('client_id', help='client id')
     parser.add_argument('client_secret', help='client secret')
+
+    logging.basicConfig(level=logging.DEBUG)
 
     args = parser.parse_args()
     kwargs = vars(args)

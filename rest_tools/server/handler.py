@@ -107,7 +107,7 @@ class RestHandler(tornado.web.RequestHandler):
         except Exception:
             LOGGER.error('error', exc_info=True)
 
-    def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
+    def initialize(self, debug=False, auth: Union[Auth, None] = None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
         super().initialize(**kwargs)
         self.debug = debug
         self.auth = auth
@@ -150,6 +150,8 @@ class RestHandler(tornado.web.RequestHandler):
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
             LOGGER.debug('token: %r', token)
+            if self.auth is None:
+                raise RuntimeError('need to set auth in order to validate tokens!')
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
@@ -271,8 +273,10 @@ class KeycloakUsernameMixin:
 
     Note: will not work on service account tokens.
     """
+    auth_data: dict
+
     def get_current_user(self):
-        if not super().get_current_user():
+        if not super().get_current_user(): # type: ignore
             return None
         username = self.auth_data.get('preferred_username', None)
         if not username:
@@ -418,7 +422,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise
         return ret
 
-    def _decode_state(self, state: Union[bytes, str]) -> str:
+    def _decode_state(self, state: Union[bytes, str]) -> Dict[str, Any]:
         data = tornado.escape.json_decode(base64.b64decode(state))
         _, token, _ = self._decode_xsrf_token(data.pop('xsrf'))
         _, expected_token, _ = self._get_raw_xsrf_token()

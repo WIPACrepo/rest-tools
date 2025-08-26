@@ -33,6 +33,8 @@ def main():
     level = kwargs.pop('log_level').upper()
     logging.basicConfig(level=getattr(logging, level))
 
+    logging.info('scopes: %r', kwargs['scope'])
+
     print(asyncio.run(get_token(**kwargs)))
 
 
