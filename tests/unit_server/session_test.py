@@ -1,11 +1,18 @@
 import pytest
 import time
 
-from rest_tools.server.session import Session, SessionWrapper
+from rest_tools.server.session import Session, SessionWrapper, redis_available
 
+STORAGE_TYPES = ['memory']
+if redis_available:
+    STORAGE_TYPES.append('redis')
 
-def test_memory_session():
-    session_store = Session(storage_type='memory', expiration=0.1)
+@pytest.mark.parametrize('storage_type', STORAGE_TYPES)
+def test_memory_session(storage_type):
+    session_store = Session(storage_type=storage_type, expiration=0.1)
+
+    # Make sure we start with a clear session storage
+    session_store.clear()
 
     # Create a session
     session_store.set('user123', {'username': 'Alice'})
@@ -47,8 +54,9 @@ def test_memory_session():
         session_store.get_session('test_session')
 
 
-def test_session_wrapper():
-    session_store = Session(storage_type='memory', expiration=0.1)
+@pytest.mark.parametrize('storage_type', STORAGE_TYPES)
+def test_session_wrapper(storage_type):
+    session_store = Session(storage_type=storage_type, expiration=0.1)
 
     session_store.set('user123', {'username': 'Alice'})
 

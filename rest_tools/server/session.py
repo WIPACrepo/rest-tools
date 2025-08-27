@@ -11,11 +11,11 @@ import dataclasses as dc
 from enum import StrEnum
 import logging
 import time
-from typing import Any, Iterator, Dict, Union
+from typing import Iterator, Union
 
 
 SessionDataTypes = Union[bool, float, int, str]
-SessionData = Dict[str, SessionDataTypes]
+SessionData = MutableMapping[str, SessionDataTypes]
 
 
 # Define the structure of the internal session representation
@@ -81,13 +81,17 @@ else:
                     )
 
         def __getitem__(self, key: str) -> SessionEntry:
-            ret: dict[Any, Any] = self._conn.hgetall('session:'+key)  # type: ignore
+            ret: dict = self._conn.hgetall('session:'+key)  # type: ignore
             if not ret:
                 raise KeyError()
-            return SessionEntry(data=ret['data'], expiration=ret['expiration'])
+            exp = float(ret.pop('_expiration'))
+            return SessionEntry(data=ret, expiration=exp)
 
         def __setitem__(self, key: str, value: SessionEntry):
-            data = dc.asdict(value)
+            data = {'_expiration': value.expiration}
+            data.update(value.data)  # type: ignore
+            # we delete first to clear extra keys not in the new data
+            self._conn.delete('session:'+key)
             self._conn.hset('session:'+key, mapping=data)
 
         def __delitem__(self, key: str):
@@ -95,8 +99,7 @@ else:
 
         def __iter__(self) -> Iterator:
             for key in self._conn.keys('session:*'):  # type: ignore
-                ret: dict[Any, Any] = self._conn.hgetall(key)  # type: ignore
-                yield SessionEntry(data=ret['data'], expiration=ret['expiration'])
+                yield key[8:]
 
         def __len__(self) -> int:
             return self._conn.dbsize()  # type: ignore
@@ -199,6 +202,13 @@ class Session:
             if current_time >= session.expiration
         ]
         for session_id in expired_session_ids:
+            del self._sessions[session_id]
+
+    def clear(self) -> None:
+        """
+        Clear all session data.
+        """
+        for session_id in self._sessions:
             del self._sessions[session_id]
 
 
