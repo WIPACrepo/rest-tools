@@ -8,7 +8,7 @@ Redis is for production, and ideal when mulitple servers are running.
 
 from collections.abc import MutableMapping
 import dataclasses as dc
-from enum import StrEnum
+from enum import Enum
 import logging
 import time
 from typing import Iterator, Union
@@ -105,7 +105,7 @@ else:
             return self._conn.dbsize()  # type: ignore
 
 
-class StorageTypes(StrEnum):
+class StorageTypes(Enum):
     MEMORY = 'memory'
     REDIS = 'redis'
 

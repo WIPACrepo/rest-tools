@@ -393,9 +393,11 @@ try:
     from openapi_core.validation.exceptions import ValidationError
     import openapi_core.validation.schemas.exceptions
 except ImportError:
-    pass  # if client code wants to use these features, then let the built-in errors raise
+    # if client code wants to use these features, then let the built-in errors raise
+    def validate_request(*args, **kwargs):
+        raise RuntimeError('openapi_core cannot be imported!')
 else:
-    def validate_request(openapi_spec: "OpenAPI"):
+    def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
         """Validate request obj against the given OpenAPI spec."""
 
         def make_wrapper(method):  # type: ignore[no-untyped-def]
