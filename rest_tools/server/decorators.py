@@ -443,7 +443,6 @@ else:
 
         return make_wrapper
 
-
     def _http_server_request_to_openapi_request(
         req: tornado.httputil.HTTPServerRequest,
     ) -> "openapi_core_requests.RequestsOpenAPIRequest":

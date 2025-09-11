@@ -7,6 +7,7 @@ STORAGE_TYPES = ['memory']
 if redis_available:
     STORAGE_TYPES.append('redis')
 
+
 @pytest.mark.parametrize('storage_type', STORAGE_TYPES)
 def test_memory_session(storage_type):
     session_store = Session(storage_type=storage_type, expiration=0.1)
