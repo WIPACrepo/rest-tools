@@ -70,5 +70,7 @@ class RestServer:
         self.http_server.start()
 
     async def stop(self):
-        self.http_server.stop()
-        await self.http_server.close_all_connections()
+        if self.http_server:
+            self.http_server.stop()
+            await self.http_server.close_all_connections()
+        self.http_server = None
