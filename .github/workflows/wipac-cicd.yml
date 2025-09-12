@@ -102,6 +102,11 @@ jobs:
       fail-fast: false
       matrix:
         py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
+    services:
+      redis:
+        image: redis:8
+        ports:
+        - 6379:6379
     steps:
       - uses: actions/checkout@v4
         with:
