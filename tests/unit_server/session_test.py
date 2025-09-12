@@ -53,7 +53,7 @@ def test_memory_session(storage_type):
     session_store.delete_session('test_session')
     with pytest.raises(KeyError):
         session_store.get_session('test_session')
-    
+
     session_store.close()
 
 
@@ -81,5 +81,5 @@ def test_session_wrapper(storage_type):
     time.sleep(.07)
     ret = session_store.get_session('user123')
     assert ret == {'username': 'Alice'}
-    
+
     session_store.close()

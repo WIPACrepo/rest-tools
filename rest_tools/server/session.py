@@ -7,6 +7,7 @@ Redis is for production, and ideal when mulitple servers are running.
 """
 
 from collections.abc import MutableMapping
+from collections import UserDict
 import dataclasses as dc
 from enum import Enum
 import logging
@@ -27,17 +28,17 @@ class SessionEntry:
 
 # Define the session storage type
 class SessionStorage(MutableMapping[str, SessionEntry]):
-    def close(self):
-        pass
+    def close(self): ...
 
 
-class MemorySessionStorage(SessionStorage, dict[str, SessionEntry]):
+class MemorySessionStorage(UserDict[str, SessionEntry], SessionStorage):
     """
     In-memory session storage.
 
     This is just a dict, and is designed for testing.
     """
-    pass
+    def close(self):
+        pass
 
 
 try:
