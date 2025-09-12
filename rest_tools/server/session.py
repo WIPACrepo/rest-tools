@@ -26,10 +26,12 @@ class SessionEntry:
 
 
 # Define the session storage type
-SessionStorage = MutableMapping[str, SessionEntry]
+class SessionStorage(MutableMapping[str, SessionEntry]):
+    def close(self):
+        pass
 
 
-class MemorySessionStorage(dict[str, SessionEntry]):
+class MemorySessionStorage(SessionStorage, dict[str, SessionEntry]):
     """
     In-memory session storage.
 
@@ -79,6 +81,9 @@ else:
                             prefix=['session:'], index_type=IndexType.HASH
                         )
                     )
+
+        def close(self):
+            self._conn.close()
 
         def __getitem__(self, key: str) -> SessionEntry:
             ret: dict = self._conn.hgetall('session:'+key)  # type: ignore
@@ -137,6 +142,9 @@ class Session:
             raise RuntimeError("Invalid session storage type")
 
         self._expiration = expiration
+
+    def close(self):
+        self._sessions.close()
 
     def set(self, session_id: str, data: SessionData):
         """
