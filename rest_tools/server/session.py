@@ -28,7 +28,8 @@ class SessionEntry:
 
 # Define the session storage type
 class SessionStorage(MutableMapping[str, SessionEntry]):
-    def close(self): ...
+    def close(self):
+        ...
 
 
 class MemorySessionStorage(UserDict[str, SessionEntry], SessionStorage):
