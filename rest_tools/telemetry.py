@@ -3,7 +3,7 @@
 # pylint:skip-file
 
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, TypeVar, cast
 
 #
 # First, try to import then implement wipac-telemetry
@@ -19,7 +19,7 @@ try:
     def set_current_span_attribute(key: str, value: Any) -> None:
         wtt.get_current_span().set_attribute(key, value)
 
-    def inject_span_carrier_if_recording(carrier: Optional[Dict[str, Any]]) -> None:
+    def inject_span_carrier_if_recording(carrier: Optional[dict[str, Any]]) -> None:
         if wtt.get_current_span().is_recording():
             wtt.propagations.inject_span_carrier(carrier)
 

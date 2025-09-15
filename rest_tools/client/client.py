@@ -14,7 +14,7 @@ import logging
 import math
 import os
 import time
-from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
+from typing import Any, Callable, Generator, Optional, Tuple, Union
 
 import jwt
 import requests
@@ -267,9 +267,9 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> Tuple[str, Dict[str, Any]]:
+        args: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
+    ) -> Tuple[str, dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
             args = {}
@@ -281,7 +281,7 @@ class RestClient:
             path = path[1:]
         url = os.path.join(self.address, path)
 
-        kwargs: Dict[str, Any] = {'timeout': self.timeout}
+        kwargs: dict[str, Any] = {'timeout': self.timeout}
 
         if method in ('GET', 'HEAD'):
             # args should be urlencoded
@@ -323,8 +323,8 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        args: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -360,8 +360,8 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        args: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -395,8 +395,8 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        args: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
         chunk_size: Optional[int] = 8096,
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.

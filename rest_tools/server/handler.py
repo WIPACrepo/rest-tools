@@ -10,7 +10,7 @@ import logging
 import time
 import urllib.parse
 from collections import defaultdict
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import tornado.escape
 import tornado.httputil
@@ -109,7 +109,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.debug = debug
         self.auth = auth
         self.auth_url = auth_url
-        self.auth_data: Dict[str, Any] = {}
+        self.auth_data: dict[str, Any] = {}
         self.auth_key = ''
         self.module_auth_key = module_auth_key
         self.server_header = server_header
@@ -194,7 +194,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.finish()
 
     @functools.cached_property
-    def json_body_arguments(self) -> Dict[str,Any]:
+    def json_body_arguments(self) -> dict[str,Any]:
         """Get the body arguments, decoded from a JSON-encoded request body."""
         if not self.request.body:
             return {}
@@ -371,8 +371,8 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
         self.oauth_client_scope = list(scopes)
 
     async def get_authenticated_user(
-        self, redirect_uri: str, code: str, state: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, redirect_uri: str, code: str, state: dict[str, Any]
+    ) -> dict[str, Any]:
         http = self.get_auth_http_client()
         body = {
             'redirect_uri': redirect_uri,
@@ -419,7 +419,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise
         return ret
 
-    def _decode_state(self, state: Union[bytes, str]) -> Dict[str, Any]:
+    def _decode_state(self, state: Union[bytes, str]) -> dict[str, Any]:
         data = tornado.escape.json_decode(base64.b64decode(state))
         _, token, _ = self._decode_xsrf_token(data.pop('xsrf'))
         _, expected_token, _ = self._get_raw_xsrf_token()
@@ -429,7 +429,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise tornado.web.HTTPError(403, reason="XSRF cookie does not match state argument")
         return data
 
-    def _encode_state(self, data: Dict[str, Any]) -> bytes:
+    def _encode_state(self, data: dict[str, Any]) -> bytes:
         data2 = data.copy()  # make a copy to not add xsrf to source dict
         data2['xsrf'] = self.xsrf_token.decode('utf-8')
         return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8'))

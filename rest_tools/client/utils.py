@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from .client import RestClient
 
@@ -25,7 +25,7 @@ async def request_and_validate(
     openapi_spec: "openapi_core.OpenAPI",
     method: str,
     path: str,
-    args: Optional[Dict[str, Any]] = None,
+    args: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Make request and validate the response against a given OpenAPI spec.
 

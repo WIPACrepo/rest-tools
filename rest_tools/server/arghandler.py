@@ -9,7 +9,7 @@ import re
 import sys
 import time
 import traceback
-from typing import Any, List, Union, cast
+from typing import Any, Union, cast
 
 import tornado.web
 from tornado.escape import to_unicode
@@ -229,7 +229,7 @@ class ArgumentHandler:
 
     def parse_args(self) -> argparse.Namespace:
         """Get the args -- like argparse.parse_args but parses a dict."""
-        arg_strings: List[str] = []
+        arg_strings: list[str] = []
 
         # json-encoded body arguments
         if self.argument_source == ArgumentSource.JSON_BODY_ARGUMENTS:
