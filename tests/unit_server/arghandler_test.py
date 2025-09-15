@@ -4,7 +4,7 @@ import argparse
 import json
 import re
 import sys
-from typing import Any, Tuple, Union, cast
+from typing import Any, Union, cast
 from unittest.mock import Mock
 
 import pytest
@@ -28,7 +28,7 @@ JSON_BODY_ARGUMENTS = "json-body-arguments"
 
 def setup_argument_handler(
     argument_source: str,
-    args: Union[dict[str, Any], list[Tuple[Any, Any]]],
+    args: Union[dict[str, Any], list[tuple[Any, Any]]],
 ) -> ArgumentHandler:
     """Load data and return `ArgumentHandler` instance."""
     if argument_source == QUERY_ARGUMENTS:
@@ -488,7 +488,7 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
         "pick_it": "paper",
         "bar": "True",
     }
-    choices: list = ["rock", "paper", "scissors"]
+    choices = ["rock", "paper", "scissors"]
     if argument_source == JSON_BODY_ARGUMENTS:
         args.update(
             {

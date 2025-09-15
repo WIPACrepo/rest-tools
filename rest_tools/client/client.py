@@ -14,11 +14,11 @@ import logging
 import math
 import os
 import time
-from typing import Any, Callable, Generator, Optional, Tuple, Union
+from typing import Any, Callable, Generator, Optional, Union
 
 import jwt
 import requests
-import urllib3
+import urllib3.util
 
 from .. import telemetry as wtt
 from ..utils.json_util import JSONType, json_decode
@@ -81,6 +81,7 @@ class CalcRetryFromWaittimeMax:
         # the first backoff is always 0 sec, factor applies after 2nd attempt
         #    T  +  0  +  sum{n=1,retries-1}(T + min[MAX, 2^n * B] )  +  T
         # sum has no closed form due to `min` function
+        retries = 0
         for candidate in range(0, MAX_RETRIES + 2):  # last val is MAX_RETRIES+1
             total = (
                 timeout
@@ -269,7 +270,7 @@ class RestClient:
         path: str,
         args: Optional[dict[str, Any]] = None,
         headers: Optional[dict[str, str]] = None,
-    ) -> Tuple[str, dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
             args = {}
@@ -380,7 +381,7 @@ class RestClient:
         try:
             self.open(sync=True)
             url, kwargs = self._prepare(method, path, args, headers)
-            r = self.session.request(method, url, **kwargs)
+            r: requests.Response = self.session.request(method, url, **kwargs)  # type: ignore
             r.raise_for_status()
             return self._decode(r.content)
         finally:
@@ -422,7 +423,7 @@ class RestClient:
         try:
             self.open(sync=True)
             url, kwargs = self._prepare(method, path, args, headers)
-            resp = self.session.request(method, url, stream=True, **kwargs)
+            resp: requests.Response = self.session.request(method, url, stream=True, **kwargs)  # type: ignore
             resp.raise_for_status()
             for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):
                 decoded = self._decode(line.strip())
