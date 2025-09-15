@@ -4,7 +4,7 @@ import argparse
 import json
 import re
 import sys
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Union, cast
 from unittest.mock import Mock
 
 import pytest
@@ -28,7 +28,7 @@ JSON_BODY_ARGUMENTS = "json-body-arguments"
 
 def setup_argument_handler(
     argument_source: str,
-    args: Union[Dict[str, Any], List[Tuple[Any, Any]]],
+    args: Union[dict[str, Any], list[tuple[Any, Any]]],
 ) -> ArgumentHandler:
     """Load data and return `ArgumentHandler` instance."""
     if argument_source == QUERY_ARGUMENTS:
@@ -104,7 +104,7 @@ def test_100__defaults(argument_source: str) -> None:
 )
 def test_110__no_default_no_typing(argument_source: str) -> None:
     """Test `argument_source` arguments."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": "-10",
         "bar": "True",
         "bat": "2.5",
@@ -149,7 +149,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
     def custom_type(_: Any) -> Any:
         return "this could be anything but it's just a string"
 
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": ("-10", int),
         #
         "bar": ("True", bool),
@@ -217,7 +217,7 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
     def custom_type(val: Any) -> Any:
         raise ValueError("x")
 
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": ("hank", int),
         "bat": ("2.5", int),
         "baz": ("9e-33", int),
@@ -341,7 +341,7 @@ def test_140__extra_argument(argument_source: str) -> None:
     """Test `argument_source` arguments error case."""
 
     # set up ArgumentHandler
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": "val",
         "reqd": "2",
         "xtra": 1,
@@ -403,7 +403,7 @@ def test_141__extra_argument_with_duplicates(argument_source: str) -> None:
 )
 def test_200__argparse_dest(argument_source: str) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "old_name": "-10",
         "bar": "True",
     }
@@ -444,11 +444,11 @@ def test_200__argparse_dest(argument_source: str) -> None:
 )
 def test_210__argparse_choices(argument_source: str) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "pick_it": "paper",
         "bar": "True",
     }
-    choices: List = ["rock", "paper", "scissors"]
+    choices: list = ["rock", "paper", "scissors"]
     if argument_source == JSON_BODY_ARGUMENTS:
         args.update(
             {
@@ -484,11 +484,11 @@ def test_210__argparse_choices(argument_source: str) -> None:
 )
 def test_211__argparse_choices__error(argument_source: str) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "pick_it": "paper",
         "bar": "True",
     }
-    choices: List = ["rock", "paper", "scissors"]
+    choices: list[Any] = ["rock", "paper", "scissors"]
     if argument_source == JSON_BODY_ARGUMENTS:
         args.update(
             {
@@ -551,7 +551,7 @@ def test_230__argparse_custom_validation__supported_builtins__error(
     argument_source: str, exc: Exception
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": "True",
     }
     if argument_source == JSON_BODY_ARGUMENTS:
@@ -601,7 +601,7 @@ def test_232__argparse_custom_validation__unsupported_errors__error(
     argument_source: str, exc: Exception
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": "True",
     }
     if argument_source == JSON_BODY_ARGUMENTS:
@@ -645,7 +645,7 @@ def test_234__argparse_custom_validation__argumenttypeerror__error(
     argument_source: str,
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": "True",
     }
     if argument_source == JSON_BODY_ARGUMENTS:
@@ -700,7 +700,7 @@ def test_236__argparse_custom_validation__validator_no_param__error(
     exc: Exception,
 ) -> None:
     """Test `argument_source` arguments using argparse's advanced options."""
-    args: Dict[str, Any] = {
+    args: dict[str, Any] = {
         "foo": "True",
     }
     if argument_source == JSON_BODY_ARGUMENTS:

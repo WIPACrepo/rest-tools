@@ -8,6 +8,7 @@ from .decorators import (
     role_authorization,
     scope_role_auth,
     token_attribute_role_mapping_auth,
+    TokenAttributeRoleMappingProtocol,
     validate_request,
 )
 from .handler import (
@@ -32,6 +33,7 @@ __all__ = [
     "scope_role_auth",
     "keycloak_role_auth",
     "token_attribute_role_mapping_auth",
+    "TokenAttributeRoleMappingProtocol",
     "ArgumentHandler",
     "ArgumentSource",
     "validate_request",

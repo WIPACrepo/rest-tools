@@ -5,7 +5,7 @@ import logging
 import time
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import qrcode  # type: ignore[import]
 import requests
@@ -19,7 +19,7 @@ from ..utils.pkce import PKCEMixin
 # fmt:off
 
 
-def _print_qrcode(req: Dict[str, str]) -> None:
+def _print_qrcode(req: dict[str, str]) -> None:
     if 'verification_uri_complete' not in req:
         req['verification_uri_complete'] = req['verification_uri']+'?user_code='+req['user_code']
 
@@ -67,7 +67,7 @@ class CommonDeviceGrant(PKCEMixin):
         token_url: str,
         client_id: str,
         client_secret: Optional[str] = None,
-        scopes: Optional[List[str]] = None,
+        scopes: Optional[list[str]] = None,
     ) -> str:
         args = {
             'client_id': client_id,
@@ -145,7 +145,7 @@ def DeviceGrantAuth(
     token_url: str,
     client_id: str,
     client_secret: Optional[str] = None,
-    scopes: Optional[List[str]] = None,
+    scopes: Optional[list[str]] = None,
     **kwargs: Any,
 ) -> OpenIDRestClient:
     """A REST client that can handle OpenID and the OAuth2 Device Client flow.
@@ -198,7 +198,7 @@ def SavedDeviceGrantAuth(
     filename: str,
     client_id: str,
     client_secret: Optional[str] = None,
-    scopes: Optional[List[str]] = None,
+    scopes: Optional[list[str]] = None,
     **kwargs: Any,
 ) -> OpenIDRestClient:
     """

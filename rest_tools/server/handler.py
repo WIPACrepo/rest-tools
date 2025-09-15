@@ -10,16 +10,13 @@ import logging
 import time
 import urllib.parse
 from collections import defaultdict
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import tornado.escape
-import tornado.gen
-import tornado.httpclient
 import tornado.httputil
 import tornado.web
 from tornado.auth import OAuth2Mixin
 
-import rest_tools
 from .decorators import catch_error
 from .stats import RouteStats
 from .. import telemetry as wtt
@@ -107,13 +104,13 @@ class RestHandler(tornado.web.RequestHandler):
         except Exception:
             LOGGER.error('error', exc_info=True)
 
-    def initialize(self, debug=False, auth=None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
+    def initialize(self, debug=False, auth: Union[Auth, None] = None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
         super().initialize(**kwargs)
         self.debug = debug
         self.auth = auth
         self.auth_url = auth_url
-        self.auth_data = {}
-        self.auth_key = None
+        self.auth_data: dict[str, Any] = {}
+        self.auth_key = ''
         self.module_auth_key = module_auth_key
         self.server_header = server_header
         self.route_stats = route_stats
@@ -138,11 +135,6 @@ class RestHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self._headers['Server'] = self.server_header
 
-    def get_template_namespace(self):
-        namespace = super().get_template_namespace()
-        namespace['version'] = rest_tools.__version__
-        return namespace
-
     def get_current_user(self):
         """Get the current user, and set auth-related attributes."""
         try:
@@ -150,6 +142,8 @@ class RestHandler(tornado.web.RequestHandler):
             if type.lower() != 'bearer':
                 raise Exception('bad header type')
             LOGGER.debug('token: %r', token)
+            if self.auth is None:
+                raise RuntimeError('need to set auth in order to validate tokens!')
             data = self.auth.validate(token)
             self.auth_data = data
             self.auth_key = token
@@ -200,7 +194,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.finish()
 
     @functools.cached_property
-    def json_body_arguments(self) -> Dict[str,Any]:
+    def json_body_arguments(self) -> dict[str,Any]:
         """Get the body arguments, decoded from a JSON-encoded request body."""
         if not self.request.body:
             return {}
@@ -271,8 +265,10 @@ class KeycloakUsernameMixin:
 
     Note: will not work on service account tokens.
     """
+    auth_data: dict
+
     def get_current_user(self):
-        if not super().get_current_user():
+        if not super().get_current_user():  # type: ignore
             return None
         username = self.auth_data.get('preferred_username', None)
         if not username:
@@ -284,7 +280,7 @@ class KeycloakUsernameMixin:
 
 class OpenIDCookieHandlerMixin:
     """Store/load current user's `OpenIDLoginHandler` tokens in cookies."""
-    auth: OpenIDAuth
+    auth: Union[Auth, None]
     get_secure_cookie: Callable[..., Optional[bytes]]
     set_secure_cookie: Callable[..., None]
     clear_cookie: Callable[..., None]
@@ -293,9 +289,13 @@ class OpenIDCookieHandlerMixin:
         """Get the current user, and set auth-related attributes."""
         try:
             access_token = self.get_secure_cookie('access_token')
+            if not access_token:
+                raise RuntimeError('missing access_token cookie')
+            if not self.auth:
+                raise RuntimeError('auth is not set!')
             data = self.auth.validate(access_token)
             self.auth_data = data
-            self.auth_key = access_token
+            self.auth_key = access_token.decode('utf-8')
             refresh_token = self.get_secure_cookie('refresh_token')
             self.auth_refresh_token = refresh_token
             return data['sub']
@@ -371,8 +371,8 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
         self.oauth_client_scope = list(scopes)
 
     async def get_authenticated_user(
-        self, redirect_uri: str, code: str, state: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, redirect_uri: str, code: str, state: dict[str, Any]
+    ) -> dict[str, Any]:
         http = self.get_auth_http_client()
         body = {
             'redirect_uri': redirect_uri,
@@ -407,10 +407,11 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             )
             ret['id_token'] = tornado.escape.json_decode(response.body)
 
-        if ret.get('id_token') and isinstance(ret['id_token'], str):
-            ret['id_token'] = self.auth.validate(ret['id_token'])
-
         try:
+            if not self.auth:
+                raise RuntimeError('auth is not set!')
+            if ret.get('id_token') and isinstance(ret['id_token'], str):
+                ret['id_token'] = self.auth.validate(ret['id_token'])
             self.auth.validate(ret['access_token'])
         except Exception:
             if self.debug:
@@ -418,7 +419,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise
         return ret
 
-    def _decode_state(self, state: Union[bytes, str]) -> str:
+    def _decode_state(self, state: Union[bytes, str]) -> dict[str, Any]:
         data = tornado.escape.json_decode(base64.b64decode(state))
         _, token, _ = self._decode_xsrf_token(data.pop('xsrf'))
         _, expected_token, _ = self._get_raw_xsrf_token()
@@ -428,7 +429,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise tornado.web.HTTPError(403, reason="XSRF cookie does not match state argument")
         return data
 
-    def _encode_state(self, data: Dict[str, Any]) -> bytes:
+    def _encode_state(self, data: dict[str, Any]) -> bytes:
         data2 = data.copy()  # make a copy to not add xsrf to source dict
         data2['xsrf'] = self.xsrf_token.decode('utf-8')
         return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8'))

@@ -7,6 +7,7 @@ import os
 import re
 from functools import wraps
 from inspect import isawaitable
+from typing import Protocol
 
 import requests.exceptions
 import tornado.web
@@ -377,6 +378,11 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):  # noqa: C9
     return make_decorator
 
 
+class TokenAttributeRoleMappingProtocol(Protocol):
+    auth_groups: list
+    auth_roles: list
+
+
 ########################################################################################################################
 # fmt:on
 
@@ -385,12 +391,17 @@ try:
     from openapi_core import OpenAPI
     from openapi_core.contrib import requests as openapi_core_requests
     from openapi_core.validation.exceptions import ValidationError
+    import openapi_core.validation.schemas.exceptions
+    openapi_available = True
 except ImportError:
-    pass  # if client code wants to use these features, then let the built-in errors raise
+    # if client code wants to use these features, then let the built-in errors raise
+    openapi_available = False
 
 
-def validate_request(openapi_spec: "OpenAPI"):
+def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
     """Validate request obj against the given OpenAPI spec."""
+    if not openapi_available:
+        raise RuntimeError('openapi cannot be imported! perhaps you meant to pip install it?')
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
         async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
@@ -401,11 +412,11 @@ def validate_request(openapi_spec: "OpenAPI"):
                 openapi_spec.validate_request(
                     _http_server_request_to_openapi_request(zelf.request),
                 )
-            except ValidationError as e:
+            except ValidationError as e:  # type: ignore
                 LOGGER.error(f"invalid request: {e.__class__.__name__} - {e}")
                 if isinstance(  # look at the ORIGINAL exception that caused this error
                     e.__context__,
-                    openapi_core.validation.schemas.exceptions.InvalidSchemaValue,
+                    openapi_core.validation.schemas.exceptions.InvalidSchemaValue,  # type: ignore
                 ):
                     reason = "; ".join(  # to client
                         # verbose details after newline
@@ -442,7 +453,9 @@ def _http_server_request_to_openapi_request(
     req: tornado.httputil.HTTPServerRequest,
 ) -> "openapi_core_requests.RequestsOpenAPIRequest":
     """Convert a `tornado.httputil.HTTPServerRequest` to openapi's type."""
-    return openapi_core_requests.RequestsOpenAPIRequest(
+    if not openapi_available:
+        raise RuntimeError('openapi cannot be imported! perhaps you meant to pip install it?')
+    return openapi_core_requests.RequestsOpenAPIRequest(  # type: ignore
         requests.Request(
             method=req.method.lower() if req.method else "get",
             url=f"{req.protocol}://{req.host}{req.uri}",
