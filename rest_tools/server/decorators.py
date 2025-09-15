@@ -397,6 +397,7 @@ except ImportError:
     # if client code wants to use these features, then let the built-in errors raise
     openapi_available = False
 
+
 def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
     """Validate request obj against the given OpenAPI spec."""
     if not openapi_available:
@@ -446,6 +447,7 @@ def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
         return wrapper
 
     return make_wrapper
+
 
 def _http_server_request_to_openapi_request(
     req: tornado.httputil.HTTPServerRequest,
