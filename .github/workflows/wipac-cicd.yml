@@ -64,6 +64,7 @@ jobs:
   #############################################################################
 
   py-setup:
+    if: ${{ github.actor != 'dependabot[bot]' }} # dependabot cannot access PAT
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -107,7 +108,7 @@ jobs:
       redis:
         image: redis:8
         ports:
-        - 6379:6379
+          - 6379:6379
     steps:
       - uses: actions/checkout@v5
         with:
@@ -138,7 +139,7 @@ jobs:
       redis:
         image: redis:8
         ports:
-        - 6379:6379
+          - 6379:6379
     steps:
       - uses: actions/checkout@v5
         with:
@@ -169,7 +170,7 @@ jobs:
       redis:
         image: redis:8
         ports:
-        - 6379:6379
+          - 6379:6379
     steps:
       - uses: actions/checkout@v5
         with:
