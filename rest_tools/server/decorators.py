@@ -392,6 +392,7 @@ try:
     from openapi_core.contrib import requests as openapi_core_requests
     from openapi_core.validation.exceptions import ValidationError
     import openapi_core.validation.schemas.exceptions
+
     openapi_available = True
 except ImportError:
     # if client code wants to use these features, then let the built-in errors raise
@@ -401,11 +402,13 @@ except ImportError:
 def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
     """Validate request obj against the given OpenAPI spec."""
     if not openapi_available:
-        raise RuntimeError('openapi cannot be imported! perhaps you meant to pip install it?')
+        raise RuntimeError(
+            "openapi cannot be imported! perhaps you meant to pip install it?"
+        )
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
         async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
-            LOGGER.info("validating with openapi spec")
+            LOGGER.debug("validating with openapi spec")
             # NOTE - don't change data (unmarshal) b/c we are downstream of data separation
             try:
                 # https://openapi-core.readthedocs.io/en/latest/validation.html
@@ -454,7 +457,9 @@ def _http_server_request_to_openapi_request(
 ) -> "openapi_core_requests.RequestsOpenAPIRequest":
     """Convert a `tornado.httputil.HTTPServerRequest` to openapi's type."""
     if not openapi_available:
-        raise RuntimeError('openapi cannot be imported! perhaps you meant to pip install it?')
+        raise RuntimeError(
+            "openapi cannot be imported! perhaps you meant to pip install it?"
+        )
     return openapi_core_requests.RequestsOpenAPIRequest(  # type: ignore
         requests.Request(
             method=req.method.lower() if req.method else "get",
