@@ -14,6 +14,8 @@ import logging
 import time
 from typing import Iterator, Union
 
+from tornado.web import RequestHandler
+
 
 SessionDataTypes = Union[bool, float, int, str]
 SessionData = MutableMapping[str, SessionDataTypes]
@@ -60,9 +62,10 @@ else:
 
         Ideal for production, where multiple servers could be running at the same time.
         """
-        def __init__(self):
+        def __init__(self, host='localhost'):
             retry = Retry(ExponentialBackoff(), 5)
             self._conn = redis.Redis(
+                host=host,
                 cache_config=CacheConfig(),
                 decode_responses=True,
                 protocol=3,
@@ -123,7 +126,7 @@ class Session:
     """
     _sessions: SessionStorage
 
-    def __init__(self, storage_type: Union[str, StorageTypes] = 'memory', expiration: float = 1800):
+    def __init__(self, storage_type: Union[str, StorageTypes] = 'memory', expiration: float = 1800, **kwargs):
         """
         Initializes the session store.
 
@@ -139,7 +142,7 @@ class Session:
                 logging.error("You have asked to use the redis session storage backend, but "
                               "`redis` is not installed. Install it with `pip install redis`.")
                 raise RuntimeError('redis package not installed')
-            self._sessions = RedisSessionStorage()
+            self._sessions = RedisSessionStorage(**kwargs)
         else:
             raise RuntimeError("Invalid session storage type")
 
@@ -247,12 +250,11 @@ class SessionWrapper(SessionData):
         return len(self._data)
 
 
-class SessionMixin:
+class SessionMixin(RequestHandler):
     """Mixin to access session data"""
-    current_user: Union[str, None]
-
-    def initialize(self, session: Session, **kwargs):
+    def initialize(self, *args, session: Session, **kwargs):
         self._session_mgr = session
+        super().initialize(*args, **kwargs)
 
     @property
     def session(self):
