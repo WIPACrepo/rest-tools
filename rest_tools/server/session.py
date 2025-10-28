@@ -62,10 +62,13 @@ else:
 
         Ideal for production, where multiple servers could be running at the same time.
         """
-        def __init__(self, host='localhost'):
+        def __init__(self, host='localhost', username=None, password=None, ssl=False):
             retry = Retry(ExponentialBackoff(), 5)
             self._conn = redis.Redis(
                 host=host,
+                username=username,
+                password=password,
+                ssl=ssl,
                 cache_config=CacheConfig(),
                 decode_responses=True,
                 protocol=3,
