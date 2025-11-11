@@ -434,7 +434,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
         data2['xsrf'] = self.xsrf_token.decode('utf-8')
         return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8'))
 
-    def start_oauth_authorization(self, state: dict | None = None):
+    def start_oauth_authorization(self, state: dict[str, Any] | None = None):
         """Start the OAuth2 Authorization flow"""
         if not state:
             state = {}
