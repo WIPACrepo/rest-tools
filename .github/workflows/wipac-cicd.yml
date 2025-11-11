@@ -76,6 +76,7 @@ jobs:
           mode: PACKAGING_AND_PYPI
           pypi_name: wipac-rest-tools
           python_min: "3.10"
+          python_max: 3.13
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
           keywords_comma: "WIPAC, IceCube, REST, tools, utilities"
@@ -160,7 +161,7 @@ jobs:
           pycycle --here --verbose
 
   tests-with-telemetry:
-    if: false  # telemetry has been shelved — perhaps in the future, we will re-enable it 
+    if: false  # telemetry has been shelved — perhaps in the future, we will re-enable it
     needs: [ py-versions ]
     runs-on: ubuntu-latest
     strategy:
