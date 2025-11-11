@@ -429,10 +429,10 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise tornado.web.HTTPError(403, reason="XSRF cookie does not match state argument")
         return data
 
-    def _encode_state(self, data: dict[str, Any]) -> bytes:
+    def _encode_state(self, data: dict[str, Any]) -> str:
         data2 = data.copy()  # make a copy to not add xsrf to source dict
         data2['xsrf'] = self.xsrf_token.decode('utf-8')
-        return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8'))
+        return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8')).decode('utf-8')
 
     def start_oauth_authorization(self, state: dict[str, Any] | None = None):
         """Start the OAuth2 Authorization flow"""
