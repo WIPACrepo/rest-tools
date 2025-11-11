@@ -71,7 +71,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
-      - uses: WIPACrepo/wipac-dev-py-setup-action@v5.7
+      - uses: WIPACrepo/wipac-dev-py-setup-action@v5.8
         with:
           mode: PACKAGING_AND_PYPI
           pypi_name: wipac-rest-tools
@@ -79,7 +79,7 @@ jobs:
           python_max: "3.14"
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
-          keywords_comma: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
+          keywords_comma: "WIPAC, IceCube, REST, tools, utilities"
           auto_mypy_option: True
 
   py-dependencies:
@@ -88,10 +88,9 @@ jobs:
       - name: checkout
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           fetch-depth: 0  # setuptools-scm needs to access git tags
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
-      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v3.2
+      - uses: WIPACrepo/wipac-dev-py-dependencies-action@v3.4
 
 
   #############################################################################
@@ -161,6 +160,7 @@ jobs:
           pycycle --here --verbose
 
   tests-with-telemetry:
+    if: false  # telemetry has been shelved — perhaps in the future, we will re-enable it
     needs: [ py-versions ]
     runs-on: ubuntu-latest
     strategy:
