@@ -117,7 +117,7 @@ class RestHandler(tornado.web.RequestHandler):
 
     @wtt.spanned(
         span_namer=wtt.SpanNamer(use_this_arg='self.request.method'),
-        kind=wtt.SpanKind.SERVER,
+        kind=wtt.SpanKind.SERVER,  # type:ignore
         these=["self.request.method", "self.request.path"],
         carrier="self.request.headers",
     )
@@ -429,10 +429,38 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise tornado.web.HTTPError(403, reason="XSRF cookie does not match state argument")
         return data
 
-    def _encode_state(self, data: dict[str, Any]) -> bytes:
+    def _encode_state(self, data: dict[str, Any]) -> str:
         data2 = data.copy()  # make a copy to not add xsrf to source dict
         data2['xsrf'] = self.xsrf_token.decode('utf-8')
-        return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8'))
+        return base64.b64encode(tornado.escape.json_encode(data2).encode('utf-8')).decode('utf-8')
+
+    def start_oauth_authorization(self, state: dict[str, Any] | None = None):
+        """Start the OAuth2 Authorization flow"""
+        if not state:
+            state = {}
+        redirect = self.get_argument('next', None)
+        if not redirect:
+            redirect = self.get_argument('redirect', None)
+        if redirect:
+            state['redirect'] = redirect
+        elif not self.settings.get('debug', False):
+            raise tornado.web.HTTPError(400, 'missing redirect')
+        if self.get_argument('state', False):
+            state['state'] = self.get_argument('state')
+        extra_params = {}
+        if not self.oauth_client_secret:
+            # use PKCE  https://www.rfc-editor.org/rfc/rfc7636
+            extra_params['code_challenge'] = self.create_pkce_challenge()
+            extra_params['code_challenge_method'] = 'S256'
+            state['code_challenge'] = extra_params['code_challenge']
+        extra_params["state"] = self._encode_state(state)
+
+        self.authorize_redirect(
+            redirect_uri=self.get_login_url(),
+            client_id=self.oauth_client_id,
+            scope=self.oauth_client_scope,
+            extra_params=extra_params,
+            response_type='code')
 
     @catch_error
     async def get(self):
@@ -479,27 +507,4 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             else:
                 raise tornado.web.HTTPError(400, reason='missing redirect')
         else:
-            state = {}
-            redirect = self.get_argument('next', None)
-            if not redirect:
-                redirect = self.get_argument('redirect', None)
-            if redirect:
-                state['redirect'] = redirect
-            elif not self.settings.get('debug', False):
-                raise tornado.web.HTTPError(400, 'missing redirect')
-            if self.get_argument('state', False):
-                state['state'] = self.get_argument('state')
-            extra_params = {}
-            if not self.oauth_client_secret:
-                # use PKCE  https://www.rfc-editor.org/rfc/rfc7636
-                extra_params['code_challenge'] = self.create_pkce_challenge()
-                extra_params['code_challenge_method'] = 'S256'
-                state['code_challenge'] = extra_params['code_challenge']
-            extra_params["state"] = self._encode_state(state)
-
-            self.authorize_redirect(
-                redirect_uri=self.get_login_url(),
-                client_id=self.oauth_client_id,
-                scope=self.oauth_client_scope,
-                extra_params=extra_params,
-                response_type='code')
+            self.start_oauth_authorization()

@@ -9,9 +9,6 @@ import logging
 import socket
 
 import tornado.web
-from tornado.platform.asyncio import AsyncIOMainLoop
-
-AsyncIOMainLoop().install()
 
 LOGGER = logging.getLogger()  # this stuff always needs to be logged -> use the 'root' logger
 
