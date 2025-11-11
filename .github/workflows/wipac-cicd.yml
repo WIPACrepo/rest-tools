@@ -78,7 +78,7 @@ jobs:
           python_min: "3.10"
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
-          keywords_comma: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
+          keywords_comma: "WIPAC, IceCube, REST, tools, utilities"
           auto_mypy_option: True
 
   py-dependencies:
