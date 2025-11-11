@@ -75,8 +75,8 @@ jobs:
         with:
           mode: PACKAGING_AND_PYPI
           pypi_name: wipac-rest-tools
-          python_min: 3.10
-          python_max: 3.14
+          python_min: "3.10"
+          python_max: "3.14"
           author: WIPAC Developers
           author_email: developers@icecube.wisc.edu
           keywords_comma: "WIPAC, IceCube, REST, tools, utilities, OpenTelemetry, tracing, telemetry"
