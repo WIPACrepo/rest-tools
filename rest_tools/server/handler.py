@@ -350,14 +350,9 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
     """
     store_tokens: Callable[..., Awaitable[None]]
 
-    def initialize(self, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):  # type: ignore
-        super().initialize(**kwargs)
-        if not isinstance(self.auth, OpenIDAuth):
-            raise RuntimeError('OpenID Connect auth not set up')
-        self._OAUTH_AUTHORIZE_URL = self.auth.provider_info['authorization_endpoint']
-        self._OAUTH_ACCESS_TOKEN_URL = self.auth.provider_info['token_endpoint']
-        self._OAUTH_LOGOUT_URL = self.auth.provider_info['end_session_endpoint']
-        self._OAUTH_USERINFO_URL = self.auth.provider_info['userinfo_endpoint']
+    def initialize(self, *args, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
+        super().initialize(*args, **kwargs)
+        self.oauth_setup()
         self.oauth_client_id = oauth_client_id
         self.oauth_client_secret = oauth_client_secret
 
@@ -369,6 +364,15 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
         if oauth_client_secret:
             scopes.add('offline_access')
         self.oauth_client_scope = list(scopes)
+
+    def oauth_setup(self):
+        # this is separate so it can be mocked out in testing
+        if not isinstance(self.auth, OpenIDAuth):
+            raise RuntimeError('OpenID Connect auth not set up')
+        self._OAUTH_AUTHORIZE_URL = self.auth.provider_info['authorization_endpoint']
+        self._OAUTH_ACCESS_TOKEN_URL = self.auth.provider_info['token_endpoint']
+        self._OAUTH_LOGOUT_URL = self.auth.provider_info['end_session_endpoint']
+        self._OAUTH_USERINFO_URL = self.auth.provider_info['userinfo_endpoint']
 
     async def get_authenticated_user(
         self, redirect_uri: str, code: str, state: dict[str, Any]

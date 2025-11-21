@@ -128,7 +128,7 @@ def test_openid_cookie_handler_mixin():
 def test_openid_login_handler_initialize(requests_mock):
     handler = OpenIDLoginHandler()
     with pytest.raises(RuntimeError):
-        handler.initialize('foo', 'bar')
+        handler.initialize(oauth_client_id='foo', oauth_client_secret='bar')
 
     requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({
         'authorization_endpoint': 'http://foo/auth',
@@ -137,7 +137,7 @@ def test_openid_login_handler_initialize(requests_mock):
         'userinfo_endpoint': 'http://foo/userinfo',
     }))
     ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
-    handler.initialize('foo', 'bar', **ret)
+    handler.initialize(oauth_client_id='foo', oauth_client_secret='bar', **ret)
 
     assert handler._OAUTH_AUTHORIZE_URL == 'http://foo/auth'
     assert handler._OAUTH_ACCESS_TOKEN_URL == 'http://foo/token'
@@ -165,7 +165,7 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
         'keys': [jwk],
     }))
     ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
-    handler.initialize('foo', 'bar', **ret)
+    handler.initialize(oauth_client_id='foo', oauth_client_secret='bar', **ret)
 
     access_token = auth.create_token('sub', headers={'kid': '123'})
     id_token = auth.create_token('sub', headers={'kid': '123'})
