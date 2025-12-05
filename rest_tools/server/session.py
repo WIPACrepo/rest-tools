@@ -17,8 +17,7 @@ from typing import Iterator, Union
 from tornado.web import RequestHandler
 
 
-SessionDataTypes = Union[bool, float, int, str]
-SessionData = MutableMapping[str, SessionDataTypes]
+SessionData = MutableMapping[str, str]
 
 
 # Define the structure of the internal session representation
@@ -235,10 +234,10 @@ class SessionWrapper(SessionData):
         self._session_mgr = session_mgr
         self._data = data
 
-    def __getitem__(self, name: str) -> SessionDataTypes:
+    def __getitem__(self, name: str) -> str:
         return self._data[name]
 
-    def __setitem__(self, name: str, value: SessionDataTypes):
+    def __setitem__(self, name: str, value: str):
         self._data[name] = value
         self._session_mgr.set(self._key, self._data)
 
