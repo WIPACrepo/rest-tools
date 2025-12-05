@@ -374,6 +374,11 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
         self._OAUTH_LOGOUT_URL = self.auth.provider_info['end_session_endpoint']
         self._OAUTH_USERINFO_URL = self.auth.provider_info['userinfo_endpoint']
 
+    def validate_new_token(self, token) -> dict[str, Any]:
+        if not self.auth:
+            raise RuntimeError('auth is not set!')
+        return self.auth.validate(token)
+
     async def get_authenticated_user(
         self, redirect_uri: str, code: str, state: dict[str, Any]
     ) -> dict[str, Any]:
@@ -412,11 +417,9 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             ret['id_token'] = tornado.escape.json_decode(response.body)
 
         try:
-            if not self.auth:
-                raise RuntimeError('auth is not set!')
             if ret.get('id_token') and isinstance(ret['id_token'], str):
-                ret['id_token'] = self.auth.validate(ret['id_token'])
-            self.auth.validate(ret['access_token'])
+                ret['id_token'] = self.validate_new_token(ret['id_token'])
+            self.validate_new_token(ret['access_token'])
         except Exception:
             if self.debug:
                 LOGGER.debug(f'bad token: {ret}')
