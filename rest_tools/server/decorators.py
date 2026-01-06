@@ -362,11 +362,10 @@ def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):  # noqa: C9
                     LOGGER.warning('exception in group auth', exc_info=True)
                     raise tornado.web.HTTPError(500, reason="internal server error") from exc
 
-                if authorized_groups:
-                    authorized_groups = sorted(authorized_groups)
-                    LOGGER.debug('groups authorized: %r', authorized_groups)
-                    wtt.set_current_span_attribute('self.auth_data.groups', ','.join(authorized_groups))
-                    self.auth_groups = authorized_groups
+                authorized_groups = sorted(authorized_groups)
+                LOGGER.debug('groups authorized: %r', authorized_groups)
+                wtt.set_current_span_attribute('self.auth_data.groups', ','.join(authorized_groups))
+                self.auth_groups = authorized_groups
 
                 ret = method(self, *args, **kwargs)
                 if isawaitable(ret):
