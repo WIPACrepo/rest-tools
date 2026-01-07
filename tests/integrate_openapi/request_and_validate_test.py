@@ -169,7 +169,9 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
 
     with pytest.raises(
         DataValidationError,
-        match=re.escape("Failed to cast value to integer type: hello"),
+        match=re.escape(
+            "InvalidData: Value {'resp-echo': {'foo': 'hello'}} not valid for schema of type object: (<ValidationError: \"'hello' is not of type 'integer'\">,)"
+        ),
     ):
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "hello"}}
