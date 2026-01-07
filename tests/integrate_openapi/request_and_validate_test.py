@@ -15,7 +15,7 @@ from openapi_core.validation.response.exceptions import DataValidationError
 
 from rest_tools.client import RestClient
 from rest_tools.client.utils import request_and_validate
-from rest_tools.server import RestServer, RestHandler
+from rest_tools.server import RestHandler, RestServer
 
 
 @pytest_asyncio.fixture
@@ -29,7 +29,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
         async def post(self) -> None:
             if self.get_argument("raise", None):
                 raise tornado.web.HTTPError(self.get_argument("raise"), "it's an error")
-            self.write({"echo-echo": self.get_argument("echo", {})})
+            self.write({"resp-echo": self.get_argument("echo", {})})
 
     rs.add_route(TestHandler.ROUTE, TestHandler)
     rs.startup(address="localhost", port=port)
@@ -85,7 +85,7 @@ OPENAPI_SPEC = openapi_core.OpenAPI(
                                         "schema": {
                                             "type": "object",
                                             "properties": {
-                                                "echo-echo": {
+                                                "resp-echo": {
                                                     "$ref": "#/components/schemas/EchoObject"
                                                 },
                                             },
@@ -132,7 +132,7 @@ async def test_000__valid(server: Callable[[], RestClient]) -> None:
     res = await request_and_validate(
         rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": 123}}
     )
-    assert res == {"echo-echo": {"foo": 123}}
+    assert res == {"resp-echo": {"foo": 123}}
 
     # validate response error
     with pytest.raises(requests.HTTPError) as e:
@@ -159,7 +159,9 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
 
     with pytest.raises(
         DataValidationError,
-        match=re.escape("Failed to cast value to object type: 123"),
+        match=re.escape(
+            "InvalidData: Value {'resp-echo': 123} not valid for schema of type object: (<ValidationError: \"123 is not of type 'object'\">,)"
+        ),
     ):
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": 123}
@@ -167,7 +169,9 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
 
     with pytest.raises(
         DataValidationError,
-        match=re.escape("Failed to cast value to integer type: hello"),
+        match=re.escape(
+            "InvalidData: Value {'resp-echo': {'foo': 'hello'}} not valid for schema of type object: (<ValidationError: \"'hello' is not of type 'integer'\">,)"
+        ),
     ):
         await request_and_validate(
             rc, OPENAPI_SPEC, "POST", "/echo/this", {"echo": {"foo": "hello"}}
@@ -176,7 +180,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     with pytest.raises(
         DataValidationError,
         match=re.escape(
-            "Value {'echo-echo': {}} not valid for schema of type object: (<ValidationError: \"'foo' is a required property\">,)"
+            "Value {'resp-echo': {}} not valid for schema of type object: (<ValidationError: \"'foo' is a required property\">,)"
         ),
     ):
         await request_and_validate(rc, OPENAPI_SPEC, "POST", "/echo/this", {"baz": 123})

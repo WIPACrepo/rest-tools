@@ -10,7 +10,7 @@ import requests
 from jsonschema_path import SchemaPath
 
 from rest_tools.client import RestClient
-from rest_tools.server import RestServer, RestHandler, validate_request
+from rest_tools.server import RestHandler, RestServer, validate_request
 
 
 @pytest_asyncio.fixture
@@ -343,7 +343,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
-            f"Request body validation error for url: {rc.address}/foo/args"
+            f"400 Client Error: 'abc' is not of type 'integer' for url: {rc.address}/foo/args"
         ),
     ) as e:
         # bad type
