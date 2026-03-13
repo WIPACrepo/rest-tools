@@ -1,12 +1,14 @@
 """Tools for working with OpenAPI."""
 
+import importlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import requests
 import tornado
+from jsonschema_path.typing import Schema
 
 # 'openapi' imports
 try:
@@ -31,22 +33,59 @@ LOGGER = logging.getLogger(__name__)
 ########################################################################################
 
 
-def get_openapi_spec(fpath: Path) -> tuple["openapi_core.OpenAPI", dict[str, Any]]:
+def get_openapi_spec(
+    fpath: Path,
+    add_project_metadata: bool = False,
+) -> tuple["openapi_core.OpenAPI", Schema]:
     """Get the OpenAPI spec and its dict representation."""
     spec_dict, base_uri = read_from_filename(str(fpath))
+    if add_project_metadata:
+        spec_dict = _populate_openapi_info_from_installed_metadata(spec_dict)
 
-    # first, validate the spec
+    # validate the spec
     LOGGER.info(f"validating OpenAPI spec for {base_uri} ({fpath})")
     validate(spec_dict)  # no exception -> spec is valid
 
-    # next, create the OpenAPI object
-    _path = SchemaPath.from_file_path(str(fpath))
-    _spec = openapi_core.OpenAPI(_path)
+    # create the OpenAPI object
+    _spec = openapi_core.OpenAPI(SchemaPath.from_dict(spec_dict, base_uri=base_uri))
 
-    return (
-        _spec,
-        cast(dict[str, Any], spec_dict),
-    )
+    return _spec, spec_dict
+
+
+def _populate_openapi_info_from_installed_metadata(spec: Schema) -> Schema:
+    """Populate spec['info'] from installed project metadata only."""
+    top_name = (__package__ or __name__).split(".")[0]
+    dist_name = importlib.metadata.packages_distributions()[top_name][0]  # use first
+    md = importlib.metadata.metadata(dist_name)
+
+    def _first_project_url(md: importlib.metadata.PackageMetadata) -> str:
+        """Return the first parsed Project-URL value."""
+        return next(
+            (
+                parts[1].strip()
+                for item in md.get_all("Project-URL", [])
+                if len(parts := item.split(",", 1)) == 2 and parts[1].strip()
+            ),
+            "",
+        )
+
+    info: dict[str, str | Any] = {
+        "title": md.get("Name", ""),
+        "summary": md.get("Summary", ""),
+        "description": md.get_payload() or "",
+        "version": md.get("Version", ""),
+        "contact": {
+            "name": md.get("Maintainer", md.get("Author", "")),
+            "email": md.get("Maintainer-email", md.get("Author-email", "")),
+            "url": _first_project_url(md),
+        },
+        "license": {
+            "name": md.get("License-Expression", md.get("License", "")),
+        },
+    }
+
+    spec["info"] = info
+    return spec
 
 
 def get_version_vmaj(openapi_spec: "openapi_core.OpenAPI") -> str:
