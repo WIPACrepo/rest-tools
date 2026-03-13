@@ -40,4 +40,4 @@ def get_openapi_spec(
 
 def get_version_vmaj(openapi_spec: "openapi_core.OpenAPI") -> str:
     """Get the major version of the OpenAPI spec, like 'v0', 'v1', etc."""
-    return "v" + openapi_spec.version.split(".")[0]
+    return "v" + openapi_spec.version.major
