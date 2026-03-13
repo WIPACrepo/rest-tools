@@ -14,6 +14,8 @@ try:
     from jsonschema_path import SchemaPath
     from openapi_spec_validator import validate
     from openapi_spec_validator.readers import read_from_filename
+    from openapi_core.contrib import requests as openapi_core_requests
+    from openapi_core.exceptions import OpenAPIError
 
     openapi_available = True
 except (ImportError, ModuleNotFoundError) as e:
@@ -26,6 +28,7 @@ LOGGER = logging.getLogger(__name__)
 
 ########################################################################################
 # OpenAPI spec manipulation
+########################################################################################
 
 
 def get_openapi_spec(fpath: Path) -> tuple["openapi_core.OpenAPI", dict[str, Any]]:
@@ -52,11 +55,21 @@ def get_version_vmaj(openapi_spec: "openapi_core.OpenAPI") -> str:
 
 
 ########################################################################################
-# Endpoint request validation
+# Server-side endpoint request validation
+########################################################################################
 
 
 def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
-    """Validate request obj against the given OpenAPI spec."""
+    """A REST-endpoint wrapper to validate requests against an OpenAPI spec.
+
+    Example:
+    ```
+    class MyRestHandler(RestHandler):
+
+        @validate_request(config.OPENAPI_SPEC)
+        async def get(self) -> None: ...
+    ```
+    """
     if not openapi_available:
         raise RuntimeError(
             "openapi cannot be imported! perhaps you meant to pip install it?"
@@ -133,3 +146,41 @@ def _http_server_request_to_openapi_request(
 
 
 ########################################################################################################################
+# Client-side
+########################################################################################################################
+
+
+async def request_and_validate(
+    rc: "RestClient",
+    openapi_spec: "openapi_core.OpenAPI",
+    method: str,
+    path: str,
+    args: dict[str, Any] | None = None,
+) -> Any:
+    """Make request and validate the response against an OpenAPI spec.
+
+    Useful for testing and debugging.
+
+    NOTE: this essentially mimics RestClient.request() with added features.
+    """
+    url, kwargs = rc._prepare(method, path, args=args)
+
+    # run request as async in case of other dependent, concurrent actions (ex: test suite runs server in same process)
+    response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]
+
+    try:
+        openapi_spec.validate_response(
+            openapi_core_requests.RequestsOpenAPIRequest(response.request),
+            openapi_core_requests.RequestsOpenAPIResponse(response),  # type: ignore[arg-type] # openapi uses protocols
+        )
+    except OpenAPIError as e:
+        LOGGER.error(
+            f"OpenAPI response validator encountered an error: '{e}'; more info below."
+        )
+        LOGGER.info(f"request: {vars(response.request)}")
+        LOGGER.info(f"response: {vars(response)}")
+        raise
+
+    out = rc._decode(response.content)
+    response.raise_for_status()
+    return out
