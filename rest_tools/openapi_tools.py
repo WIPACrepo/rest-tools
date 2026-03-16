@@ -38,11 +38,15 @@ LOGGER = logging.getLogger(__name__)
 ########################################################################################
 
 
-def get_openapi_spec(
+def load_openapi_spec(
     fpath: Path,
-    add_project_metadata: bool = False,
+    add_project_metadata: bool,
 ) -> tuple["openapi_core.OpenAPI", Schema]:
-    """Get the OpenAPI spec and its dict representation."""
+    """Get the OpenAPI spec and its dict representation.
+
+    If `add_project_metadata` is True, then the spec's 'info' field will be populated
+    using the installed project's metadata.
+    """
     spec_dict, base_uri = read_from_filename(str(fpath))
     if add_project_metadata:
         spec_dict = _populate_openapi_info_from_installed_metadata(spec_dict)
@@ -59,6 +63,11 @@ def get_openapi_spec(
 
 def _populate_openapi_info_from_installed_metadata(spec: Schema) -> Schema:
     """Populate spec['info'] from installed project metadata only."""
+    if spec.get("info"):
+        raise RuntimeError(
+            "Cannot auto-populate OpenAPI field 'info' -- it's already populated"
+        )
+
     top_name = (__package__ or __name__).split(".")[0]
     dist_name = importlib.metadata.packages_distributions()[top_name][0]  # use first
     md = importlib.metadata.metadata(dist_name)
@@ -77,7 +86,7 @@ def _populate_openapi_info_from_installed_metadata(spec: Schema) -> Schema:
     info: dict[str, str | Any] = {
         "title": md.get("Name", ""),
         "summary": md.get("Summary", ""),
-        "description": md.get_payload() or "",
+        "description": md.get("Description", ""),
         "version": md.get("Version", ""),
         "contact": {
             "name": md.get("Maintainer", md.get("Author", "")),
@@ -89,6 +98,7 @@ def _populate_openapi_info_from_installed_metadata(spec: Schema) -> Schema:
         },
     }
 
+    spec = dict(spec)  # cast in order to add key
     spec["info"] = info
     return spec
 
