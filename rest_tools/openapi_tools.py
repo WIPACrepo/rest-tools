@@ -5,7 +5,7 @@ import importlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import requests
 import tornado
@@ -15,11 +15,11 @@ from jsonschema_path.typing import Schema
 try:
     import openapi_core
     from jsonschema_path import SchemaPath
-    from openapi_spec_validator import validate
-    from openapi_spec_validator.readers import read_from_filename
     from openapi_core.contrib import requests as openapi_core_requests
     from openapi_core.exceptions import OpenAPIError
     from openapi_core.validation.exceptions import ValidationError
+    from openapi_spec_validator import validate
+    from openapi_spec_validator.readers import read_from_filename
 
     openapi_available = True
 except (ImportError, ModuleNotFoundError):
