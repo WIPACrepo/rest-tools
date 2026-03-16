@@ -5,9 +5,8 @@ import importlib
 import logging
 import os
 import sys
-from collections.abc import Hashable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import requests
 import tornado
@@ -34,6 +33,7 @@ if TYPE_CHECKING:  # prevent circular imports at runtime
 
 LOGGER = logging.getLogger(__name__)
 
+sdict = dict[str, Any]
 
 ########################################################################################
 # OpenAPI spec manipulation
@@ -43,13 +43,14 @@ LOGGER = logging.getLogger(__name__)
 def load_openapi_spec(
     fpath: Path,
     add_project_metadata: bool,
-) -> tuple["openapi_core.OpenAPI", dict[Hashable, Any]]:
+) -> tuple["openapi_core.OpenAPI", sdict]:
     """Get the OpenAPI spec and its dict representation.
 
     If `add_project_metadata` is True, then the spec's 'info' field will be populated
     using the installed project's metadata.
     """
     _schema, base_uri = read_from_filename(str(fpath))
+    _schema = cast(sdict, dict(_schema))
     if add_project_metadata:
         _schema = _populate_spec_info_from_installed_metadata(_schema)
 
@@ -60,10 +61,10 @@ def load_openapi_spec(
     # create the OpenAPI object
     _spec = openapi_core.OpenAPI(SchemaPath.from_dict(_schema, base_uri=base_uri))
 
-    return _spec, dict(_schema)
+    return _spec, _schema
 
 
-def _populate_spec_info_from_installed_metadata(spec: Schema) -> Schema:
+def _populate_spec_info_from_installed_metadata(spec: sdict) -> sdict:
     """Populate spec['info'] from installed project metadata only."""
     if spec.get("info"):
         raise RuntimeError(
