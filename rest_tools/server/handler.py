@@ -350,7 +350,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
     """
     store_tokens: Callable[..., Awaitable[None]]
 
-    def initialize(self, *args, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
+    def initialize(self, *args, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):  # ty: ignore[invalid-method-override]
         super().initialize(*args, **kwargs)
         self.oauth_setup()
         self.oauth_client_id = oauth_client_id

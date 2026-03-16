@@ -1,6 +1,5 @@
 """Some JSON encoding and decoding utilities."""
 
-
 # fmt:off
 # pylint: skip-file
 
@@ -91,7 +90,7 @@ class binary_converter:
 class bytearray_converter:
     @staticmethod
     def dumps(obj,name=None):
-        return base64.b64encode(str(obj))
+        return base64.b64encode(str(obj))  # ty: ignore[invalid-argument-type]
 
     @staticmethod
     def loads(obj,name=None):

@@ -52,7 +52,7 @@ class _AuthValidate:
             else:
                 issuers = self.issuers
 
-        token = jwt.decode(token, key, leeway=leeway, algorithms=self.algorithms, options=options, **kwargs)
+        token = jwt.decode(token, key, leeway=leeway, algorithms=self.algorithms, options=options, **kwargs)  # ty: ignore[invalid-argument-type]
         if issuers and token['iss'] not in issuers:
             raise jwt.exceptions.InvalidIssuerError()
 
