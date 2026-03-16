@@ -4,6 +4,7 @@ import asyncio
 import importlib
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -49,7 +50,7 @@ def load_openapi_spec(
     """
     spec_dict, base_uri = read_from_filename(str(fpath))
     if add_project_metadata:
-        spec_dict = _populate_openapi_info_from_installed_metadata(spec_dict)
+        spec_dict = _populate_spec_info_from_installed_metadata(spec_dict)
 
     # validate the spec
     LOGGER.info(f"validating OpenAPI spec for {base_uri} ({fpath})")
@@ -61,11 +62,18 @@ def load_openapi_spec(
     return _spec, spec_dict
 
 
-def _populate_openapi_info_from_installed_metadata(spec: Schema) -> Schema:
+def _populate_spec_info_from_installed_metadata(spec: Schema) -> Schema:
     """Populate spec['info'] from installed project metadata only."""
     if spec.get("info"):
         raise RuntimeError(
             "Cannot auto-populate OpenAPI field 'info' -- it's already populated"
+        )
+
+    if sys.version_info < (3, 12):
+        # python <= 3.11 does not support PackageMetadata.get()
+        # -- our server apps will need to run on python 3.12+, which most already do
+        raise RuntimeError(
+            "openapi_tools._populate_spec_info_from_installed_metadata() requires python 3.12+"
         )
 
     top_name = (__package__ or __name__).split(".")[0]
