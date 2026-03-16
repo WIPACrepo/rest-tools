@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Hashable, TYPE_CHECKING, Any
 
 import requests
 import tornado
@@ -42,24 +42,24 @@ LOGGER = logging.getLogger(__name__)
 def load_openapi_spec(
     fpath: Path,
     add_project_metadata: bool,
-) -> tuple["openapi_core.OpenAPI", Schema]:
+) -> tuple["openapi_core.OpenAPI", dict[Hashable, Any]]:
     """Get the OpenAPI spec and its dict representation.
 
     If `add_project_metadata` is True, then the spec's 'info' field will be populated
     using the installed project's metadata.
     """
-    spec_dict, base_uri = read_from_filename(str(fpath))
+    _schema, base_uri = read_from_filename(str(fpath))
     if add_project_metadata:
-        spec_dict = _populate_spec_info_from_installed_metadata(spec_dict)
+        _schema = _populate_spec_info_from_installed_metadata(_schema)
 
     # validate the spec
     LOGGER.info(f"validating OpenAPI spec for {base_uri} ({fpath})")
-    validate(spec_dict)  # no exception -> spec is valid
+    validate(_schema)  # no exception -> spec is valid
 
     # create the OpenAPI object
-    _spec = openapi_core.OpenAPI(SchemaPath.from_dict(spec_dict, base_uri=base_uri))
+    _spec = openapi_core.OpenAPI(SchemaPath.from_dict(_schema, base_uri=base_uri))
 
-    return _spec, spec_dict
+    return _spec, dict(_schema)
 
 
 def _populate_spec_info_from_installed_metadata(spec: Schema) -> Schema:
