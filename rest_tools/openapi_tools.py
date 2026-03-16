@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 import tornado
-from jsonschema_path.typing import Schema
 
 # 'openapi' imports
 try:
     import openapi_core
     from jsonschema_path import SchemaPath
+    from jsonschema_path.typing import Schema
     from openapi_core.contrib import requests as openapi_core_requests
     from openapi_core.exceptions import OpenAPIError
     from openapi_core.validation.exceptions import ValidationError
