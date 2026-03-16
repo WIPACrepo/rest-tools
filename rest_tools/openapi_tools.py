@@ -27,7 +27,8 @@ except (ImportError, ModuleNotFoundError):
     openapi_available = False
 
 if TYPE_CHECKING:  # prevent circular imports at runtime
-    from .client import RestClient
+    from jsonschema_path.typing import Schema
+    from rest_tools.client import RestClient
 
 
 LOGGER = logging.getLogger(__name__)
@@ -49,7 +50,6 @@ def load_openapi_spec(
     using the installed project's metadata.
     """
     _schema, base_uri = read_from_filename(str(fpath))
-    _schema = cast(sdict, dict(_schema))
     if add_project_metadata:
         _schema = _populate_spec_info_from_installed_metadata(_schema)
 
@@ -60,10 +60,10 @@ def load_openapi_spec(
     # create the OpenAPI object
     _spec = openapi_core.OpenAPI(SchemaPath.from_dict(_schema, base_uri=base_uri))
 
-    return _spec, _schema
+    return _spec, cast(sdict, dict(_schema))
 
 
-def _populate_spec_info_from_installed_metadata(spec: sdict) -> sdict:
+def _populate_spec_info_from_installed_metadata(spec: "Schema") -> "Schema":
     """Populate spec['info'] from installed project metadata only."""
     if spec.get("info"):
         raise RuntimeError(
