@@ -5,8 +5,9 @@ import importlib
 import logging
 import os
 import sys
+from collections.abc import Hashable
 from pathlib import Path
-from typing import Hashable, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any
 
 import requests
 import tornado
