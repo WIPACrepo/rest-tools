@@ -23,40 +23,12 @@ jobs:
   # LINTERS
   #############################################################################
 
-  flake8:
+  lint:
     needs: [ py-versions ]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.py3 }}
-      - uses: WIPACrepo/wipac-dev-flake8-action@v1.3
-        with:
-          max-complexity: 16  # ideal is ~10-15
-
-  mypy:
-    needs: [ py-versions ]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0  # setuptools-scm needs to access git tags
-          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.py3 }}
-      - uses: WIPACrepo/wipac-dev-mypy-action@v2.0
+    uses: WIPACrepo/wipac-dev-workflows/.github/workflows/lint-python.yml@linters
+    with:
+      py-matrix-json: ${{ needs.py-versions.outputs.matrix }}
+      max-complexity: 10  # ideal is ~10-15
 
 
   #############################################################################
@@ -98,7 +70,7 @@ jobs:
   #############################################################################
 
   unit-tests:
-    needs: [ py-versions ]
+    needs: [ py-versions, lint ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -119,17 +91,17 @@ jobs:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           pip install --upgrade pip wheel setuptools
           pip install .[tests]
       - name: Run Tests
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           python -m pytest tests/unit_* --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
   tests-with-openapi:
-    needs: [ py-versions ]
+    needs: [ py-versions, lint ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -150,18 +122,18 @@ jobs:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           pip install --upgrade pip wheel setuptools
           pip install .[tests,openapi]
       - name: Run Tests
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           python -m pytest tests/integrate_openapi --tb=short --log-level=DEBUG -vvv
           pycycle --here --verbose
 
   tests-with-telemetry:
     if: false  # telemetry has been shelved — perhaps in the future, we will re-enable it
-    needs: [ py-versions ]
+    needs: [ py-versions, lint ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -182,17 +154,17 @@ jobs:
           python-version: ${{ matrix.py3 }}
       - name: Setup Dependencies
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           pip install --upgrade pip wheel setuptools
           pip install .[telemetry,tests]
       - name: Run Tests
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           python -m pytest tests/unit_* --tb=short --log-level=DEBUG
           pycycle --here --verbose
       - name: Run Integration Test
         run: |
-          set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+          set -euo pipefail
           cd examples/
           python rest_server.py &
           python rest_client.py
@@ -207,8 +179,7 @@ jobs:
     if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
     needs: [
       py-versions,
-      flake8,
-      mypy,
+      lint,
       py-setup,
       py-dependencies,
       unit-tests,
