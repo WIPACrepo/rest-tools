@@ -1,10 +1,11 @@
 """Tools for working with OpenAPI."""
 
+import asyncio
 import importlib
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import requests
 import tornado
@@ -18,11 +19,15 @@ try:
     from openapi_spec_validator.readers import read_from_filename
     from openapi_core.contrib import requests as openapi_core_requests
     from openapi_core.exceptions import OpenAPIError
+    from openapi_core.validation.exceptions import ValidationError
 
     openapi_available = True
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError):
     # if client code wants to use these features, then let the built-in errors raise
     openapi_available = False
+
+if TYPE_CHECKING:  # prevent circular imports at runtime
+    from .client import RestClient
 
 
 LOGGER = logging.getLogger(__name__)
@@ -98,7 +103,7 @@ def get_version_vmaj(openapi_spec: "openapi_core.OpenAPI") -> str:
 ########################################################################################
 
 
-def validate_request(openapi_spec: "OpenAPI"):  # type: ignore
+def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
     """A REST-endpoint wrapper to validate requests against an OpenAPI spec.
 
     Example:

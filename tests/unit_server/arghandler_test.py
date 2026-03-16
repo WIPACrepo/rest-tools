@@ -201,7 +201,7 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
         print(arg)
         print(val)
         print(typ)
-        if typ == bool and isinstance(val, str):
+        if (typ is bool) and isinstance(val, str):
             assert getattr(outargs, arg.replace("-", "_")) == strtobool(val)
         else:
             assert getattr(outargs, arg.replace("-", "_")) == typ(val)
