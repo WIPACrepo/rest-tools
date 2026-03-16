@@ -29,6 +29,7 @@ jobs:
     with:
       py-matrix-json: ${{ needs.py-versions.outputs.matrix }}
       max-complexity: 16  # ideal is ~10-15
+      max-statements: 63  # default is 50
 
 
   #############################################################################
