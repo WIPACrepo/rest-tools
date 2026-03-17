@@ -28,7 +28,7 @@ except (ImportError, ModuleNotFoundError):
 
 if TYPE_CHECKING:  # prevent circular imports at runtime
     from jsonschema_path.typing import Schema
-    from rest_tools.client import RestClient
+    from .client import RestClient
 
 
 LOGGER = logging.getLogger(__name__)
@@ -42,16 +42,26 @@ sdict = dict[str, Any]
 
 def load_openapi_spec(
     fpath: Path,
-    add_project_metadata: bool,
+    metadata_from_package: str,
 ) -> tuple["openapi_core.OpenAPI", sdict]:
-    """Get the OpenAPI spec and its dict representation.
+    """
+    Loads and validates an OpenAPI specification file while optionally incorporating
+    project metadata.
 
-    If `add_project_metadata` is True, then the spec's 'info' field will be populated
-    using the installed project's metadata.
+    Parameters:
+        fpath: Path
+            The file path to the OpenAPI specification.
+        metadata_from_package: str
+            The name of the package to use for metadata to add to the spec.
+
+    Returns:
+        A tuple containing:
+            - the schema as an OpenAPI object
+            - the schema as a dictionary
     """
     _schema, base_uri = read_from_filename(str(fpath))
-    if add_project_metadata:
-        _schema = _populate_spec_info_from_installed_metadata(_schema)
+    if metadata_from_package:
+        _schema = _populate_spec_info_from_pkg_metadata(_schema, metadata_from_package)
 
     # validate the spec
     LOGGER.info(f"validating OpenAPI spec for {base_uri} ({fpath})")
@@ -63,13 +73,8 @@ def load_openapi_spec(
     return _spec, cast(sdict, dict(_schema))
 
 
-def _populate_spec_info_from_installed_metadata(spec: "Schema") -> "Schema":
-    """Populate spec['info'] from installed project metadata only."""
-    if spec.get("info"):
-        raise RuntimeError(
-            "Cannot auto-populate OpenAPI field 'info' -- it's already populated"
-        )
-
+def _populate_spec_info_from_pkg_metadata(spec: "Schema", dist_name: str) -> "Schema":
+    """Populate the 'info' section of an OpenAPI spec with project metadata, for package dist_name."""
     if sys.version_info < (3, 12):
         # python <= 3.11 does not support PackageMetadata.get()
         # -- our server apps will need to run on python 3.12+, which most already do
@@ -77,8 +82,6 @@ def _populate_spec_info_from_installed_metadata(spec: "Schema") -> "Schema":
             "openapi_tools._populate_spec_info_from_installed_metadata() requires python 3.12+"
         )
 
-    top_name = (__package__ or __name__).split(".")[0]
-    dist_name = importlib.metadata.packages_distributions()[top_name][0]  # use first
     md = importlib.metadata.metadata(dist_name)
 
     def _first_project_url(md: importlib.metadata.PackageMetadata) -> str:
@@ -92,11 +95,13 @@ def _populate_spec_info_from_installed_metadata(spec: "Schema") -> "Schema":
             "",
         )
 
-    info: dict[str, str | Any] = {
-        "title": md.get("Name", ""),
+    new_info: dict[str, str | Any] = {
+        # NOTE: do not add/override 'title' or 'version'
+        # - 'title' and 'version' are required by the OpenAPI spec
+        # - auto-populating 'version' from the project would not allow testing new
+        #       major versions -- think: crossing over from v1 to v2, endpoints may change
         "summary": md.get("Summary", ""),
         "description": md.get("Description", ""),
-        "version": md.get("Version", ""),
         "contact": {
             "name": md.get("Maintainer", md.get("Author", "")),
             "email": md.get("Maintainer-email", md.get("Author-email", "")),
@@ -107,14 +112,24 @@ def _populate_spec_info_from_installed_metadata(spec: "Schema") -> "Schema":
         },
     }
 
+    # check overrides
+    for k in new_info:
+        if spec["info"].get(k):
+            raise RuntimeError(
+                f"Cannot auto-populate OpenAPI specification field 'info.{k}' -- it's already populated"
+            )
+
     spec = dict(spec)  # cast in order to add key
-    spec["info"] = info
+    spec["info"] = {
+        **spec.get("info", {}),
+        **new_info,  # override/add
+    }
     return spec
 
 
-def get_version_vmaj(openapi_spec: "openapi_core.OpenAPI") -> str:
-    """Get the major version of the OpenAPI spec, like 'v0', 'v1', etc."""
-    return "v" + openapi_spec.version.major
+def get_version_vmaj(openapi_dict: sdict) -> str:
+    """Get the major version of the OpenAPI spec (info.version); like 'v0', 'v1', etc."""
+    return "v" + openapi_dict["info"]["version"].split(".")[0]
 
 
 ########################################################################################
