@@ -28,6 +28,7 @@ except (ImportError, ModuleNotFoundError):
 
 if TYPE_CHECKING:  # prevent circular imports at runtime
     from jsonschema_path.typing import Schema
+
     from .client import RestClient
 
 
