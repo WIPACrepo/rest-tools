@@ -17,6 +17,7 @@ from .fixtures import (  # noqa: F401 # gen_keys_bytes uses gen_keys
     gen_keys_bytes,
 )
 
+
 @pytest.fixture(scope='module')
 def shared_key():
     return secrets.token_bytes(64)
