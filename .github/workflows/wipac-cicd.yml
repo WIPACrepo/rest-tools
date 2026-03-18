@@ -23,40 +23,13 @@ jobs:
   # LINTERS
   #############################################################################
 
-  flake8:
+  lint:
     needs: [ py-versions ]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.py3 }}
-      - uses: WIPACrepo/wipac-dev-flake8-action@v1.3
-        with:
-          max-complexity: 16  # ideal is ~10-15
-
-  mypy:
-    needs: [ py-versions ]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        py3: ${{ fromJSON(needs.py-versions.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0  # setuptools-scm needs to access git tags
-          ref: ${{ github.sha }}  # lock to triggered commit (github.ref is dynamic)
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.py3 }}
-      - uses: WIPACrepo/wipac-dev-mypy-action@v2.0
+    uses: WIPACrepo/wipac-dev-workflows/.github/workflows/lint-python.yml@v1.21
+    with:
+      py-matrix-json: ${{ needs.py-versions.outputs.matrix }}
+      max-complexity: 16  # ideal is ~10-15
+      max-statements: 63  # default is 50
 
 
   #############################################################################
@@ -71,7 +44,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ github.ref }}  # dont lock to sha (action needs to push)
-      - uses: WIPACrepo/wipac-dev-py-setup-action@v5.9
+      - uses: WIPACrepo/wipac-dev-py-setup-action@v5.10
         with:
           mode: PACKAGING_AND_PYPI
           pypi_name: wipac-rest-tools
@@ -98,7 +71,7 @@ jobs:
   #############################################################################
 
   unit-tests:
-    needs: [ py-versions ]
+    needs: [ py-versions, lint ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -129,7 +102,7 @@ jobs:
           pycycle --here --verbose
 
   tests-with-openapi:
-    needs: [ py-versions ]
+    needs: [ py-versions, lint ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -161,7 +134,7 @@ jobs:
 
   tests-with-telemetry:
     if: false  # telemetry has been shelved — perhaps in the future, we will re-enable it
-    needs: [ py-versions ]
+    needs: [ py-versions, lint ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -207,8 +180,7 @@ jobs:
     if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
     needs: [
       py-versions,
-      flake8,
-      mypy,
+      lint,
       py-setup,
       py-dependencies,
       unit-tests,

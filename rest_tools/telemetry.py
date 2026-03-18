@@ -60,5 +60,5 @@ except ImportError:
         PRODUCER = 3
         CONSUMER = 4
 
-    set_current_span_attribute = dummy_func
-    inject_span_carrier_if_recording = dummy_func
+    set_current_span_attribute = dummy_func  # ty: ignore[invalid-assignment]
+    inject_span_carrier_if_recording = dummy_func  # ty: ignore[invalid-assignment]
