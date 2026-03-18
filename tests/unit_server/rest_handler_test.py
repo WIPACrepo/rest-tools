@@ -19,10 +19,10 @@ from rest_tools.server import (
 from rest_tools.utils.auth import Auth, OpenIDAuth
 from tornado.web import Application, HTTPError
 
-from .fixtures import gen_keys, gen_keys_bytes  # noqa: F401
+from .fixtures import gen_keys, gen_keys_bytes, shared_key  # noqa: F401
 
 
-def test_rest_handler_setup(requests_mock):
+def test_rest_handler_setup(requests_mock, shared_key):  # noqa: F811
     ret = RestHandlerSetup({})
     assert ret['auth'] is None
 
@@ -32,11 +32,11 @@ def test_rest_handler_setup(requests_mock):
     ret = RestHandlerSetup({'auth': {'url': 'foo'}})
     assert ret['auth_url'] == 'foo'
 
-    ret = RestHandlerSetup({'auth': {'secret': 'foo'}})
+    ret = RestHandlerSetup({'auth': {'secret': shared_key}})
     assert isinstance(ret['auth'], Auth)
 
     # test audience and issuers
-    ret = RestHandlerSetup({'auth': {'secret': 'foo', 'audience': 'bar', 'issuer': 'baz', 'issuers': ['baz']}})
+    ret = RestHandlerSetup({'auth': {'secret': shared_key, 'audience': 'bar', 'issuer': 'baz', 'issuers': ['baz']}})
     assert isinstance(ret['auth'], Auth)
     tok = ret['auth'].create_token('subj', expiration=20, payload={'aud': 'bar'})
     ret['auth'].validate(tok)
@@ -57,8 +57,8 @@ def test_rest_handler_initialize():
     assert rh.debug
 
 
-def test_rest_handler_get_current_user():
-    a = Auth('secret')
+def test_rest_handler_get_current_user(shared_key):  # noqa: F811
+    a = Auth(shared_key)
     rh = RestHandler()
     rh.initialize(auth=a)
     rh.request = MagicMock()
@@ -96,8 +96,8 @@ def test_keycloak_username_mixin():
     assert test.get_current_user() == 'user'
 
 
-def test_openid_cookie_handler_mixin():
-    a = Auth('secret')
+def test_openid_cookie_handler_mixin(shared_key):  # noqa: F811
+    a = Auth(shared_key)
 
     class A(OpenIDCookieHandlerMixin, RestHandler):
         pass
@@ -125,10 +125,10 @@ def test_openid_cookie_handler_mixin():
     assert rh.auth_key == token.decode('utf-8')
 
 
-def test_openid_login_handler_initialize(requests_mock):
+def test_openid_login_handler_initialize(requests_mock, shared_key):  # noqa: F811
     handler = OpenIDLoginHandler()
     with pytest.raises(RuntimeError):
-        handler.initialize(oauth_client_id='foo', oauth_client_secret='bar')
+        handler.initialize(oauth_client_id='foo', oauth_client_secret=shared_key)
 
     requests_mock.get('http://foo/.well-known/openid-configuration', text=json.dumps({
         'authorization_endpoint': 'http://foo/auth',
@@ -137,7 +137,7 @@ def test_openid_login_handler_initialize(requests_mock):
         'userinfo_endpoint': 'http://foo/userinfo',
     }))
     ret = RestHandlerSetup({'auth': {'openid_url': 'http://foo'}})
-    handler.initialize(oauth_client_id='foo', oauth_client_secret='bar', **ret)
+    handler.initialize(oauth_client_id='foo', oauth_client_secret=shared_key, **ret)
 
     assert handler._OAUTH_AUTHORIZE_URL == 'http://foo/auth'
     assert handler._OAUTH_ACCESS_TOKEN_URL == 'http://foo/token'
