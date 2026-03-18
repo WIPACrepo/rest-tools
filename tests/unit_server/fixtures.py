@@ -1,4 +1,5 @@
 import pytest
+import secrets
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import generate_private_key
 
@@ -25,3 +26,8 @@ def gen_keys_bytes(gen_keys):
     )
     print(priv_pem, pub_pem)
     return (priv_pem, pub_pem)
+
+
+@pytest.fixture(scope='module')
+def shared_key():
+    return secrets.token_hex(64)
