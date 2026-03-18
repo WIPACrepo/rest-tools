@@ -22,7 +22,7 @@ from tornado.web import Application, HTTPError
 from .fixtures import gen_keys, gen_keys_bytes, shared_key  # noqa: F401
 
 
-def test_rest_handler_setup(requests_mock, shared_key):  # noqu: F811
+def test_rest_handler_setup(requests_mock, shared_key):  # noqa: F811
     ret = RestHandlerSetup({})
     assert ret['auth'] is None
 
@@ -57,7 +57,7 @@ def test_rest_handler_initialize():
     assert rh.debug
 
 
-def test_rest_handler_get_current_user(shared_key):  # noqu: F811
+def test_rest_handler_get_current_user(shared_key):  # noqa: F811
     a = Auth(shared_key)
     rh = RestHandler()
     rh.initialize(auth=a)
@@ -96,7 +96,7 @@ def test_keycloak_username_mixin():
     assert test.get_current_user() == 'user'
 
 
-def test_openid_cookie_handler_mixin(shared_key):  # noqu: F811
+def test_openid_cookie_handler_mixin(shared_key):  # noqa: F811
     a = Auth(shared_key)
 
     class A(OpenIDCookieHandlerMixin, RestHandler):
@@ -125,7 +125,7 @@ def test_openid_cookie_handler_mixin(shared_key):  # noqu: F811
     assert rh.auth_key == token.decode('utf-8')
 
 
-def test_openid_login_handler_initialize(requests_mock, shared_key):  # noqu: F811
+def test_openid_login_handler_initialize(requests_mock, shared_key):  # noqa: F811
     handler = OpenIDLoginHandler()
     with pytest.raises(RuntimeError):
         handler.initialize(oauth_client_id='foo', oauth_client_secret=shared_key)
