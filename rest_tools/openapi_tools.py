@@ -248,7 +248,7 @@ async def request_and_validate(
     url, kwargs = rc._prepare(method, path, args=args)
 
     # run request as async in case of other dependent, concurrent actions (ex: test suite runs server in same process)
-    response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]
+    response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]  # ty: ignore[invalid-argument-type]
 
     try:
         openapi_spec.validate_response(
