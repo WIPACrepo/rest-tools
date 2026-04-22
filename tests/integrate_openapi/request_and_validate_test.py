@@ -26,7 +26,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     class TestHandler(RestHandler):
         ROUTE = "/echo/this"
 
-        async def post(self) -> None:
+        async def post(self) -> None:  # ty: ignore[invalid-method-override]
             if self.get_argument("raise", None):
                 raise tornado.web.HTTPError(self.get_argument("raise"), "it's an error")
             self.write({"resp-echo": self.get_argument("echo", {})})

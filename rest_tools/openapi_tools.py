@@ -178,7 +178,10 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
                     reason = str(e)  # to client
                 if os.getenv("CI"):
                     # in prod, don't fill up logs w/ traces from invalid data
-                    LOGGER.exception(e)
+                    LOGGER.error(
+                        f"Request data is invalid (will send 400 error): "
+                        f"{e.__class__.__name__}: {e}"
+                    )
                 raise tornado.web.HTTPError(
                     status_code=400,
                     log_message=f"{e.__class__.__name__}: {e}",  # to stderr
@@ -245,7 +248,7 @@ async def request_and_validate(
     url, kwargs = rc._prepare(method, path, args=args)
 
     # run request as async in case of other dependent, concurrent actions (ex: test suite runs server in same process)
-    response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]
+    response = await asyncio.wrap_future(rc.session.request(method, url, **kwargs))  # type: ignore[var-annotated,arg-type]  # ty: ignore[invalid-argument-type]
 
     try:
         openapi_spec.validate_response(

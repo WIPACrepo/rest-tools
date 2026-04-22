@@ -259,7 +259,7 @@ class RestClient:
                 self.logger.debug('token expired')
 
         try:
-            self.access_token = self.token_func()  # type: ignore[misc]
+            self.access_token = self.token_func()  # type: ignore[misc]  # ty: ignore[call-non-callable]
         except Exception:
             self.logger.warning('acquiring access token failed')
             raise
@@ -276,7 +276,7 @@ class RestClient:
             args = {}
 
         # auto-inject the current span's info into the HTTP headers
-        wtt.inject_span_carrier_if_recording(self.session.headers)  # type: ignore[arg-type]
+        wtt.inject_span_carrier_if_recording(self.session.headers)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         if path.startswith('/'):
             path = path[1:]
@@ -343,7 +343,7 @@ class RestClient:
         url, kwargs = self._prepare(method, path, args, headers)
         try:
             # session: AsyncSession; So, self.session.request() -> Future
-            r: requests.Response = await asyncio.wrap_future(self.session.request(method, url, **kwargs))  # type: ignore[arg-type]
+            r: requests.Response = await asyncio.wrap_future(self.session.request(method, url, **kwargs))  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
             r.raise_for_status()
             return self._decode(r.content)
         except requests.exceptions.HTTPError as e:
