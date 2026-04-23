@@ -1,5 +1,4 @@
 """Tools for working with OpenAPI."""
-from duplicity.log import Log
 
 import asyncio
 import importlib
