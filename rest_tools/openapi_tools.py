@@ -162,6 +162,8 @@ def _schema_error_to_human_readable(err):  # noqa: C901  # ignore "too complex"
         # og: "'' is not of type 'integer'"
         _type_alias = {
             # communicate python equivalents for the more abstract JSON types
+            "number": " (float or int)",
+            "integer": " (int)",
             "boolean": " (bool)",
             "array": " (list)",
             "object": " (dict)",
