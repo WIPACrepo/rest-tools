@@ -343,7 +343,7 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
-            f"400 Client Error: 'abc' is not of type 'integer' for url: {rc.address}/foo/args"
+            f"400 Client Error: 'rank': must be type 'integer' (int) for url: {rc.address}/foo/args"
         ),
     ) as e:
         # bad type
