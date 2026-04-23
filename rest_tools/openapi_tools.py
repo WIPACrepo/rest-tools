@@ -1,8 +1,10 @@
 """Tools for working with OpenAPI."""
+from duplicity.log import Log
 
 import asyncio
 import importlib
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -147,6 +149,10 @@ def _schema_error_to_human_readable(err):  # noqa: C901  # ignore "too complex"
     client. The full value remains available server-side via LOGGER.error
     for debugging.
     """
+    if os.getenv("CI"):
+        _logging_dict = {**vars(err), "instance": "<omitted for brevity>"}
+        LOGGER.error(f"TEST-ONLY LOGGING: {err.__class__.__name__}: {_logging_dict}")
+
     field_path = ".".join(str(p) for p in err.absolute_path)
 
     # Reconstruct the reason without including err.instance (the bad value).
@@ -230,10 +236,11 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
         async def get(self) -> None: ...
     ```
     """
-    if not openapi_available:
-        raise RuntimeError(
-            "openapi cannot be imported! perhaps you meant to pip install it?"
-        )
+    # TODO
+    # if not openapi_available:
+    #     raise RuntimeError(
+    #         "openapi cannot be imported! perhaps you meant to pip install it?"
+    #     )
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
         async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
@@ -245,7 +252,9 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
                     _http_server_request_to_openapi_request(zelf.request),
                 )
             except ValidationError as e:  # type: ignore
-                LOGGER.error(f"invalid request: {e.__class__.__name__} - {e}")
+                LOGGER.error(
+                    f"Invalid request: {e.__class__.__name__} (see validation details below)"
+                )
                 # get reason
                 if isinstance(  # look at the ORIGINAL exception that caused this error
                     e.__context__,
@@ -260,15 +269,18 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
                 # send 400
                 raise tornado.web.HTTPError(
                     status_code=400,
-                    log_message=f"{e.__class__.__name__}: {e}",  # to stderr
+                    log_message=f"{e.__class__.__name__}: {reason}",  # to stderr -- omit req obj
                     reason=reason,  # to client
                 )
             except Exception as e:
-                LOGGER.error(f"unexpected exception: {e.__class__.__name__} - {e}")
+                LOGGER.error(
+                    f"Unexpected exception! {e.__class__.__name__} (see trace below)"
+                )
                 LOGGER.exception(e)
+                # send 400
                 raise tornado.web.HTTPError(
                     status_code=400,
-                    log_message=f"{e.__class__.__name__}: {e}",  # to stderr
+                    log_message=e.__class__.__name__,  # to stderr -- omit req obj
                     reason=None,  # to client (don't send possibly sensitive info)
                 )
 
