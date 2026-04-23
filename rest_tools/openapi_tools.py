@@ -138,6 +138,86 @@ def get_version_vmaj(openapi_dict: sdict) -> str:
 ########################################################################################
 
 
+def _schema_error_to_human_readable(err):  # noqa: C901  # ignore "too complex"
+    """Format a jsonschema ValidationError as 'path: reason'.
+
+    The offending value (err.instance) is intentionally NOT included in the
+    returned string: request bodies can contain secrets (tokens, auth URLs,
+    env-var values) or be very large (full event payloads), and a 400
+    response body is not the right place to reflect either back to the
+    client. The full value remains available server-side via LOGGER.error
+    for debugging.
+    """
+    field_path = ".".join(str(p) for p in err.absolute_path)
+
+    # Reconstruct the reason without including err.instance (the bad value).
+    # err.validator is the failing keyword ('type', 'pattern', 'required',
+    # 'oneOf', ...); err.validator_value is its schema value.
+    keyword, constraint = err.validator, err.validator_value
+
+    if keyword in ("required", "additionalProperties"):
+        # og: "'docker_tag' is a required property"
+        # og: "Additional properties are not allowed ('scan_id' was unexpected)"
+        return str(err).split("\n", 1)[0]
+    elif keyword == "type":
+        # og: "'' is not of type 'integer'"
+        _type_alias = {
+            # communicate python equivalents for the more abstract JSON types
+            "boolean": " (bool)",
+            "array": " (list)",
+            "object": " (dict)",
+            "null": " (None)",
+        }
+        reason = f"must be type {constraint!r}{_type_alias.get(constraint, '')}"
+    elif keyword == "pattern":
+        # og: "' ' does not match '\\S'"
+        reason = f"must match the pattern {constraint!r}"
+    elif keyword == "minLength":
+        # og: "'' is too short"
+        reason = f"must be at least {constraint} characters long"
+    elif keyword == "maxLength":
+        # og: "'aaaa...' is too long"
+        reason = f"must be no more than {constraint} characters long"
+    elif keyword == "minimum":
+        # og: "0 is less than the minimum of 1"
+        reason = f"must be at least {constraint}"
+    elif keyword == "maximum":
+        # og: "30 is greater than the maximum of 25"
+        reason = f"must be no more than {constraint}"
+    elif keyword == "enum":
+        # og: "'fake' is not one of ['real', 'real_event', ...]"
+        reason = f"must be one of: {', '.join(repr(v) for v in constraint)}"
+    elif keyword in ("oneOf", "anyOf"):
+        # og: "X is not valid under any of the given schemas"
+        # NOTE: 'oneOf' vs 'anyOf'
+        #   'anyOf' fires for both "matched 0 branches" and "matched multiple branches";
+        #   jsonschema's default message distinguishes the two, but from the user's
+        #   POV the fix is the same: send a value that fits exactly one form.
+        #   So -- this makes both keywords ('oneOf' and 'anyOf') practically the same,
+        #   using the following wording...
+        reason = "must match one of the accepted types"
+    elif keyword == "minItems":
+        # og: "[] is too short"
+        reason = f"must have at least {constraint} items"
+    elif keyword == "maxItems":
+        # og: "[...] is too long"
+        reason = f"must have no more than {constraint} items"
+    elif keyword == "minProperties":
+        # og: "{} does not have enough properties"
+        reason = f"must have at least {constraint} entries"
+    elif keyword == "maxProperties":
+        # og: "{...} has too many properties"
+        reason = f"must have no more than {constraint} entries"
+    elif keyword == "uniqueItems":
+        # og: "[1, 1] has non-unique elements"
+        reason = "items must be unique"
+    else:
+        # fall-through: future-proof new keywords
+        reason = f"failed {keyword!r} constraint"
+
+    return f"{field_path!r}: {reason}" if field_path else reason
+
+
 def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
     """A REST-endpoint wrapper to validate requests against an OpenAPI spec.
 
@@ -165,23 +245,18 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
                 )
             except ValidationError as e:  # type: ignore
                 LOGGER.error(f"invalid request: {e.__class__.__name__} - {e}")
+                # get reason
                 if isinstance(  # look at the ORIGINAL exception that caused this error
                     e.__context__,
                     openapi_core.validation.schemas.exceptions.InvalidSchemaValue,  # type: ignore
                 ):
-                    reason = "; ".join(  # to client
-                        # verbose details after newline
-                        str(x).split("\n", maxsplit=1)[0]
+                    reason = "; ".join(
+                        _schema_error_to_human_readable(x)
                         for x in e.__context__.schema_errors
                     )
                 else:
                     reason = str(e)  # to client
-                if os.getenv("CI"):
-                    # in prod, don't fill up logs w/ traces from invalid data
-                    LOGGER.error(
-                        f"Request data is invalid (will send 400 error): "
-                        f"{e.__class__.__name__}: {e}"
-                    )
+                # send 400
                 raise tornado.web.HTTPError(
                     status_code=400,
                     log_message=f"{e.__class__.__name__}: {e}",  # to stderr
