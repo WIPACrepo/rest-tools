@@ -236,11 +236,10 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
         async def get(self) -> None: ...
     ```
     """
-    # TODO
-    # if not openapi_available:
-    #     raise RuntimeError(
-    #         "openapi cannot be imported! perhaps you meant to pip install it?"
-    #     )
+    if not openapi_available:
+        raise RuntimeError(
+            "openapi cannot be imported! perhaps you meant to pip install it?"
+        )
 
     def make_wrapper(method):  # type: ignore[no-untyped-def]
         async def wrapper(zelf: tornado.web.RequestHandler, *args, **kwargs):  # type: ignore[no-untyped-def]
