@@ -65,7 +65,7 @@ class OpenIDRestClient(RestClient):
 
     def _get_scopes(self) -> str:
         try:
-            return jwt.decode(self.refresh_token, options={'verify_signature': False}).get('scope', '')
+            return self.auth.validate(self.refresh_token, audience=None).get('scope', '')
         except jwt.exceptions.DecodeError:
             # in case the token is opaque
             return ''
