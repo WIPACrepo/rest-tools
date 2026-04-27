@@ -1,16 +1,17 @@
 import base64
 import logging
+import urllib.parse
 from typing import Any
 from unittest.mock import Mock
-import urllib.parse
 
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from requests import PreparedRequest
 
 from rest_tools.client import OpenIDRestClient
 from rest_tools.utils.auth import Auth
+
 from rest_tools.utils.json_util import json_encode  # isort:skip # noqa # pylint: disable=C0413
 
 
