@@ -114,9 +114,8 @@ def test_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
 
 def test_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
     """Test that we get an exception if we get a bad jwt"""
-    initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
-
     bad_auth = Auth('secret'*20)
+    initial_refresh_token = bad_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
 
     def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
