@@ -71,7 +71,8 @@ def make_auth(well_known_mock, requests_mock: Mock):
     yield auth
 
 
-def test_10_scopes(make_auth, requests_mock: Mock) -> None:
+def test_scopes(make_auth, requests_mock: Mock) -> None:
+    """Test that we can get scopes from the refresh token"""
     initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
 
     def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
@@ -90,7 +91,8 @@ def test_10_scopes(make_auth, requests_mock: Mock) -> None:
     assert s == 'foo'
 
 
-def test_10_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
+def test_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
+    """Test that we fail over gracefully for opaque tokens that are not jwt"""
     initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
 
     def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
@@ -100,7 +102,7 @@ def test_10_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
         assert body['client_id'][0] == 'client-id'
         return json_encode({
             "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
-            "refresh_token": 'my_fake_token',
+            "refresh_token": 'my_opaque_token',
         }).encode("utf-8")
     requests_mock.post('http://test/token', content=token_response)
 
@@ -110,10 +112,11 @@ def test_10_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
     assert s == ''
 
 
-def test_10_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
+def test_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
+    """Test that we get an exception if we get a bad jwt"""
     initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
 
-    fake_auth = Auth('secret'*20)
+    bad_auth = Auth('secret'*20)
 
     def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
@@ -122,7 +125,7 @@ def test_10_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
         assert body['client_id'][0] == 'client-id'
         return json_encode({
             "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
-            "refresh_token": fake_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
+            "refresh_token": bad_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
         }).encode("utf-8")
     requests_mock.post('http://test/token', content=token_response)
 
