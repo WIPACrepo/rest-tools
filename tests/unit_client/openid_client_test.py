@@ -4,6 +4,7 @@ import urllib.parse
 from typing import Any
 from unittest.mock import Mock
 
+import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -36,7 +37,8 @@ def to_base64url(n):
     return base64.urlsafe_b64encode(der_bytes).decode('utf-8').rstrip('=')
 
 
-def test_10_scopes(well_known_mock, requests_mock: Mock) -> None:
+@pytest.fixture
+def make_auth(well_known_mock, requests_mock: Mock):
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     priv_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -59,13 +61,18 @@ def test_10_scopes(well_known_mock, requests_mock: Mock) -> None:
         ]
     }
 
-    # auth for making tokens
-    auth = Auth(secret=priv_pem, algorithm='RS256')
-    initial_refresh_token = auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
-
     def jwks_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         return json_encode(jwks).encode("utf-8")
     requests_mock.get('http://test/jwks', content=jwks_response)
+
+    # auth for making tokens
+    auth = Auth(secret=priv_pem, algorithm='RS256')
+
+    yield auth
+
+
+def test_10_scopes(make_auth, requests_mock: Mock) -> None:
+    initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
 
     def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
@@ -73,11 +80,53 @@ def test_10_scopes(well_known_mock, requests_mock: Mock) -> None:
         logging.debug('token request args: %r', body)
         assert body['client_id'][0] == 'client-id'
         return json_encode({
-            "access_token": auth.create_token('sub', headers={'kid': 'test-key'}),
-            "refresh_token": auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
+            "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
+            "refresh_token": make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
         }).encode("utf-8")
     requests_mock.post('http://test/token', content=token_response)
 
     rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
     s = rc._get_scopes()
     assert s == 'foo'
+
+
+def test_10_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
+    initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
+
+    def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        body = urllib.parse.parse_qs(str(req.body))
+        logging.debug('token request args: %r', body)
+        assert body['client_id'][0] == 'client-id'
+        return json_encode({
+            "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
+            "refresh_token": 'my_fake_token',
+        }).encode("utf-8")
+    requests_mock.post('http://test/token', content=token_response)
+
+    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
+
+    s = rc._get_scopes()
+    assert s == ''
+
+
+def test_10_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
+    initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
+
+    fake_auth = Auth('secret'*20)
+
+    def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        body = urllib.parse.parse_qs(str(req.body))
+        logging.debug('token request args: %r', body)
+        assert body['client_id'][0] == 'client-id'
+        return json_encode({
+            "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
+            "refresh_token": fake_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
+        }).encode("utf-8")
+    requests_mock.post('http://test/token', content=token_response)
+
+    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
+
+    with pytest.raises(jwt.exceptions.InvalidAlgorithmError):
+        rc._get_scopes()
