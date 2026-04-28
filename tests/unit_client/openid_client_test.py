@@ -93,7 +93,7 @@ def test_scopes(make_auth, requests_mock: Mock) -> None:
 
 def test_scopes_opaque_token(make_auth, requests_mock: Mock) -> None:
     """Test that we fail over gracefully for opaque tokens that are not jwt"""
-    initial_refresh_token = make_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
+    initial_refresh_token = 'my_opaque_token'
 
     def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         assert req.body is not None
