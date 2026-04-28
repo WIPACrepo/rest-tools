@@ -117,18 +117,6 @@ def test_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
     bad_auth = Auth('secret'*20)
     initial_refresh_token = bad_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'})
 
-    def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
-        assert req.body is not None
-        body = urllib.parse.parse_qs(str(req.body))
-        logging.debug('token request args: %r', body)
-        assert body['client_id'][0] == 'client-id'
-        return json_encode({
-            "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
-            "refresh_token": bad_auth.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
-        }).encode("utf-8")
-    requests_mock.post('http://test/token', content=token_response)
-
-    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
-
+    # fails initially because of the call to _get_scopes in the __init__
     with pytest.raises(jwt.exceptions.InvalidAlgorithmError):
-        rc._get_scopes()
+        OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
