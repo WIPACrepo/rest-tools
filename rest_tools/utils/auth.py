@@ -124,6 +124,10 @@ class Auth(_AuthValidate):
         return self._validate(token, self.pub_secret, issuer=self.issuer, **kwargs)
 
 
+class BadJwtKey(RuntimeError):
+    pass
+
+
 class OpenIDAuth(_AuthValidate):
     """Handle validation of JWT tokens using OpenID .well-known auto-discovery."""
 
@@ -196,4 +200,4 @@ class OpenIDAuth(_AuthValidate):
             key = self.public_keys[header['kid']]
             return self._validate(token, key, **kwargs)
         else:
-            raise Exception(f'JWT key {header["kid"]} not found')
+            raise BadJwtKey(f'JWT key {header["kid"]} not found')
