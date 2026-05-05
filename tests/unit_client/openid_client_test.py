@@ -120,3 +120,25 @@ def test_scopes_invalid_alg(make_auth, requests_mock: Mock) -> None:
     # fails initially because of the call to _get_scopes in the __init__
     with pytest.raises(jwt.exceptions.InvalidAlgorithmError):
         OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
+
+
+def test_scopes_jwt_key_not_found(make_auth, requests_mock: Mock) -> None:
+    """Test that we fail over gracefully for private keys"""
+    other_auth = Auth('secret'*20)
+    initial_refresh_token = other_auth.create_token('sub', payload={'scope':'foo'}, headers={'kid': 'priv-key'})
+
+    def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        body = urllib.parse.parse_qs(str(req.body))
+        logging.debug('token request args: %r', body)
+        assert body['client_id'][0] == 'client-id'
+        return json_encode({
+            "access_token": make_auth.create_token('sub', headers={'kid': 'test-key'}),
+            "refresh_token": other_auth.create_token('sub', payload={'scope':'foo'}, headers={'kid': 'priv-key'}),
+        }).encode("utf-8")
+    requests_mock.post('http://test/token', content=token_response)
+
+    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
+
+    s = rc._get_scopes()
+    assert s == 'foo'

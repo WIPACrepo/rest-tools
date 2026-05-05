@@ -14,7 +14,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from .client import RestClient
-from ..utils.auth import OpenIDAuth
+from ..utils.auth import BadJwtKey, OpenIDAuth
 
 
 # fmt:off
@@ -66,6 +66,13 @@ class OpenIDRestClient(RestClient):
     def _get_scopes(self) -> str:
         try:
             return self.auth.validate(self.refresh_token, audience=None).get('scope', '')
+        except BadJwtKey:
+            # the jwt key isn't available
+            header = jwt.get_unverified_header(self.refresh_token)
+            if header['alg'].startswith('HS'):
+                # this token is "private" to the server, but we can still get the scope
+                return jwt.decode(self.refresh_token, options={'verify_signature': False}).get('scope', '')
+            raise
         except jwt.exceptions.DecodeError:
             # in case the token is opaque
             return ''
