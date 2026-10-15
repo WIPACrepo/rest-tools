@@ -47,7 +47,12 @@ class OpenIDRestClient(RestClient):
         ] = None,
         **kwargs: Any,
     ) -> None:
-        self.auth = OpenIDAuth(token_url)
+        auth_args = {}
+        if 'algorithm' in kwargs:
+            auth_args['algorithm'] = kwargs.pop('algorithm')
+        if 'algorithms' in kwargs:
+            auth_args['algorithms'] = kwargs.pop('algorithms')
+        self.auth = OpenIDAuth(token_url, **auth_args)
         self.refresh_token = refresh_token
         self.client_id = client_id
         self.client_secret = client_secret

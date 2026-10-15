@@ -5,9 +5,10 @@ from typing import Any
 from unittest.mock import Mock
 
 import jwt
+import jwt.algorithms
 import pytest
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, ed25519
 from requests import PreparedRequest
 
 from rest_tools.client import OpenIDRestClient
@@ -45,21 +46,12 @@ def make_auth(well_known_mock, requests_mock: Mock):
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     )
-    public_numbers = private_key.public_key().public_numbers()
 
-    # Build the JWK manually using n and e
-    jwks = {
-        "keys": [
-            {
-                "kty": "RSA",
-                "kid": "test-key",         # Key ID for rotation/lookup
-                "use": "sig",              # Key usage (signing)
-                "alg": "RS256",            # Algorithm
-                "n": to_base64url(public_numbers.n), # Modulus as hex
-                "e": to_base64url(public_numbers.e), # Exponent as hex
-            }
-        ]
-    }
+    # Build the JWK
+    jwk = jwt.algorithms.RSAAlgorithm.to_jwk(private_key.public_key(), as_dict=True)
+    jwk['kid'] = 'test-key'
+    jwk['alg'] = 'RS256'
+    jwks = {"keys": [jwk]}
 
     def jwks_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
         return json_encode(jwks).encode("utf-8")
@@ -140,5 +132,59 @@ def test_scopes_jwt_key_not_found(make_auth, requests_mock: Mock) -> None:
 
     rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
 
+    s = rc._get_scopes()
+    assert s == 'foo'
+
+
+@pytest.fixture
+def make_auth_okp(well_known_mock, requests_mock: Mock):
+    private_key = ed25519.Ed25519PrivateKey.generate()
+    priv_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    # Build the JWK
+    jwk = jwt.algorithms.OKPAlgorithm.to_jwk(private_key.public_key(), as_dict=True)
+    jwk['kid'] = 'test-key'
+    jwk['alg'] = 'EdDSA'
+    jwks = {"keys": [jwk]}
+
+    def jwks_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        return json_encode(jwks).encode("utf-8")
+    requests_mock.get('http://test/jwks', content=jwks_response)
+
+    # auth for making tokens
+    auth = Auth(secret=priv_pem, algorithm='EdDSA')
+
+    yield auth
+
+
+def test_scopes_other_alg(make_auth_okp, requests_mock: Mock) -> None:
+    """Test that we can get scopes from the refresh token"""
+    initial_refresh_token = make_auth_okp.create_token(
+        'xxx',
+        payload={'scope':'foo'},
+        headers={'kid': 'test-key'},
+    )
+
+    def token_response(req: PreparedRequest, ctx: Any) -> bytes:  # pylint: disable=W0613
+        assert req.body is not None
+        body = urllib.parse.parse_qs(str(req.body))
+        logging.debug('token request args: %r', body)
+        assert body['client_id'][0] == 'client-id'
+        return json_encode({
+            "access_token": make_auth_okp.create_token('sub', headers={'kid': 'test-key'}),
+            "refresh_token": make_auth_okp.create_token('xxx', payload={'scope':'foo'}, headers={'kid': 'test-key'}),
+        }).encode("utf-8")
+    requests_mock.post('http://test/token', content=token_response)
+
+    with pytest.raises(jwt.exceptions.InvalidAlgorithmError):
+        OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
+        
+    OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id', algorithms=['EdDSA'])
+
+    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id', algorithm='EdDSA')
     s = rc._get_scopes()
     assert s == 'foo'
