@@ -1,9 +1,26 @@
 <!--- Top of README Badges (automated) --->
-[![PyPI](https://img.shields.io/pypi/v/wipac-rest-tools)](https://pypi.org/project/wipac-rest-tools/) [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/WIPACrepo/rest-tools?include_prereleases)](https://github.com/WIPACrepo/rest-tools/) [![Versions](https://img.shields.io/pypi/pyversions/wipac-rest-tools.svg)](https://pypi.org/project/wipac-rest-tools) [![PyPI - License](https://img.shields.io/pypi/l/wipac-rest-tools)](https://github.com/WIPACrepo/rest-tools/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/issues?q=is%3Aissue+sort%3Aupdated-desc+is%3Aopen) [![GitHub pull requests](https://img.shields.io/github/issues-pr/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/pulls?q=is%3Apr+sort%3Aupdated-desc+is%3Aopen)
+[![PyPI](https://img.shields.io/pypi/v/wipac-rest-tools)](https://pypi.org/project/wipac-rest-tools/) [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/WIPACrepo/rest-tools?include_prereleases)](https://github.com/WIPACrepo/rest-tools) [![Versions](https://img.shields.io/pypi/pyversions/wipac-rest-tools.svg)](https://pypi.org/project/wipac-rest-tools/) [![PyPI - License](https://img.shields.io/pypi/l/wipac-rest-tools)](https://github.com/WIPACrepo/rest-tools/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/issues?q=is%3Aissue+sort%3Aupdated-desc+is%3Aopen) [![GitHub pull requests](https://img.shields.io/github/issues-pr/WIPACrepo/rest-tools)](https://github.com/WIPACrepo/rest-tools/pulls?q=is%3Apr+sort%3Aupdated-desc+is%3Aopen)
 <!--- End of README Badges (automated) --->
 # rest-tools
 
 This project contains REST tools in python, as common code for multiple other
+<!--- Top of README Metadata Section (automated) --->
+
+<!--- note: this information is pulled from the pyproject.toml --->
+
+<dl>
+    <dt><sub>Description</sub></dt>
+    <dd><sub>REST tools in python - common code for client and server</sub></dd>
+    <dt><sub>Authors</sub></dt>
+    <dd><sub>WIPAC Developers / <a href='mailto:developers@icecube.wisc.edu'>developers@icecube.wisc.edu</a></sub></dd>
+    <dt><sub>Keywords</sub></dt>
+    <dd><sub>WIPAC&nbsp;&nbsp;·&nbsp;&nbsp;IceCube&nbsp;&nbsp;·&nbsp;&nbsp;REST&nbsp;&nbsp;·&nbsp;&nbsp;tools&nbsp;&nbsp;·&nbsp;&nbsp;utilities</sub></dd>
+    <dt><sub>URLs</sub></dt>
+    <dd><sub><a href='https://pypi.org/project/wipac-rest-tools/'>Homepage</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href='https://github.com/WIPACrepo/rest-tools/issues'>Tracker</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href='https://github.com/WIPACrepo/rest-tools'>Source</a></sub></dd>
+</dl>
+
+<br>
+<!--- End of README Metadata Section (automated) --->
 projects under https://github.com/WIPACrepo.
 
 All code uses python [asyncio](https://docs.python.org/3/library/asyncio.html),
