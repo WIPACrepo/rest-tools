@@ -183,8 +183,6 @@ def test_scopes_other_alg(make_auth_okp, requests_mock: Mock) -> None:
     with pytest.raises(jwt.exceptions.InvalidAlgorithmError):
         OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id')
         
-    OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id', algorithms=['EdDSA'])
-
-    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id', algorithm='EdDSA')
+    rc = OpenIDRestClient('http://test-api', 'http://test', refresh_token=initial_refresh_token, client_id='client-id', algorithms=['EdDSA'])
     s = rc._get_scopes()
     assert s == 'foo'

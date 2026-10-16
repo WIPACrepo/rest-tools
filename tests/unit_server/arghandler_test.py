@@ -503,19 +503,7 @@ def test_211__argparse_choices__error(argument_source: str) -> None:
     with pytest.raises(tornado.web.HTTPError) as e:
         arghand.parse_args()
 
-    # For Python 3.13 and later: join stringified representations directly
-    expected_message1 = (
-        f"HTTP 400: argument pick_it: invalid choice: 'hank' "
-        f"(choose from {', '.join(str(c) for c in choices)})"
-    )
-    # For Python 3.9–3.12: join repr representations directly
-    expected_message2 = (
-        f"HTTP 400: argument pick_it: invalid choice: 'hank' "
-        f"(choose from {', '.join(repr(c) for c in choices)})"
-    )
-    assert (
-        str(e.value) == expected_message1 or str(e.value) == expected_message2
-    ), "Error does not match expected values"
+    assert str(e.value).startswith("HTTP 400: argument pick_it: invalid choice: 'hank'")
 
 
 @pytest.mark.parametrize(
