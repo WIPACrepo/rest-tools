@@ -3,8 +3,8 @@ from typing import Any
 
 import requests
 
-from .client import RestClient
 from ..utils.auth import OpenIDAuth
+from .client import RestClient
 
 
 class ClientCredentialsAuth(RestClient):

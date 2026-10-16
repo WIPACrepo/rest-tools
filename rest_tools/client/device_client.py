@@ -5,16 +5,15 @@ import logging
 import time
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import qrcode  # type: ignore[import]
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .openid_client import OpenIDRestClient
 from ..utils.auth import OpenIDAuth
 from ..utils.pkce import PKCEMixin
-
+from .openid_client import OpenIDRestClient
 
 # fmt:off
 
@@ -66,8 +65,8 @@ class CommonDeviceGrant(PKCEMixin):
         device_url: str,
         token_url: str,
         client_id: str,
-        client_secret: Optional[str] = None,
-        scopes: Optional[list[str]] = None,
+        client_secret: str | None = None,
+        scopes: list[str] | None = None,
     ) -> str:
         args = {
             'client_id': client_id,
@@ -83,7 +82,7 @@ class CommonDeviceGrant(PKCEMixin):
             args['code_challenge_method'] = 'S256'
 
         try:
-            r = requests.post(device_url, data=args, **kwargs)  # type: ignore[arg-type]
+            r = requests.post(device_url, data=args, **kwargs)  # ty: ignore[invalid-argument-type]
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -110,13 +109,13 @@ class CommonDeviceGrant(PKCEMixin):
         if client_secret:
             kwargs['auth'] = HTTPBasicAuth(client_id, client_secret)
         else:
-            args['code_verifier'] = self.get_pkce_verifier(code_challenge)
+            args['code_verifier'] = self.get_pkce_verifier(code_challenge)  # pyright: ignore[reportPossiblyUnboundVariable]
 
         sleep_time = int(req.get('interval', 5))
         while True:
             time.sleep(sleep_time)
             try:
-                r = requests.post(token_url, data=args, **kwargs)  # type: ignore[arg-type]
+                r = requests.post(token_url, data=args, **kwargs)  # ty: ignore[invalid-argument-type]
                 r.raise_for_status()
                 req = r.json()
             except requests.exceptions.HTTPError as exc:
@@ -144,8 +143,8 @@ def DeviceGrantAuth(
     address: str,
     token_url: str,
     client_id: str,
-    client_secret: Optional[str] = None,
-    scopes: Optional[list[str]] = None,
+    client_secret: str | None = None,
+    scopes: list[str] | None = None,
     **kwargs: Any,
 ) -> OpenIDRestClient:
     """A REST client that can handle OpenID and the OAuth2 Device Client flow.
@@ -164,7 +163,7 @@ def DeviceGrantAuth(
     auth = OpenIDAuth(token_url)
     if 'device_authorization_endpoint' not in auth.provider_info:
         raise RuntimeError('Device grant not supported by server')
-    endpoint: str = auth.provider_info['device_authorization_endpoint']  # type: ignore
+    endpoint: str = auth.provider_info['device_authorization_endpoint']
 
     device = CommonDeviceGrant()
     refresh_token = device.perform_device_grant(
@@ -182,7 +181,7 @@ def DeviceGrantAuth(
     )
 
 
-def _load_token_from_file(filepath: Path) -> Optional[str]:
+def _load_token_from_file(filepath: Path) -> str | None:
     if filepath.exists():
         return filepath.read_text()
     return None
@@ -197,8 +196,8 @@ def SavedDeviceGrantAuth(
     token_url: str,
     filename: str,
     client_id: str,
-    client_secret: Optional[str] = None,
-    scopes: Optional[list[str]] = None,
+    client_secret: str | None = None,
+    scopes: list[str] | None = None,
     **kwargs: Any,
 ) -> OpenIDRestClient:
     """
@@ -243,7 +242,7 @@ def SavedDeviceGrantAuth(
         raise RuntimeError('Token service does not support .well-known discovery')
     if 'device_authorization_endpoint' not in auth.provider_info:
         raise RuntimeError('Device grant not supported by server')
-    endpoint: str = auth.provider_info['device_authorization_endpoint']  # type: ignore
+    endpoint: str = auth.provider_info['device_authorization_endpoint']
 
     device = CommonDeviceGrant()
     refresh_token = device.perform_device_grant(

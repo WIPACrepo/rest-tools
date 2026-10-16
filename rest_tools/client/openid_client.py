@@ -7,15 +7,15 @@ a json-encoded dictionary as necessary.
 """
 
 import logging
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 import jwt
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .client import RestClient
 from ..utils.auth import BadJwtKey, OpenIDAuth
-
+from .client import RestClient
 
 # fmt:off
 
@@ -39,12 +39,10 @@ class OpenIDRestClient(RestClient):
         self,
         address: str,
         token_url: str,
-        refresh_token: Union[str, bytes],
+        refresh_token: str | bytes,
         client_id: str,
-        client_secret: Optional[str] = None,
-        update_func: Optional[
-            Callable[[Union[str, bytes], Optional[Union[str, bytes]]], None]
-        ] = None,
+        client_secret: str | None = None,
+        update_func: Callable[[str | bytes, str | bytes | None], None] | None = None,
         **kwargs: Any,
     ) -> None:
         auth_args = {}
@@ -100,7 +98,7 @@ class OpenIDRestClient(RestClient):
             kwargs['auth'] = HTTPBasicAuth(self.client_id, self.client_secret)
 
         try:
-            r = requests.post(self.auth.token_url, data=args, **kwargs)  # type: ignore[arg-type]
+            r = requests.post(self.auth.token_url, data=args, **kwargs)  # ty: ignore[invalid-argument-type]
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -122,7 +120,7 @@ class OpenIDRestClient(RestClient):
 
 
 class RegisterOpenIDClient:
-    def __init__(self, address: str, client_name: str, scopes: Union[list[str], None] = None):
+    def __init__(self, address: str, client_name: str, scopes: list[str] | None = None):
         self.address = address
         self.client_name = client_name
         self.scopes = scopes if scopes else []

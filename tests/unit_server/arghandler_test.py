@@ -3,8 +3,7 @@
 import argparse
 import json
 import re
-import sys
-from typing import Any, Union, cast
+from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -18,17 +17,13 @@ from rest_tools.server.handler import RestHandler
 
 # pylint: disable=W0212,W0621
 
-# these tests are only for 3.9+
-if sys.version_info < (3, 9):
-    pytest.skip("only for 3.9+", allow_module_level=True)  # type: ignore[var-annotated]
-
 QUERY_ARGUMENTS = "query-arguments"
 JSON_BODY_ARGUMENTS = "json-body-arguments"
 
 
 def setup_argument_handler(
     argument_source: str,
-    args: Union[dict[str, Any], list[tuple[Any, Any]]],
+    args: dict[str, Any] | list[tuple[Any, Any]],
 ) -> ArgumentHandler:
     """Load data and return `ArgumentHandler` instance."""
     if argument_source == QUERY_ARGUMENTS:
@@ -151,19 +146,15 @@ def test_111__no_default_with_typing(argument_source: str) -> None:
 
     args: dict[str, Any] = {
         "foo": ("-10", int),
-        #
         "bar": ("True", bool),
         "boo": ("False", bool),
         "ghi": ("no", bool),
         "jkl": ("1", bool),
         "mno": ("0", bool),
-        #
         "bat": ("2.5", float),
         "abc": ("2", float),
-        #
         "baz": ("Toyota Corolla", str),
         "def": ("1000", str),
-        #
         "zzz": ("yup", custom_type),
     }
     if argument_source == JSON_BODY_ARGUMENTS:
@@ -221,12 +212,9 @@ def test_112__no_default_with_typing__error(argument_source: str) -> None:
         "foo": ("hank", int),
         "bat": ("2.5", int),
         "baz": ("9e-33", int),
-        #
         "bar": ("idk", bool),
         "boo": ("2", bool),
-        #
         "abc": ("222.111.333", float),
-        #
         "zzz": ("yup", custom_type),
     }
     if argument_source == JSON_BODY_ARGUMENTS:
@@ -433,7 +421,7 @@ def test_200__argparse_dest(argument_source: str) -> None:
         print(arg)
         print(val)
         if arg == "old_name":
-            assert val == getattr(outargs, "new_name")
+            assert val == outargs.new_name
         else:
             assert val == getattr(outargs, arg.replace("-", "_"))
 

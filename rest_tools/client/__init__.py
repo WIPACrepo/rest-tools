@@ -13,15 +13,15 @@ from .openid_client import OpenIDRestClient
 from .session import AsyncSession, Session
 
 __all__ = [
-    "RestClient",
-    "OpenIDRestClient",
-    "ClientCredentialsAuth",
-    "DeviceGrantAuth",
-    "SavedDeviceGrantAuth",
+    "MAX_RETRIES",
     "AsyncSession",
-    "Session",
     "CalcRetryFromBackoffMax",
     "CalcRetryFromWaittimeMax",
-    "MAX_RETRIES",
+    "ClientCredentialsAuth",
+    "DeviceGrantAuth",
+    "OpenIDRestClient",
+    "RestClient",
+    "SavedDeviceGrantAuth",
+    "Session",
     "utils",
 ]

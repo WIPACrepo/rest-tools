@@ -138,7 +138,7 @@ def get_version_vmaj(openapi_dict: sdict) -> str:
 ########################################################################################
 
 
-def _schema_error_to_human_readable(err):  # noqa: C901  # ignore "too complex"
+def _schema_error_to_human_readable(err):  # ignore "too complex"
     """Format a jsonschema ValidationError as 'path: reason'.
 
     The offending value (err.instance) is intentionally NOT included in the
@@ -224,7 +224,7 @@ def _schema_error_to_human_readable(err):  # noqa: C901  # ignore "too complex"
     return f"{field_path!r}: {reason}" if field_path else reason
 
 
-def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
+def validate_request(openapi_spec: "openapi_core.OpenAPI"):
     """A REST-endpoint wrapper to validate requests against an OpenAPI spec.
 
     Example:
@@ -249,7 +249,7 @@ def validate_request(openapi_spec: "openapi_core.OpenAPI"):  # type: ignore
                 openapi_spec.validate_request(
                     _http_server_request_to_openapi_request(zelf.request),
                 )
-            except ValidationError as e:  # type: ignore
+            except ValidationError as e:  # pyright: ignore[reportPossiblyUnboundVariable]
                 LOGGER.error(
                     f"Invalid request: {e.__class__.__name__} (see validation details below)"
                 )
@@ -297,7 +297,7 @@ def _http_server_request_to_openapi_request(
         raise RuntimeError(
             "openapi cannot be imported! perhaps you meant to pip install it?"
         )
-    return openapi_core_requests.RequestsOpenAPIRequest(  # type: ignore
+    return openapi_core_requests.RequestsOpenAPIRequest(  # pyright: ignore[reportPossiblyUnboundVariable]
         requests.Request(
             method=req.method.lower() if req.method else "get",
             url=f"{req.protocol}://{req.host}{req.uri}",

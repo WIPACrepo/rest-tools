@@ -17,7 +17,7 @@ logger = logging.getLogger('config_test')
 
 class config_test(unittest.TestCase):
     def setUp(self):
-        super(config_test,self).setUp()
+        super().setUp()
         self.test_dir = tempfile.mkdtemp(dir=os.getcwd())
 
         def cleanup():

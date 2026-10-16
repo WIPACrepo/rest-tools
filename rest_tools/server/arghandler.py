@@ -9,7 +9,7 @@ import re
 import sys
 import time
 import traceback
-from typing import Any, Union, cast
+from typing import Any, cast
 
 import tornado.web
 from tornado.escape import to_unicode
@@ -163,7 +163,7 @@ class ArgumentHandler:
 
     @staticmethod
     def _translate_error(
-        exc: Union[Exception, SystemExit],
+        exc: Exception | SystemExit,
         captured_stderr: str,
     ) -> str:
         """Translate argparse-style error to a message str for HTTPError."""
@@ -210,12 +210,7 @@ class ArgumentHandler:
                 return f"{match.group(1).replace('--', '')} type"
             # ex:
             #   argument --pick_it: invalid choice: 'hammer' (choose from 'rock', 'paper', 'scissors')
-            elif match := INVALID_CHOICE_PATTERN.search(err_msg):
-                return match.group(1).replace("--", "")
-
-            # argparse.ArgumentTypeError errors -- covers errors in this known format
-            # -> this is matched when the server code raises argparse.ArgumentTypeError
-            elif match := FROM_ARGUMENT_TYPE_ERROR_PATTERN.search(err_msg):
+            elif (match := INVALID_CHOICE_PATTERN.search(err_msg)) or (match := FROM_ARGUMENT_TYPE_ERROR_PATTERN.search(err_msg)):
                 return match.group(1).replace("--", "")
 
         # FALL-THROUGH -- log unknown exception

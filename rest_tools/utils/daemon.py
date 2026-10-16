@@ -14,7 +14,7 @@ import sys
 import time
 
 
-class Daemon(object):
+class Daemon:
     """
     A generic daemon class.
 
@@ -142,14 +142,14 @@ class Daemon(object):
             pf = open(self.pidfile,'r')
             pid,pgrp = [int(x.strip()) for x in pf.read().split()]
             pf.close()
-        except IOError:
+        except OSError:
             pid = None
             pgrp = None
         return (pid,pgrp)
 
     def start(self):
         """Start the daemon"""
-        pid,pgrp = self.getpid()
+        pid,_pgrp = self.getpid()
         if pid:
             message = "pidfile %s already exist. Daemon already running?"
             raise Exception(message % self.pidfile)

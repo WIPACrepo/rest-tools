@@ -6,16 +6,14 @@ Memory is usually for testing.
 Redis is for production, and ideal when mulitple servers are running.
 """
 
-from collections.abc import MutableMapping
-from collections import UserDict
 import dataclasses as dc
-from enum import Enum
 import logging
 import time
-from typing import Iterator, Union
+from collections import UserDict
+from collections.abc import Iterator, MutableMapping
+from enum import Enum
 
 from tornado.web import RequestHandler
-
 
 SessionData = MutableMapping[str, str]
 
@@ -45,12 +43,12 @@ class MemorySessionStorage(UserDict[str, SessionEntry], SessionStorage):
 
 try:
     import redis
+    import redis.exceptions
+    from redis.backoff import ExponentialBackoff
     from redis.cache import CacheConfig
     from redis.commands.search.field import TextField
     from redis.commands.search.index_definition import IndexDefinition, IndexType
-    from redis.backoff import ExponentialBackoff
     from redis.retry import Retry
-    import redis.exceptions
     redis_available = True
 except ImportError:
     redis_available = False
@@ -93,7 +91,7 @@ else:
             self._conn.close()
 
         def __getitem__(self, key: str) -> SessionEntry:
-            ret: dict = self._conn.hgetall('session:'+key)  # type: ignore
+            ret: dict = self._conn.hgetall('session:'+key)  # pyright: ignore # ty: ignore[invalid-assignment]
             if not ret:
                 raise KeyError()
             exp = float(ret.pop('_expiration'))
@@ -101,7 +99,7 @@ else:
 
         def __setitem__(self, key: str, value: SessionEntry):
             data = {'_expiration': value.expiration}
-            data.update(value.data)  # type: ignore
+            data.update(value.data)  # pyright: ignore
             # we delete first to clear extra keys not in the new data
             self._conn.delete('session:'+key)
             self._conn.hset('session:'+key, mapping=data)
@@ -110,11 +108,11 @@ else:
             self._conn.delete('session:'+key)
 
         def __iter__(self) -> Iterator:
-            for key in self._conn.keys('session:*'):  # type: ignore
+            for key in self._conn.keys('session:*'):  # pyright: ignore # ty: ignore[not-iterable]
                 yield key[8:]
 
         def __len__(self) -> int:
-            return self._conn.dbsize()  # type: ignore
+            return self._conn.dbsize()  # pyright: ignore # ty: ignore[invalid-return-type]
 
 
 class StorageTypes(Enum):
@@ -128,7 +126,7 @@ class Session:
     """
     _sessions: SessionStorage
 
-    def __init__(self, storage_type: Union[str, StorageTypes] = 'memory', expiration: float = 1800, **kwargs):
+    def __init__(self, storage_type: str | StorageTypes = 'memory', expiration: float = 1800, **kwargs):
         """
         Initializes the session store.
 

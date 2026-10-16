@@ -1,28 +1,28 @@
 """RestHandler and related classes."""
 
 import base64
-from collections.abc import Callable, Awaitable
 import functools
 import hmac
-from inspect import isawaitable
 import json
 import logging
 import time
 import urllib.parse
 from collections import defaultdict
-from typing import Any, Optional, Union
+from collections.abc import Awaitable, Callable
+from inspect import isawaitable
+from typing import Any
 
 import tornado.escape
 import tornado.httputil
 import tornado.web
 from tornado.auth import OAuth2Mixin
 
-from .decorators import catch_error
-from .stats import RouteStats
 from .. import telemetry as wtt
 from ..utils.auth import Auth, OpenIDAuth
 from ..utils.json_util import json_decode
 from ..utils.pkce import PKCEMixin
+from .decorators import catch_error
+from .stats import RouteStats
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def _log_auth_failed(e: Exception):
         LOGGER.exception(e)
 
 
-def RestHandlerSetup(config={}):
+def RestHandlerSetup(config=None):
     """Default RestHandler setup. Returns the default arguments for passing to
     the route setup.
 
@@ -46,7 +46,9 @@ def RestHandlerSetup(config={}):
     Returns:
         dict: handler config
     """
-    debug = True if 'debug' in config and config['debug'] else False
+    if not config:
+        config = {}
+    debug = True if config.get('debug') else False
     auth = None
     auth_url = ''
     module_auth_key = ''
@@ -104,7 +106,7 @@ class RestHandler(tornado.web.RequestHandler):
         except Exception:
             LOGGER.error('error', exc_info=True)
 
-    def initialize(self, debug=False, auth: Union[Auth, None] = None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
+    def initialize(self, debug=False, auth: Auth | None = None, auth_url=None, module_auth_key='', server_header='', route_stats=None, **kwargs):
         super().initialize(**kwargs)
         self.debug = debug
         self.auth = auth
@@ -116,7 +118,7 @@ class RestHandler(tornado.web.RequestHandler):
         self.route_stats = route_stats
 
     @wtt.spanned(
-        span_namer=wtt.SpanNamer(use_this_arg='self.request.method'),
+        span_namer=wtt.SpanNamer(use_this_arg='self.request.method'),  # ty: ignore[invalid-argument-type]
         kind=wtt.SpanKind.SERVER,  # type:ignore
         these=["self.request.method", "self.request.path"],
         carrier="self.request.headers",
@@ -280,12 +282,12 @@ class KeycloakUsernameMixin:
 
 class OpenIDCookieHandlerMixin:
     """Store/load current user's `OpenIDLoginHandler` tokens in cookies."""
-    auth: Union[Auth, None]
-    get_secure_cookie: Callable[..., Optional[bytes]]
+    auth: Auth | None
+    get_secure_cookie: Callable[..., bytes | None]
     set_secure_cookie: Callable[..., None]
     clear_cookie: Callable[..., None]
 
-    def get_current_user(self) -> Union[str, None]:
+    def get_current_user(self) -> str | None:
         """Get the current user, and set auth-related attributes."""
         try:
             access_token = self.get_secure_cookie('access_token')
@@ -312,7 +314,7 @@ class OpenIDCookieHandlerMixin:
         refresh_token_exp=None,
         user_info=None,
         user_info_exp=None,
-    ) -> Union[None, Awaitable[None]]:
+    ) -> None | Awaitable[None]:
         """Store jwt tokens and user info from OpenID-compliant auth source.
 
         Args:
@@ -350,7 +352,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
     """
     store_tokens: Callable[..., Awaitable[None]]
 
-    def initialize(self, *args, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):  # ty: ignore[invalid-method-override]
+    def initialize(self, *args, oauth_client_id, oauth_client_secret, oauth_client_scope=None, **kwargs):
         super().initialize(*args, **kwargs)
         self.oauth_setup()
         self.oauth_client_id = oauth_client_id
@@ -426,7 +428,7 @@ class OpenIDLoginHandler(OpenIDCookieHandlerMixin, OAuth2Mixin, PKCEMixin, RestH
             raise
         return ret
 
-    def _decode_state(self, state: Union[bytes, str]) -> dict[str, Any]:
+    def _decode_state(self, state: bytes | str) -> dict[str, Any]:
         data = tornado.escape.json_decode(base64.b64decode(state))
         _, token, _ = self._decode_xsrf_token(data.pop('xsrf'))
         _, expected_token, _ = self._get_raw_xsrf_token()

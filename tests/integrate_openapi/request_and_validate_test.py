@@ -1,7 +1,7 @@
 """Test client.utils.request_and_validate module."""
 
 import re
-from typing import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable
 
 import openapi_core
 import pytest

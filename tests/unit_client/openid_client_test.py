@@ -8,13 +8,13 @@ import jwt
 import jwt.algorithms
 import pytest
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, ed25519
+from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from requests import PreparedRequest
 
 from rest_tools.client import OpenIDRestClient
 from rest_tools.utils.auth import Auth
 
-from rest_tools.utils.json_util import json_encode  # isort:skip # noqa # pylint: disable=C0413
+from rest_tools.utils.json_util import json_encode  # isort:skip # pylint: disable=C0413
 
 
 @pytest.fixture
