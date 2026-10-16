@@ -102,7 +102,7 @@ else:
             data.update(value.data)  # pyright: ignore
             # we delete first to clear extra keys not in the new data
             self._conn.delete('session:'+key)
-            self._conn.hset('session:'+key, mapping=data)
+            self._conn.hset('session:'+key, mapping=data)  # ty: ignore[no-matching-overload]
 
         def __delitem__(self, key: str):
             self._conn.delete('session:'+key)

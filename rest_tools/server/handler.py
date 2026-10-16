@@ -36,7 +36,7 @@ def _log_auth_failed(e: Exception):
         LOGGER.exception(e)
 
 
-def RestHandlerSetup(config=None):
+def RestHandlerSetup(config=None):  # ruff: ignore[C901]
     """Default RestHandler setup. Returns the default arguments for passing to
     the route setup.
 

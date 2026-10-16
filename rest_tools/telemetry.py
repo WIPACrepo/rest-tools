@@ -10,7 +10,7 @@ from typing import Any, TypeVar, cast
 # First, try to import then implement wipac-telemetry
 #
 try:
-    import wipac_telemetry.tracing_tools as wtt
+    import wipac_telemetry.tracing_tools as wtt  # ty: ignore[unresonved-import]
 
     evented = wtt.evented
     spanned = wtt.spanned
