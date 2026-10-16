@@ -11,7 +11,8 @@ from typing import Protocol
 import requests.exceptions
 import tornado.web
 
-from .. import openapi_tools, telemetry as wtt
+from .. import openapi_tools
+from .. import telemetry as wtt
 
 LOGGER = logging.getLogger(__name__)
 
@@ -232,7 +233,7 @@ def keycloak_role_auth(**_auth):
 ########################################################################################################################
 
 
-def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):  # noqa: C901
+def token_attribute_role_mapping_auth(role_attrs, group_attrs=None):  # ruff: ignore[C901]
     """Handle RBAC authorization by creating a decorator that maps token
     attributes to roles, then using the decorator to allow access to functions
     by role.  Can also map groups and add that to auth data.

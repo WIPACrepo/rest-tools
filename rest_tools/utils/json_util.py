@@ -9,7 +9,7 @@ import json
 import logging
 import zlib
 from datetime import date, datetime, time
-from typing import Any, Optional, Union
+from typing import Any
 
 from tornado.escape import recursive_unicode
 
@@ -168,7 +168,7 @@ def JSONToObj(obj):
     return ret
 
 
-def json_encode(value: JSONType, indent: Optional[Union[int, str]] = None) -> str:
+def json_encode(value: JSONType, indent: int | str | None = None) -> str:
     """JSON-encodes the given Python object."""
     string = json.dumps(
         recursive_unicode(value),
@@ -179,6 +179,6 @@ def json_encode(value: JSONType, indent: Optional[Union[int, str]] = None) -> st
     return string.replace("</", "<\\/")
 
 
-def json_decode(value: Union[str, bytes, bytearray]) -> JSONType:
+def json_decode(value: str | bytes | bytearray) -> JSONType:
     """Return Python objects for the given JSON string."""
     return json.loads(value, object_hook=JSONToObj)

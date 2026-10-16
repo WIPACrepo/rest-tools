@@ -2,24 +2,25 @@
 
 # pylint:skip-file
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Optional, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 #
 # First, try to import then implement wipac-telemetry
 #
 try:
-    import wipac_telemetry.tracing_tools as wtt  # type: ignore[import]  # ty: ignore[unresolved-import]  # ignore for CI/CD
+    import wipac_telemetry.tracing_tools as wtt  # ty: ignore[unresolved-import]
 
     evented = wtt.evented
     spanned = wtt.spanned
     SpanNamer = wtt.SpanNamer
-    SpanKind = wtt.SpanKind
+    SpanKind = wtt.SpanKind  # pyright: ignore[reportAssignmentType]
 
     def set_current_span_attribute(key: str, value: Any) -> None:
         wtt.get_current_span().set_attribute(key, value)
 
-    def inject_span_carrier_if_recording(carrier: Optional[dict[str, Any]]) -> None:
+    def inject_span_carrier_if_recording(carrier: dict[str, Any] | None) -> None:
         if wtt.get_current_span().is_recording():
             wtt.propagations.inject_span_carrier(carrier)
 
@@ -61,4 +62,4 @@ except ImportError:
         CONSUMER = 4
 
     set_current_span_attribute = dummy_func  # ty: ignore[invalid-assignment]
-    inject_span_carrier_if_recording = dummy_func  # ty: ignore[invalid-assignment]
+    inject_span_carrier_if_recording = dummy_func

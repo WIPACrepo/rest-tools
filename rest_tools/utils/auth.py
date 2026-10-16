@@ -4,7 +4,7 @@
 
 import logging
 import time
-from typing import Any, Optional, Union
+from typing import Any
 
 import jwt
 import requests
@@ -134,8 +134,8 @@ class OpenIDAuth(_AuthValidate):
     def __init__(
         self,
         url: str,
-        provider_info: Optional[dict[str, Union[str, list[str]]]] = None,
-        public_keys: Optional[dict[str, Any]] = None,
+        provider_info: dict[str, str | list[str]] | None = None,
+        public_keys: dict[str, Any] | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

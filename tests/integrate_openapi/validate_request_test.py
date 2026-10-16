@@ -1,7 +1,7 @@
 """Test route handlers for the OpenAPI spec validation."""
 
 import re
-from typing import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable
 
 import openapi_core
 import pytest
@@ -329,7 +329,6 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         # missing arg(s)
         await rc.request("POST", "/foo/args")
     assert e.value.response.status_code == 400
-    #
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(
@@ -339,7 +338,6 @@ async def test_010__invalid(server: Callable[[], RestClient]) -> None:
         # extra arg(s)
         await rc.request("POST", "/foo/args", {"rank": 123, "suv": "gas"})
     assert e.value.response.status_code == 400
-    #
     with pytest.raises(
         requests.HTTPError,
         match=re.escape(

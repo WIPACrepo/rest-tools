@@ -1,5 +1,6 @@
-import pytest
 import time
+
+import pytest
 
 from rest_tools.server.session import Session, SessionWrapper, redis_available
 

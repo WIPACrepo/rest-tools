@@ -6,9 +6,9 @@ from .config import from_environment
 from .daemon import Daemon
 
 __all__ = [
-    "json_util",
     "Auth",
-    "OpenIDAuth",
     "Daemon",
+    "OpenIDAuth",
     "from_environment",
+    "json_util",
 ]

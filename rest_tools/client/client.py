@@ -14,7 +14,8 @@ import logging
 import math
 import os
 import time
-from typing import Any, Callable, Generator, Optional, Union
+from collections.abc import Callable, Generator
+from typing import Any
 
 import jwt
 import requests
@@ -27,7 +28,7 @@ from .session import AsyncSession, Session
 MAX_RETRIES = 30
 
 
-def _to_str(s: Union[str, bytes]) -> str:
+def _to_str(s: str | bytes) -> str:
     if isinstance(s, bytes):
         return s.decode('utf-8')
     return s
@@ -82,7 +83,7 @@ class CalcRetryFromWaittimeMax:
         #    T  +  0  +  sum{n=1,retries-1}(T + min[MAX, 2^n * B] )  +  T
         # sum has no closed form due to `min` function
         retries = 0
-        for candidate in range(0, MAX_RETRIES + 2):  # last val is MAX_RETRIES+1
+        for candidate in range(MAX_RETRIES + 2):  # last val is MAX_RETRIES+1
             total = (
                 timeout
                 + 0
@@ -156,11 +157,11 @@ class RestClient:
     def __init__(
         self,
         address: str,
-        token: Optional[Union[str, bytes, Callable[[], Union[str, bytes]]]] = None,
+        token: str | bytes | Callable[[], str | bytes] | None = None,
         timeout: float = 60.0,
-        retries: Union[int, CalcRetryFromBackoffMax, CalcRetryFromWaittimeMax] = 10,
+        retries: int | CalcRetryFromBackoffMax | CalcRetryFromWaittimeMax = 10,
         backoff_factor: float = 0.3,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         **kwargs: Any,
     ) -> None:
         self.address = address
@@ -195,8 +196,8 @@ class RestClient:
 
         # token handling
         self._token_expire_delay_offset = 5
-        self.access_token: Optional[Union[str, bytes]] = None
-        self.token_func: Optional[Callable[[], Union[str, bytes]]] = None
+        self.access_token: str | bytes | None = None
+        self.token_func: Callable[[], str | bytes] | None = None
         if token:
             if isinstance(token, (str, bytes)):
                 self.access_token = token
@@ -268,8 +269,8 @@ class RestClient:
         self,
         method: str,
         path: str,
-        args: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
+        args: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """Internal method for preparing requests."""
         if not args:
@@ -278,8 +279,7 @@ class RestClient:
         # auto-inject the current span's info into the HTTP headers
         wtt.inject_span_carrier_if_recording(self.session.headers)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
-        if path.startswith('/'):
-            path = path[1:]
+        path = path.removeprefix('/')
         url = os.path.join(self.address, path)
 
         kwargs: dict[str, Any] = {'timeout': self.timeout}
@@ -304,7 +304,7 @@ class RestClient:
 
         return (url, kwargs)
 
-    def _decode(self, content: Union[str, bytes, bytearray]) -> JSONType:
+    def _decode(self, content: str | bytes | bytearray) -> JSONType:
         """Internal method for translating response from json."""
         if not content:
             self.logger.info('request returned empty string')
@@ -316,16 +316,16 @@ class RestClient:
             raise
 
     @wtt.spanned(
-        span_namer=wtt.SpanNamer(use_this_arg='method'),
+        span_namer=wtt.SpanNamer(use_this_arg='method'),  # ty: ignore[invalid-argument-type]
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT,
+        kind=wtt.SpanKind.CLIENT,  # pyright: ignore[reportArgumentType] # ty: ignore[invalid-argument-type]
     )
     async def request(
         self,
         method: str,
         path: str,
-        args: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
+        args: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -353,16 +353,16 @@ class RestClient:
             raise
 
     @wtt.spanned(
-        span_namer=wtt.SpanNamer(use_this_arg='method'),
+        span_namer=wtt.SpanNamer(use_this_arg='method'),  # ty: ignore[invalid-argument-type]
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT,
+        kind=wtt.SpanKind.CLIENT,  # pyright: ignore[reportArgumentType] # ty: ignore[invalid-argument-type]
     )
     def request_seq(
         self,
         method: str,
         path: str,
-        args: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
+        args: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> JSONType:
         """Send request to REST Server.
 
@@ -381,24 +381,24 @@ class RestClient:
         try:
             self.open(sync=True)
             url, kwargs = self._prepare(method, path, args, headers)
-            r: requests.Response = self.session.request(method, url, **kwargs)  # type: ignore
+            r: requests.Response = self.session.request(method, url, **kwargs)  # pyright: ignore[reportAssignmentType]
             r.raise_for_status()
             return self._decode(r.content)
         finally:
             self.session = s
 
     @wtt.spanned(
-        span_namer=wtt.SpanNamer(use_this_arg='method'),
+        span_namer=wtt.SpanNamer(use_this_arg='method'),  # ty: ignore[invalid-argument-type]
         these=['method', 'path', 'self.address'],
-        kind=wtt.SpanKind.CLIENT,
+        kind=wtt.SpanKind.CLIENT,  # pyright: ignore[reportArgumentType] # ty: ignore[invalid-argument-type]
     )
     def request_stream(
         self,
         method: str,
         path: str,
-        args: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
-        chunk_size: Optional[int] = 8096,
+        args: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        chunk_size: int | None = 8096,
     ) -> Generator[JSONType, None, None]:
         """Send request to REST Server, and stream results back.
 
@@ -423,7 +423,7 @@ class RestClient:
         try:
             self.open(sync=True)
             url, kwargs = self._prepare(method, path, args, headers)
-            resp: requests.Response = self.session.request(method, url, stream=True, **kwargs)  # type: ignore
+            resp: requests.Response = self.session.request(method, url, stream=True, **kwargs)  # pyright: ignore[reportAssignmentType]
             resp.raise_for_status()
             for line in resp.iter_lines(chunk_size=chunk_size, delimiter=b'\n'):
                 decoded = self._decode(line.strip())

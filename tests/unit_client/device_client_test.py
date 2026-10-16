@@ -1,14 +1,15 @@
 import logging
+import urllib.parse
 from typing import Any
 from unittest.mock import Mock
-import urllib.parse
 
 import pytest
 from requests import PreparedRequest
 
 from rest_tools.client import DeviceGrantAuth, SavedDeviceGrantAuth
 from rest_tools.client.device_client import _load_token_from_file, _save_token_to_file
-from rest_tools.utils.json_util import json_encode  # isort:skip # noqa # pylint: disable=C0413
+
+from rest_tools.utils.json_util import json_encode  # isort:skip # pylint: disable=C0413
 
 
 @pytest.fixture

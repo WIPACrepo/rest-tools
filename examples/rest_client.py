@@ -6,9 +6,10 @@ Add some fruit to the server, then read them back.
 import asyncio
 import logging
 
-from rest_tools.client import RestClient  # noqa: E402 # pylint: disable=C0413,E0401
-from rest_tools.utils import Auth  # noqa: E402 # pylint: disable=C0413,E0401
-from wipac_telemetry import tracing_tools  # type: ignore[import]  # ty: ignore[unresolved-import]
+from wipac_telemetry import tracing_tools  # ty: ignore[unresolved-import]
+
+from rest_tools.client import RestClient  # pylint: disable=C0413,E0401
+from rest_tools.utils import Auth  # pylint: disable=C0413,E0401
 
 
 @tracing_tools.spanned()

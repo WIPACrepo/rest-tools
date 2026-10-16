@@ -7,15 +7,15 @@ a json-encoded dictionary as necessary.
 """
 
 import logging
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 import jwt
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .client import RestClient
 from ..utils.auth import BadJwtKey, OpenIDAuth
-
+from .client import RestClient
 
 # fmt:off
 
@@ -33,21 +33,25 @@ class OpenIDRestClient(RestClient):
         update_func (callable): a function that gets called when the access and refresh tokens are updated (optional)
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
+        algorithms (list[str]): specify allowed algorithms (optional)
     """
 
     def __init__(
         self,
         address: str,
         token_url: str,
-        refresh_token: Union[str, bytes],
+        refresh_token: str | bytes,
         client_id: str,
-        client_secret: Optional[str] = None,
-        update_func: Optional[
-            Callable[[Union[str, bytes], Optional[Union[str, bytes]]], None]
-        ] = None,
+        client_secret: str | None = None,
+        update_func: Callable[[str | bytes, str | bytes | None], None] | None = None,
         **kwargs: Any,
     ) -> None:
-        self.auth = OpenIDAuth(token_url)
+        auth_args = {}
+        if 'algorithm' in kwargs:
+            auth_args['algorithm'] = kwargs.pop('algorithm')
+        if 'algorithms' in kwargs:
+            auth_args['algorithms'] = kwargs.pop('algorithms')
+        self.auth = OpenIDAuth(token_url, **auth_args)
         self.refresh_token = refresh_token
         self.client_id = client_id
         self.client_secret = client_secret
@@ -95,7 +99,7 @@ class OpenIDRestClient(RestClient):
             kwargs['auth'] = HTTPBasicAuth(self.client_id, self.client_secret)
 
         try:
-            r = requests.post(self.auth.token_url, data=args, **kwargs)  # type: ignore[arg-type]
+            r = requests.post(self.auth.token_url, data=args, **kwargs)  # ty: ignore[invalid-argument-type]
             r.raise_for_status()
             req = r.json()
         except requests.exceptions.HTTPError as exc:
@@ -117,7 +121,7 @@ class OpenIDRestClient(RestClient):
 
 
 class RegisterOpenIDClient:
-    def __init__(self, address: str, client_name: str, scopes: Union[list[str], None] = None):
+    def __init__(self, address: str, client_name: str, scopes: list[str] | None = None):
         self.address = address
         self.client_name = client_name
         self.scopes = scopes if scopes else []

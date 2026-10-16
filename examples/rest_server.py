@@ -5,24 +5,25 @@ Make a fruit API.
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any
 
-from rest_tools.server import (  # noqa: E402 # pylint: disable=C0413,E0401
+from wipac_telemetry import tracing_tools  # ty: ignore[unresolved-import]
+
+from rest_tools.server import (  # pylint: disable=C0413,E0401
     RestHandler,
     RestHandlerSetup,
     RestServer,
     role_authorization,
 )
-from rest_tools.utils.json_util import (  # noqa: E402 # pylint: disable=C0413,E0401
+from rest_tools.utils.json_util import (  # pylint: disable=C0413,E0401
     json_decode,
 )
-from wipac_telemetry import tracing_tools  # type: ignore[import]  # # ty: ignore[unresolved-import]
 
 
 class FruitsHanlder(RestHandler):
     """Handle Fruit requests."""
 
-    def initialize(self, fruit: Dict[str, Any], *args: Any, **kwargs: Any) -> None:  # type: ignore
+    def initialize(self, fruit: dict[str, Any], *args: Any, **kwargs: Any) -> None:
         """Initialize."""
         super().initialize(*args, **kwargs)
         self.fruit = fruit  # pylint: disable=W0201
@@ -30,7 +31,7 @@ class FruitsHanlder(RestHandler):
     @role_authorization(roles=["admin", "user"])
     async def get(self) -> None:
         """Write existing fruits."""
-        assert tracing_tools.get_current_span().parent.span_id  # type: ignore[attr-defined]
+        assert tracing_tools.get_current_span().parent.span_id  # pyright: ignore[reportAttributeAccessIssue] # ty: ignore[unresolved-attribute]
 
         logging.info("fruits: %r", self.fruit)
 
@@ -39,7 +40,7 @@ class FruitsHanlder(RestHandler):
     @role_authorization(roles=["admin"])
     async def post(self) -> None:
         """Handle a new fruit."""
-        assert tracing_tools.get_current_span().parent.span_id  # type: ignore[attr-defined]
+        assert tracing_tools.get_current_span().parent.span_id  # pyright: ignore[reportAttributeAccessIssue] # ty: ignore[unresolved-attribute]
 
         body = json_decode(self.request.body)
         logging.info("body: %r", body)

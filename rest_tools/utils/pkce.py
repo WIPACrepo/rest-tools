@@ -1,7 +1,7 @@
 import base64
 import hashlib
 import secrets
-from typing import MutableMapping
+from collections.abc import MutableMapping
 
 from cachetools import TTLCache
 

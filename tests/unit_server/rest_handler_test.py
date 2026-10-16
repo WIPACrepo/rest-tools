@@ -9,6 +9,8 @@ from unittest.mock import MagicMock
 
 import jwt.algorithms
 import pytest
+from tornado.web import Application, HTTPError
+
 from rest_tools.server import (
     KeycloakUsernameMixin,
     OpenIDCookieHandlerMixin,
@@ -17,7 +19,6 @@ from rest_tools.server import (
     RestHandlerSetup,
 )
 from rest_tools.utils.auth import Auth, OpenIDAuth
-from tornado.web import Application, HTTPError
 
 from .fixtures import gen_keys, gen_keys_bytes, shared_key  # noqa: F401
 
@@ -181,8 +182,8 @@ async def test_openid_login_handler_get_authenticated_user(gen_keys, gen_keys_by
         ret.body = json.dumps(user_info)
         return ret
 
-    handler.get_auth_http_client = MagicMock()  # ty: ignore[invalid-assignment]
-    handler.get_auth_http_client.return_value.fetch = MagicMock(side_effect=fn)  # ty: ignore[unresolved-attribute]
+    handler.get_auth_http_client = MagicMock()
+    handler.get_auth_http_client.return_value.fetch = MagicMock(side_effect=fn)
     state = {}
     ret = await handler.get_authenticated_user('redirect', 'code', state)
     user_info_ret = user_info.copy()
@@ -239,10 +240,10 @@ async def test_openid_login_handler_get__no_body(gen_keys, gen_keys_bytes, reque
     handler = OpenIDLoginHandler(application, request, **ret)
 
     # first-time get
-    handler.authorize_redirect = MagicMock()  # ty: ignore[invalid-assignment]
+    handler.authorize_redirect = MagicMock()
     request.body = ''
     await handler.get()
-    handler.authorize_redirect.assert_called()  # ty: ignore[unresolved-attribute]
+    handler.authorize_redirect.assert_called()
 
 
 @pytest.mark.asyncio
@@ -283,14 +284,14 @@ async def test_openid_login_handler_get__okay(gen_keys, gen_keys_bytes, requests
     async def fn2(*args, **Kwargs):
         return user_info
 
-    handler.get_authenticated_user = MagicMock(side_effect=fn2)  # ty:ignore[invalid-assignment]
+    handler.get_authenticated_user = MagicMock(side_effect=fn2)
 
     request.body = '{"code": "thecode", "state": "state"}'
-    handler._decode_state = MagicMock(return_value={})  # ty:ignore[invalid-assignment]
-    handler.write = MagicMock()  # ty:ignore[invalid-assignment]
+    handler._decode_state = MagicMock(return_value={})
+    handler.write = MagicMock()
     await handler.get()
-    handler.write.assert_called()  # ty: ignore[unresolved-attribute]
-    assert handler.write.call_args[0][0] == user_info  # ty: ignore[unresolved-attribute]
+    handler.write.assert_called()
+    assert handler.write.call_args[0][0] == user_info
 
 
 @pytest.mark.asyncio
@@ -322,8 +323,8 @@ async def test_openid_login_handler_get__with_error(gen_keys, gen_keys_bytes, re
 
     # get with error
     request.body = '{"error": true, "error_description": "the error"}'
-    handler._decode_state = MagicMock(return_value={})  # ty:ignore[invalid-assignment]
-    handler.authorize_redirect = MagicMock()  # ty: ignore[invalid-assignment]
+    handler._decode_state = MagicMock(return_value={})
+    handler.authorize_redirect = MagicMock()
     with pytest.raises(HTTPError, match='the error'):
         await handler.get()
-    handler.authorize_redirect.assert_not_called()  # ty: ignore[unresolved-attribute]
+    handler.authorize_redirect.assert_not_called()

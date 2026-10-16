@@ -6,8 +6,9 @@ import json
 import logging
 import re
 import signal
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
-from typing import Any, Iterable, Iterator
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -15,6 +16,7 @@ import urllib3
 from httpretty import HTTPretty, httprettified  # type: ignore[import]
 from requests import PreparedRequest
 from requests.exceptions import SSLError, Timeout
+
 from rest_tools.client import (
     MAX_RETRIES,
     CalcRetryFromBackoffMax,
@@ -125,13 +127,11 @@ async def test_040_request_autocalc_retries() -> None:
     for timeout, backoff_factor, arg, out in [
         (0.5, 0.75, 1, 1),
         (0.5, 0.75, MAX_RETRIES, MAX_RETRIES),
-        #
         (0.5, 0.75, CalcRetryFromBackoffMax(0.1), 0),  # -1.90689 -> 0
         (0.5, 0.75, CalcRetryFromBackoffMax(0.5), 0),  # 0.41503
         (0.5, 0.75, CalcRetryFromBackoffMax(0.75), 1),  # 1.0
         (0.5, 0.75, CalcRetryFromBackoffMax(0.9), 1),  # 1.26303
         (0.5, 0.75, CalcRetryFromBackoffMax(8.1), 4),  # 4.43296
-        #
         (0.5, 0.75, CalcRetryFromWaittimeMax(100), 7),  # 7.01484
         (15, 0.5, CalcRetryFromWaittimeMax(5 * 60), 8),  # 8.20825
         (1, 0.1, CalcRetryFromWaittimeMax(5 * 60), 11),  # 11.4854
@@ -153,13 +153,11 @@ async def test_041_request_autocalc_retries_error() -> None:
     """Test auto-calculated retries options in `RestClient`."""
     for timeout, backoff_factor, arg in [
         (0.5, 0.75, MAX_RETRIES + 1),
-        #
         (
             0.5,
             01e-07,
             CalcRetryFromBackoffMax(urllib3.util.retry.Retry.DEFAULT_BACKOFF_MAX),
         ),
-        #
         (0.5, 0.3, CalcRetryFromWaittimeMax(60 * 60)),
     ]:
         print(f"{timeout=}, {backoff_factor=}, {arg=}")
