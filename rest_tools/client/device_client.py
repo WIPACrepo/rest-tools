@@ -157,6 +157,7 @@ def DeviceGrantAuth(
         scopes (list): token scope list (optional)
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
+        algorithms (list[str]): specify allowed algorithms (optional)
     """
     logger = kwargs.pop('logger', logging.getLogger('DeviceGrantAuth'))
 
@@ -213,6 +214,7 @@ def SavedDeviceGrantAuth(
         scopes (list): token scope list (optional)
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
+        algorithms (list[str]): specify allowed algorithms (optional)
     """
     logger = kwargs.pop('logger', logging.getLogger('SavedDeviceGrantAuth'))
     filepath = Path(filename)

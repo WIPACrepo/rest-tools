@@ -33,6 +33,7 @@ class OpenIDRestClient(RestClient):
         update_func (callable): a function that gets called when the access and refresh tokens are updated (optional)
         timeout (int): request timeout (optional)
         retries (int): number of retries to attempt (optional)
+        algorithms (list[str]): specify allowed algorithms (optional)
     """
 
     def __init__(
