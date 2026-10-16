@@ -7,7 +7,7 @@ import asyncio
 import logging
 from typing import Any
 
-from wipac_telemetry import tracing_tools  # ty: ignore[unresonved-import]
+from wipac_telemetry import tracing_tools  # ty: ignore[unresolved-import]
 
 from rest_tools.server import (  # pylint: disable=C0413,E0401
     RestHandler,
