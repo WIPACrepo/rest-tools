@@ -30,20 +30,20 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
     class RaiseHandler(RestHandler):
         """Raise HTTPError with the reason given in the JSON body."""
 
-        async def post(self) -> None:
+        async def post(self) -> None:  # ty: ignore[incompatible-mutable-override]
             reason = self.get_argument("reason", None)
             raise tornado.web.HTTPError(400, reason=reason)
 
     class SendErrorHandler(RestHandler):
         """Call send_error() with the reason as a keyword."""
 
-        async def post(self) -> None:
+        async def post(self) -> None:  # ty: ignore[incompatible-mutable-override]
             self.send_error(400, reason=self.get_argument("reason"))
 
     class DirectStatusHandler(RestHandler):
         """Set a multi-line status directly and write a custom body."""
 
-        async def post(self) -> None:
+        async def post(self) -> None:  # ty: ignore[incompatible-mutable-override]
             self.set_status(400, reason=self.get_argument("reason"))
             self.write({"custom": True})
 
@@ -54,7 +54,7 @@ async def server(port: int) -> AsyncIterator[Callable[[], RestClient]]:
             super().prepare()
             raise tornado.web.HTTPError(403, reason="denied\nbecause reasons")
 
-        async def get(self) -> None:
+        async def get(self) -> None:  # ty: ignore[incompatible-mutable-override]
             self.write({})
 
     rs.add_route("/raise", RaiseHandler)
