@@ -185,12 +185,39 @@ class RestHandler(tornado.web.RequestHandler):
             stat = self.route_stats[self.request.path]
             stat.append(time.time() - self.start_time)
 
+    def set_status(self, status_code: int, reason: str | None = None) -> None:
+        """Set the response status, keeping the status-line reason to one line.
+
+        HTTP forbids CR/LF in the status line; Tornado would raise while
+        writing headers and drop the connection. A multi-line reason is
+        reduced to its first non-blank line here. The full text still reaches
+        the client in the JSON body via `write_error()`.
+        """
+        if reason:
+            lines = [line for line in reason.splitlines() if line.strip()]
+            # only line breaks/whitespace -> None, so Tornado uses the default phrase
+            reason = lines[0] if lines else None
+        super().set_status(status_code, reason=reason)
+
     @wtt.evented(all_args=True)
     def write_error(self, status_code=500, **kwargs):
-        """Write out custom error json."""
+        """Write out custom error json.
+
+        The `error` field holds the full (possibly multi-line) reason, taken
+        from the same sources as `send_error()`: the raised `HTTPError`, then
+        a `reason=` keyword. Falls back to the status-line phrase.
+        """
+        reason = kwargs.get('reason')
+        if exc_info := kwargs.get('exc_info'):
+            exc = exc_info[1]
+            if isinstance(exc, tornado.web.HTTPError) and exc.reason:
+                reason = exc.reason
+        if not (reason and reason.strip()):
+            # missing or whitespace-only -> use the status-line phrase
+            reason = self._reason
         data = {
             'code': status_code,
-            'error': self._reason,
+            'error': reason,
         }
         self.write(data)
         self.finish()
