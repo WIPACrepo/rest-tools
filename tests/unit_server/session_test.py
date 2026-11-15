@@ -4,8 +4,36 @@ import pytest
 
 from rest_tools.server.session import Session, SessionWrapper, redis_available
 
+
+def _redis_server_up() -> bool:
+    """True only if the redis package is installed AND a server answers quickly.
+
+    Avoids long hangs (client retries + backoff) when redis is installed
+    but no server is running.
+    """
+    if not redis_available:
+        return False
+    import redis
+    from redis.backoff import NoBackoff
+    from redis.retry import Retry
+    try:
+        # short timeouts, no retries (redis-py retries by default), so a
+        # missing server is detected in ~1s
+        conn = redis.Redis(
+            socket_connect_timeout=1,
+            socket_timeout=1,
+            retry=Retry(NoBackoff(), 0),
+        )
+        try:
+            return bool(conn.ping())
+        finally:
+            conn.close()
+    except Exception:
+        return False
+
+
 STORAGE_TYPES = ['memory']
-if redis_available:
+if _redis_server_up():
     STORAGE_TYPES.append('redis')
 
 
